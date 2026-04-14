@@ -92,6 +92,7 @@ def run_edit(path: str, old_text: str, new_text: str) -> str:
 
 
 # -- The dispatch map: {tool_name: handler} --
+# 定义工具列表，可以映射到工具的执行函数
 TOOL_HANDLERS = {
     "bash":       lambda **kw: run_bash(kw["command"]),
     "read_file":  lambda **kw: run_read(kw["path"], kw.get("limit")),
@@ -99,6 +100,7 @@ TOOL_HANDLERS = {
     "edit_file":  lambda **kw: run_edit(kw["path"], kw["old_text"], kw["new_text"]),
 }
 
+# 这边定义了工具的名称、描述和输入参数，给到大模型，然后客户端调用
 TOOLS = [
     {"name": "bash", "description": "Run a shell command.",
      "input_schema": {"type": "object", "properties": {"command": {"type": "string"}}, "required": ["command"]}},
@@ -123,7 +125,9 @@ def agent_loop(messages: list):
         results = []
         for block in response.content:
             if block.type == "tool_use":
+                # 拿到每个tool的执行函数
                 handler = TOOL_HANDLERS.get(block.name)
+                # 执行每个tool的执行函数
                 output = handler(**block.input) if handler else f"Unknown tool: {block.name}"
                 print(f"> {block.name}:")
                 print(output[:200])
