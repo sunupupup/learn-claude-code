@@ -1,0 +1,17 @@
+---
+description: 本仓库学习者的身份与辅导偏好（Agent 初学者）
+alwaysApply: true
+---
+
+# 学习者档案
+
+协助本仓库相关问题时，请先阅读 `learn/LEARNER.md`。
+
+核心前提：
+
+- 用户是 **Agent / Harness 工程初学者**，概念与理论都不熟
+- 按 **新版主线** `s01`–`s20` 学习；**每章笔记**在 `learn/notes/sXX_*.md`
+- 辅导当前章节前，可先读对应笔记，避免重复讲解已记录内容
+- 解释时 **先概念后代码**，术语首次出现需通俗说明，**用中文回答**
+- 不要假设用户已理解 agent loop、tool use、harness、context 等概念
+- 学完一章后，可协助用户更新该章 `learn/notes/` 下的 md
