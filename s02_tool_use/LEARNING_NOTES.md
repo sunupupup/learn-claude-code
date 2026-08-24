@@ -672,3 +672,53 @@ Python 项目、复杂类型和结构化错误 → Pydantic 作为单一事实�
 1. 一次多个工具调用会生成多个 `tool_result` block，但通常放进同一条 user message。
 2. Tool 参数定义是概念，JSON Schema 是协议表达，Pydantic 是 Python 运行时模型与校验工具。
 3. 结构校验、业务校验、权限策略和执行防护属于不同层次，不能全部归为参数校验。
+
+### 13.9 补充问答：一轮问答、message 与 content block
+
+**我的理解**：
+
+> 用户看到的一问一答，即使中间包含 tool call loop，本质上也是不同角色的 message 持续累加；一条 message 的 content 又可以包含多个 block，例如多个工具调用或多个工具结果。
+
+**结论**：这个理解正确。需要同时记住两个层级：
+
+```text
+messages：完整对话轨迹
+└── message：某个角色的一次协议发言
+    └── content：这次发言中的 block 数组
+        ├── text
+        ├── tool_use
+        └── tool_result
+```
+
+因此，用户视角的一轮问答，在 Agent 内部可能展开为：
+
+```text
+user message
+  └── 用户问题
+
+assistant message
+  ├── tool_use A
+  └── tool_use B
+
+user message
+  ├── tool_result A
+  └── tool_result B
+
+assistant message
+  └── 最终文本回答
+```
+
+这里还有四个边界需要记住：
+
+1. 多个 block 不等于多条 message。同一轮的多个 `tool_use` 可以位于一条 assistant message；对应的多个 `tool_result` 通常集中在下一条 user message。
+2. API 返回 assistant response 后，Harness 要主动把完整的 `response.content` 加入 `messages`，不能只保存其中的 `tool_use` 或只保存工具结果。
+3. 如果下一次模型响应仍包含 `tool_use`，Harness 就继续执行并累加新的 assistant/user message；只剩最终文本时才正常结束本轮循环。
+4. 生产实现还需要最大循环次数、超时、取消、预算耗尽和等待人工批准等终止条件，避免模型持续调用工具。
+
+**最终记忆**：
+
+```text
+一轮用户问答不等于固定两条 message；
+它可能包含多组 assistant(tool_use) → user(tool_result)；
+每条 message 又可以承载多个 content block。
+```
