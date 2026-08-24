@@ -1,6 +1,6 @@
 # s02 学习手册：Tool Use
 
-> 学习状态：进行中  
+> 学习状态：基础通过，待巩固
 > 本章目标：理解工具声明、分发、校验、执行和结果回传的完整链路，并能区分 Client Tool、Server Tool、MCP Tool 与协议错误。
 
 | 项目 | 路径 |
@@ -408,3 +408,267 @@ tool_use_id 负责配对；
 is_error 负责表达失败，但不会自动重试。
 ```
 
+## 十三、问答验收记录（2026-08-25）
+
+### 13.1 本轮结论
+
+- 难度：D1 Tool Use 基础，包含少量 D2 生产边界。
+- 结果：基础通过，约 70 分，可以进入 s03 Permission。
+- 已掌握：工具声明与执行映射、handler 分发、执行前校验、错误结果回传、参数合法不等于操作安全。
+- 待巩固：消息与 content block 的层级、多工具结果分组、JSON Schema/Pydantic 边界、校验与权限分层。
+
+### 13.2 问题一：`TOOLS` 与 `TOOL_HANDLERS`
+
+**我的回答摘要**：
+
+> handlers 负责执行 LLM API 调用的工具内容。模型不具备执行 Python 函数的能力，真正运行的是宿主 Python Agent 代码。
+
+**正确部分**：
+
+- 模型不能直接执行 Python 函数；
+- 真正执行工具的是宿主 Harness；
+- `TOOL_HANDLERS` 负责找到实际函数。
+
+**需要校准**：
+
+- `TOOLS` 是给模型看的工具契约，描述名称、用途和输入 schema；
+- `TOOL_HANDLERS` 不是执行“LLM API”，而是执行模型通过 API 返回的本地工具请求；
+- 模型选择下一步，Harness 掌握真正的执行能力和副作用边界。
+
+**最终结论**：
+
+```text
+TOOLS：让模型知道可以请求什么。
+TOOL_HANDLERS：让 Harness 知道本地执行什么。
+```
+
+### 13.3 问题二：非法 `glob` 参数的完整调用链
+
+题目输入：
+
+```json
+{
+  "type": "tool_use",
+  "id": "toolu_123",
+  "name": "glob",
+  "input": {"pattern": 123}
+}
+```
+
+**我的回答摘要**：
+
+> 根据 name 找 handler，检查是否存在 `glob` 和对应 validator；校验失败就拼接错误消息作为 tool result，成功则调用 handler 并把结果放入 message。
+
+**正确部分**：
+
+- 先检查 handler 是否存在；
+- 再查找并执行 validator；
+- 失败结果也要返回模型；
+- 合法参数才进入 handler。
+
+**需要校准**：
+
+- 方向是 Harness 调用 LLM API 后收到 response，不是“LLM API 收到 block”；
+- 完整 assistant response 要先加入 `messages`；
+- 此处 `pattern` 类型错误，因此 `run_glob` 不会执行；
+- 字典关键字参数展开写作 `handler(**block.input)`，不是 `handler(*input)`；
+- 错误结果需要保留 `tool_use_id` 并设置 `is_error: true`。
+
+**最终流程**：
+
+```text
+接收 assistant response
+→ 保存完整 response.content
+→ 遍历 tool_use block
+→ execute_tool("glob", {"pattern": 123})
+→ handler 存在
+→ validator 返回错误
+→ 不执行 run_glob
+→ 构造 tool_result(is_error=true)
+→ 作为一条 role=user 消息加入 messages
+```
+
+### 13.4 问题三：`tool_use_id`、消息配对与 session 隔离
+
+**我的回答摘要**：
+
+> 如果 ID 映射不上，工具调用和结果无法对应，上下文会丢失、不连贯；串 session 还可能产生危险操作。
+
+**正确部分**：
+
+- `tool_use.id` 必须匹配 `tool_result.tool_use_id`；
+- 不能只保存结果而丢失模型的原始调用；
+- 消息历史混乱会破坏上下文连续性。
+
+**需要校准**：
+
+这不仅是语义问题，也是 Anthropic Messages API 的协议约束。完整顺序应为：
+
+```text
+assistant: tool_use(id=toolu_123)
+user:      tool_result(tool_use_id=toolu_123)
+```
+
+缺少调用、漏掉结果或 ID 不匹配时，API 可能直接返回 4xx，模型甚至看不到这次错误。
+
+`tool_use_id` 只负责同一条消息轨迹中的调用/结果关联，不是 session、用户或租户的安全边界。跨 session 混入消息的风险更大：可能泄露另一个用户的工具结果、复用错误的审批状态，甚至让 A 会话的请求影响 B 会话的数据。
+
+因此还需要：
+
+- 每个 session 独立维护消息历史；
+- 每次工具执行绑定当前用户、租户和 run；
+- 权限判断不能只相信 `tool_use_id`；
+- 服务端记录 tool call 与 session/tenant 的关联并进行校验。
+
+**最终结论**：
+
+```text
+tool_use_id 解决协议配对；
+session/tenant 隔离解决安全归属。
+二者不能互相替代。
+```
+
+### 13.5 问题四：同一轮多个工具调用
+
+**我的回答摘要**：
+
+> A、B 分别返回带各自 tool ID 的结果。B 没执行时不能伪造调用数据，要么返回错误，要么返回真实的 B 调用结果。
+
+**正确部分**：
+
+这里的核心意图是正确的：B 没有执行就不能伪造一个成功结果；它必须有明确的处理结论。
+
+**措辞校准**：
+
+“B 没执行就不能返回结果”容易把“真实执行输出”和“协议中的结果块”混在一起：
+
+- B 没执行，当然没有真实执行输出；
+- 但协议上仍必须返回一个 B 的 `tool_result` block；
+- 这个结果块应设置 `is_error: true`，说明没有执行的原因。
+
+另外，两个结果通常不是放在两条 user message 中，而是放在同一条 user message 的 `content` 数组里：
+
+```json
+{
+  "role": "user",
+  "content": [
+    {
+      "type": "tool_result",
+      "tool_use_id": "A",
+      "content": "read result"
+    },
+    {
+      "type": "tool_result",
+      "tool_use_id": "B",
+      "content": "Not executed because the preceding operation failed",
+      "is_error": true
+    }
+  ]
+}
+```
+
+**最终结论**：
+
+```text
+两个 tool_use → 两个 tool_result block → 通常放在同一条 user message。
+未执行没有成功输出，但仍必须有错误结果块。
+```
+
+### 13.6 问题五：Tool 参数定义、JSON Schema 与 Pydantic
+
+**我的回答摘要**：
+
+> 模型输出有随机性和不确定性，所以仍需运行时校验。JSON Schema 是希望模型返回完整 JSON 结构；忘记了 Pydantic 的作用。
+
+**正确部分**：
+
+- 模型生成具有不确定性；
+- 不能因为模型看过 schema 就完全信任输出；
+- 本地仍需要在副作用发生前校验。
+
+**需要校准**：
+
+Tool 参数定义与 JSON Schema 并不是两个平级、完全不同的东西：
+
+```text
+Tool 参数定义：概念——这个工具需要哪些输入。
+JSON Schema：表达形式——用语言无关的结构描述这些输入。
+```
+
+完整 Tool 定义通常包含：
+
+```text
+name
+description
+input_schema（这里才是参数结构）
+```
+
+因此在当前项目里，`input_schema` 基本就是 Tool 参数定义的正式表达。它描述字段、类型、必填项和约束，并不只是要求模型返回一个“JSON 字符串”。模型返回的 `tool_use.input` 在 SDK 中已经表现为一个对象/字典。
+
+Pydantic 是 Python 运行时数据模型和校验库，可以：
+
+- 用 Python 类型定义复杂、嵌套的参数；
+- 在本地执行严格校验；
+- 返回结构化校验错误；
+- 得到校验后的 Python 对象；
+- 通过 `model_json_schema()` 生成给模型使用的 JSON Schema。
+
+**选择方式**：
+
+```text
+跨语言或已有 JSON Schema → JSON Schema 作为单一事实来源。
+Python 项目、复杂类型和结构化错误 → Pydantic 作为单一事实来源并生成 JSON Schema。
+```
+
+### 13.7 问题六：参数合法但操作危险
+
+**我的回答摘要**：
+
+> 还需要工具内部保护机制，以及额外的业务逻辑校验和安全校验。参数校验通常只校验类型、范围等通用条件。
+
+**正确部分**：
+
+- 类型正确不代表业务允许；
+- 需要业务规则；
+- 工具内部还要做安全保护；
+- 不能只依赖最外层 schema。
+
+**需要校准**：
+
+可以在高层概括为“业务”和“安全”两类，但不应把它们全部叫作“额外参数校验”。生产链路至少可以分成四层：
+
+| 层次 | 回答的问题 | 示例 |
+|---|---|---|
+| 结构校验 | 输入形状合法吗 | `path` 是否为字符串、字段是否必填 |
+| 业务校验 | 这个操作符合业务规则吗 | 禁止修改已关闭订单 |
+| 权限/策略 | 当前身份获准执行吗 | 普通用户不能改生产配置；高风险操作需要批准 |
+| 执行防护 | 即使获准，怎样限制副作用 | `safe_path`、沙箱、幂等、备份、回滚 |
+
+对于 `write_file("config/production.env", ...)`：
+
+```text
+结构可以合法
+业务目标也可能合理
+但权限策略可能要求 ask 或 deny
+获准后仍要通过 safe_path、备份等执行防护
+```
+
+这也不一定是 HTTP 400。用 HTTP 类比：
+
+- 输入结构错误更接近 400；
+- 身份无权操作更接近 403；
+- 需要用户确认则是 Agent 的 `ask/approval` 状态，不一定对应 HTTP 错误码。
+
+**最终结论**：
+
+```text
+校验回答“输入/业务是否成立”；
+权限回答“谁是否获准执行”；
+执行防护回答“获准后如何限制真实副作用”。
+```
+
+### 13.8 仍需巩固
+
+1. 一次多个工具调用会生成多个 `tool_result` block，但通常放进同一条 user message。
+2. Tool 参数定义是概念，JSON Schema 是协议表达，Pydantic 是 Python 运行时模型与校验工具。
+3. 结构校验、业务校验、权限策略和执行防护属于不同层次，不能全部归为参数校验。
