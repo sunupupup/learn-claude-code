@@ -32,10 +32,11 @@ from pathlib import Path
 
 try:
     import readline
-    readline.parse_and_bind('set bind-tty-special-chars off')
-    readline.parse_and_bind('set input-meta on')
-    readline.parse_and_bind('set output-meta on')
-    readline.parse_and_bind('set convert-meta off')
+
+    readline.parse_and_bind("set bind-tty-special-chars off")
+    readline.parse_and_bind("set input-meta on")
+    readline.parse_and_bind("set output-meta on")
+    readline.parse_and_bind("set convert-meta off")
 except ImportError:
     pass
 
@@ -50,12 +51,20 @@ WORKDIR = Path.cwd()
 client = Anthropic(base_url=os.getenv("ANTHROPIC_BASE_URL"))
 MODEL = os.environ["MODEL_ID"]
 
+# destructive 破坏性的、可能造成数据损失的。
+# destructive 意思是：破坏性的、可能造成数据损失的。
+# 在程序和 Agent 工具中，destructive operation 通常指会删除、覆盖或不可逆改变数据的操作，例如：
+# - rm -rf 删除文件
+# - 覆盖生产配置
+# - 删除数据库记录
+# - 强制回滚或格式化磁盘
 SYSTEM = f"You are a coding agent at {WORKDIR}. All destructive operations require user approval."
 
 
 # ═══════════════════════════════════════════════════════════
 #  FROM s02 (unchanged): Tool Implementations
 # ═══════════════════════════════════════════════════════════
+
 
 def safe_path(p: str) -> Path:
     path = (WORKDIR / p).resolve()
@@ -66,8 +75,14 @@ def safe_path(p: str) -> Path:
 
 def run_bash(command: str) -> str:
     try:
-        r = subprocess.run(command, shell=True, cwd=WORKDIR,
-                           capture_output=True, text=True, timeout=120)
+        r = subprocess.run(
+            command,
+            shell=True,
+            cwd=WORKDIR,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
         out = (r.stdout + r.stderr).strip()
         return out[:50000] if out else "(no output)"
     except subprocess.TimeoutExpired:
@@ -108,6 +123,7 @@ def run_edit(path: str, old_text: str, new_text: str) -> str:
 
 def run_glob(pattern: str) -> str:
     import glob as g
+
     try:
         results = []
         for match in g.glob(pattern, root_dir=WORKDIR):
@@ -123,21 +139,63 @@ def run_glob(pattern: str) -> str:
 # ═══════════════════════════════════════════════════════════
 
 TOOLS = [
-    {"name": "bash", "description": "Run a shell command.",
-     "input_schema": {"type": "object", "properties": {"command": {"type": "string"}}, "required": ["command"]}},
-    {"name": "read_file", "description": "Read file contents.",
-     "input_schema": {"type": "object", "properties": {"path": {"type": "string"}, "limit": {"type": "integer"}}, "required": ["path"]}},
-    {"name": "write_file", "description": "Write content to a file.",
-     "input_schema": {"type": "object", "properties": {"path": {"type": "string"}, "content": {"type": "string"}}, "required": ["path", "content"]}},
-    {"name": "edit_file", "description": "Replace exact text in a file once.",
-     "input_schema": {"type": "object", "properties": {"path": {"type": "string"}, "old_text": {"type": "string"}, "new_text": {"type": "string"}}, "required": ["path", "old_text", "new_text"]}},
-    {"name": "glob", "description": "Find files matching a glob pattern.",
-     "input_schema": {"type": "object", "properties": {"pattern": {"type": "string"}}, "required": ["pattern"]}},
+    {
+        "name": "bash",
+        "description": "Run a shell command.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"command": {"type": "string"}},
+            "required": ["command"],
+        },
+    },
+    {
+        "name": "read_file",
+        "description": "Read file contents.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"path": {"type": "string"}, "limit": {"type": "integer"}},
+            "required": ["path"],
+        },
+    },
+    {
+        "name": "write_file",
+        "description": "Write content to a file.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"path": {"type": "string"}, "content": {"type": "string"}},
+            "required": ["path", "content"],
+        },
+    },
+    {
+        "name": "edit_file",
+        "description": "Replace exact text in a file once.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "path": {"type": "string"},
+                "old_text": {"type": "string"},
+                "new_text": {"type": "string"},
+            },
+            "required": ["path", "old_text", "new_text"],
+        },
+    },
+    {
+        "name": "glob",
+        "description": "Find files matching a glob pattern.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"pattern": {"type": "string"}},
+            "required": ["pattern"],
+        },
+    },
 ]
 
 TOOL_HANDLERS = {
-    "bash": run_bash, "read_file": run_read, "write_file": run_write,
-    "edit_file": run_edit, "glob": run_glob,
+    "bash": run_bash,
+    "read_file": run_read,
+    "write_file": run_write,
+    "edit_file": run_edit,
+    "glob": run_glob,
 }
 
 
@@ -148,6 +206,7 @@ TOOL_HANDLERS = {
 # Gate 1: Hard deny list — always forbidden
 DENY_LIST = ["rm -rf /", "sudo", "shutdown", "reboot", "mkfs", "dd if=", "> /dev/sda"]
 
+
 def check_deny_list(command: str) -> str | None:
     for pattern in DENY_LIST:
         if pattern in command:
@@ -157,13 +216,22 @@ def check_deny_list(command: str) -> str | None:
 
 # Gate 2: Rule matching — context-dependent checks
 PERMISSION_RULES = [
-    {"tools": ["write_file", "edit_file"],
-     "check": lambda args: not (WORKDIR / args.get("path", "")).resolve().is_relative_to(WORKDIR),
-     "message": "Writing outside workspace"},
-    {"tools": ["bash"],
-     "check": lambda args: any(kw in args.get("command", "") for kw in ["rm ", "> /etc/", "chmod 777"]),
-     "message": "Potentially destructive command"},
+    {
+        "tools": ["write_file", "edit_file"],
+        "check": lambda args: (
+            not (WORKDIR / args.get("path", "")).resolve().is_relative_to(WORKDIR)
+        ),
+        "message": "Writing outside workspace",
+    },
+    {
+        "tools": ["bash"],
+        "check": lambda args: any(
+            kw in args.get("command", "") for kw in ["rm ", "> /etc/", "chmod 777"]
+        ),
+        "message": "Potentially destructive command",
+    },
 ]
+
 
 def check_rules(tool_name: str, args: dict) -> str | None:
     for rule in PERMISSION_RULES:
@@ -199,11 +267,15 @@ def check_permission(block) -> bool:
 #  agent_loop — same as s02, with check_permission() inserted
 # ═══════════════════════════════════════════════════════════
 
+
 def agent_loop(messages: list):
     while True:
         response = client.messages.create(
-            model=MODEL, system=SYSTEM, messages=messages,
-            tools=TOOLS, max_tokens=8000,
+            model=MODEL,
+            system=SYSTEM,
+            messages=messages,
+            tools=TOOLS,
+            max_tokens=8000,
         )
         messages.append({"role": "assistant", "content": response.content})
 
@@ -219,14 +291,21 @@ def agent_loop(messages: list):
 
             # s03 change: run through permission pipeline before executing
             if not check_permission(block):
-                results.append({"type": "tool_result", "tool_use_id": block.id,
-                                "content": "Permission denied."})
+                results.append(
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": block.id,
+                        "content": "Permission denied.",
+                    }
+                )
                 continue
 
             handler = TOOL_HANDLERS.get(block.name)
             output = handler(**block.input) if handler else f"Unknown: {block.name}"
             print(str(output)[:200])
-            results.append({"type": "tool_result", "tool_use_id": block.id, "content": output})
+            results.append(
+                {"type": "tool_result", "tool_use_id": block.id, "content": output}
+            )
 
         messages.append({"role": "user", "content": results})
 
