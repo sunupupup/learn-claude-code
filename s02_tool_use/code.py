@@ -219,11 +219,13 @@ TOOL_VALIDATORS = {
 
 def execute_tool(tool_name: str, tool_input: dict) -> tuple[str, bool]:
     """校验并执行工具，返回 (输出, 是否为错误)。"""
+    # TOOLS 只是给模型看的契约；真正能否执行，要以本地 handler 注册表为准。
     handler = TOOL_HANDLERS.get(tool_name)
     if handler is None:
         available = ", ".join(TOOL_HANDLERS)
         return f"Error: Unknown tool '{tool_name}'. Available tools: {available}", True
 
+    # 一定要在调用 handler 之前校验，避免非法输入触发真实副作用。
     validator = TOOL_VALIDATORS.get(tool_name)
     if validator:
         validation_error = validator(tool_input)
@@ -278,6 +280,8 @@ def agent_loop(messages: list):
                     tool_result["is_error"] = True
                 results.append(tool_result)
 
+        # Claude API 用 role=user 的 tool_result 承接上一轮 assistant 的 tool_use。
+        # 下一次循环调用 client.messages.create 时，模型就能看到执行结果或错误。
         messages.append({"role": "user", "content": results})
 
 
