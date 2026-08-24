@@ -38,3 +38,14 @@
 - `git diff --check` 通过；
 - 通过新增提交保存，不改写既有历史。
 
+## 问答补充设计
+
+在问答验收记录末尾新增 `13.9`，补齐用户刚完成的消息结构理解：
+
+- 用户视角的一轮问答，内部可能展开为多条 `message`；
+- 每条 `message.content` 可以包含多个 `text`、`tool_use` 或 `tool_result` block；
+- 同一轮的多个 `tool_use` 通常位于同一条 assistant message，对应结果通常集中在下一条 user message；
+- Harness 必须主动保存完整 assistant response，再追加带对应 ID 的工具结果；
+- 模型再次返回 `tool_use` 时继续循环，只返回文本或达到终止条件时退出。
+
+该补充只更新学习笔记，不修改第二章代码和 README。
