@@ -21,7 +21,7 @@ s01 的 Agent 只有一个 bash 工具。读文件要 `cat`，写文件要 `echo
 
 ![Tool Dispatch](images/tool-dispatch.svg)
 
-s01 的循环完全保留（LLM 调用、stop_reason 判断、消息追加）。唯一的变动在工具执行那 1 行：`run_bash()` 替换为 `TOOL_HANDLERS[block.name]()` 查表分发。
+s01 的核心循环完全保留（LLM 调用、stop_reason 判断、消息追加）。核心分发只改 1 行：`run_bash()` 替换为按工具名查表；本章还额外加入一个很薄的错误边界，演示未知工具和错误参数如何返回给模型。
 
 给 Agent 加一个工具只需要做两件事：
 
@@ -98,7 +98,95 @@ for block in response.content:
         results.append(...)
 ```
 
-加一个工具 = 在 `TOOLS` 数组加一条 + 在 `TOOL_HANDLERS` 字典加一行。循环不变。
+加一个工具 = 在 `TOOLS` 数组加一条 + 在 `TOOL_HANDLERS` 字典加一行。Agent 循环的主体不变。
+
+---
+
+## 工具调用失败：不要让 Agent 循环直接崩溃
+
+`TOOLS[*].input_schema` 是发给模型的**工具契约**，它能显著提高模型生成正确参数的概率，但不能代替本地运行时校验。模型输出仍应被当成不可信输入：模型可能生成错误参数，历史消息可能来自旧版本工具，`TOOLS` 和 `TOOL_HANDLERS` 也可能因为代码维护不同步。
+
+教学版只选 `glob` 演示参数校验：
+
+```python
+def validate_glob_input(tool_input: dict) -> str | None:
+    if "pattern" not in tool_input:
+        return "Missing required parameter 'pattern'"
+    if not isinstance(tool_input["pattern"], str):
+        actual = type(tool_input["pattern"]).__name__
+        return f"'pattern' must be a string, got {actual}"
+    return None
+
+TOOL_VALIDATORS = {"glob": validate_glob_input}
+```
+
+统一执行边界按顺序处理四件事：查找 handler、校验输入、执行函数、转换异常。
+
+```python
+def execute_tool(tool_name, tool_input):
+    handler = TOOL_HANDLERS.get(tool_name)
+    if handler is None:
+        return f"Error: Unknown tool '{tool_name}'", True
+
+    validator = TOOL_VALIDATORS.get(tool_name)
+    if validator and (error := validator(tool_input)):
+        return f"Error: Invalid input: {error}", True
+
+    try:
+        return handler(**tool_input), False
+    except Exception as e:
+        return f"Error: Tool failed: {e}", True
+```
+
+这里的布尔值表示结果是不是错误。错误仍然要与原来的 `tool_use_id` 配对，并显式告诉模型：
+
+```python
+{
+    "type": "tool_result",
+    "tool_use_id": block.id,
+    "content": output,
+    "is_error": True,
+}
+```
+
+这样形成的是一个可恢复闭环：
+
+```text
+错误的 tool_use → 本地拒绝执行 → tool_result(is_error=true)
+      → 模型读到具体错误 → 修改工具名或参数 → 再次 tool_use
+```
+
+注意，`is_error` 不是让 API 自动重试；是否重试、怎样修正仍由下一轮模型决定。程序还应设置最大轮数或重试预算，避免模型反复犯同一个错误形成死循环。
+
+当前几个 `run_*` 函数为了保持示例简短，仍会在内部捕获部分异常并返回以 `Error:` 开头的普通字符串。外层无法可靠判断这种字符串究竟是错误还是正常文本，因此生产实现不要依赖 `startswith("Error:")`；更稳妥的方式是让 handler 抛出可分类异常，或统一返回结构化的 `ToolExecutionResult`。
+
+### 生产环境一定要用 Pydantic 吗？
+
+不一定，但一定要有可靠的运行时校验，并避免维护两份会逐渐不一致的 schema。
+
+| 方式 | 适合场景 | 主要取舍 |
+|------|----------|----------|
+| 手写校验 | 教学、小工具、少量业务规则 | 直观，但工具一多容易漏字段和边界条件 |
+| JSON Schema 校验 | `TOOLS.input_schema` 已经是权威定义、跨语言系统 | 可直接复用模型看到的 schema，但 Python 类型体验较弱 |
+| Pydantic | Python 服务、复杂嵌套参数、希望得到结构化错误 | 类型体验和错误信息好，但应由 Pydantic 生成 JSON Schema，避免重复定义 |
+
+如果项目以 Python 为主，可以让 Pydantic 模型成为单一事实来源：使用严格模式、禁止多余字段，在本地执行 `model_validate()`，再通过 `model_json_schema()` 生成给模型的工具 schema。如果项目需要跨语言共享契约，则更适合把 JSON Schema 作为单一事实来源，再用对应语言的校验器执行。
+
+Pydantic 只解决“输入结构和值是否合法”，并不解决下面这些生产问题：
+
+- **权限与副作用**：合法的 `write_file` 参数仍可能覆盖重要文件。
+- **超时、重试和幂等**：工具可能超时；有副作用的调用不能盲目重试。
+- **错误分级**：参数错误通常可以让模型修正，系统错误可能应退避或交给用户。
+- **注册一致性**：启动时检查 `TOOLS`、handlers 和 validators，尽早发现名称或 schema 漂移。
+- **敏感信息**：不要把完整异常栈、密钥或原始敏感输入放进 `tool_result`。
+- **可观测性**：日志要记录工具名、调用 ID、耗时、错误类型和重试次数。
+- **循环上限**：限制总轮数、单工具重试次数、token 和费用预算。
+
+延伸阅读：
+
+- [Claude 官方文档：处理工具调用与 `is_error`](https://platform.claude.com/docs/en/agents-and-tools/tool-use/handle-tool-calls)
+- [Pydantic 官方文档：严格模式](https://docs.pydantic.dev/latest/concepts/strict_mode/)
+- [Pydantic 官方文档：模型与 JSON Schema](https://docs.pydantic.dev/latest/concepts/json_schema/)
 
 ---
 
@@ -117,7 +205,8 @@ for block in response.content:
 | TOOL_HANDLERS | 工具名 → 处理函数的字典。加工具 = 加一行映射 |
 | 工具定义 | 告诉模型"我能做什么"的 JSON schema |
 | 多工具调用 | 模型可一次返回多个 tool_use，教学版按原始顺序逐个执行 |
-| 循环不变 | s01 的 `while True` 循环一行都没改 |
+| 错误回传 | 未知工具或非法参数作为 `is_error: true` 的 tool_result 返回模型 |
+| 循环主体不变 | 仍然是 s01 的 `while True`；只给工具执行增加错误边界 |
 
 ---
 
@@ -128,7 +217,7 @@ for block in response.content:
 | 工具数量 | 1 (bash) | 5 (+read, write, edit, glob) |
 | 工具执行 | 硬编码 `run_bash()` | TOOL_HANDLERS 查表分发 |
 | 路径安全 | 无 | safe_path 校验（仅 file tools） |
-| 循环 | `while True` + `stop_reason` | 与 s01 完全一致 |
+| 循环 | `while True` + `stop_reason` | 主体不变，工具结果增加错误标记 |
 
 ---
 
@@ -201,7 +290,7 @@ CC 的 `partitionToolCalls()`（`toolOrchestration.ts:91-115`）不是分两组�
 
 CC 的每个工具调用经过严格的 5 步验证（`toolExecution.ts`）：
 
-1. **Zod schema 验证**（`614-680`，教学版用 JSON Schema 替代）：参数类型/结构检查
+1. **Zod schema 验证**（`614-680`）：参数类型/结构检查；教学版只把 JSON Schema 发给模型，本地仅用 `glob` 手写校验演示运行时验证
 2. **工具级 validateInput()**（`682-733`）：参数值验证（如路径是否在工作区内）
 3. **PreToolUse hooks**（`800-862`，s04 详细介绍）：钩子可以返回消息、修改输入、阻止执行
 4. **权限检查**（`921-931`，s03 的核心内容）：canUseTool + checkPermissions → allow/deny/ask

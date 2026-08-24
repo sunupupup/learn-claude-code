@@ -8,9 +8,11 @@ s02: Tool Use — 在 s01 基础上新增 4 个工具 + 分发映射。
 本文件 = s01 的全部代码 + 以下新增:
   + run_read / run_write / run_edit / run_glob 四个工具实现
   + TOOL_HANDLERS 分发映射（替代 s01 中硬编码的 run_bash 调用）
+  + TOOL_VALIDATORS 输入校验映射（只用 glob 演示）
+  + execute_tool 统一处理未知工具、非法输入和执行异常
   + safe_path 路径安全校验
 
-循环本身（agent_loop）与 s01 完全一致。
+agent_loop 主体与 s01 一致，工具执行结果额外支持 is_error 错误标记。
 """
 
 import os, subprocess
@@ -195,9 +197,52 @@ TOOL_HANDLERS = {
 
 
 # ═══════════════════════════════════════════════════════════
+#  工具输入校验：教学版只用 glob 演示，生产版应覆盖所有工具
+# ═══════════════════════════════════════════════════════════
+
+
+def validate_glob_input(tool_input: dict) -> str | None:
+    if "pattern" not in tool_input:
+        return "Missing required parameter 'pattern'"
+
+    pattern = tool_input["pattern"]
+    if not isinstance(pattern, str):
+        return f"'pattern' must be a string, got {type(pattern).__name__}"
+
+    return None
+
+
+TOOL_VALIDATORS = {
+    "glob": validate_glob_input,
+}
+
+
+def execute_tool(tool_name: str, tool_input: dict) -> tuple[str, bool]:
+    """校验并执行工具，返回 (输出, 是否为错误)。"""
+    handler = TOOL_HANDLERS.get(tool_name)
+    if handler is None:
+        available = ", ".join(TOOL_HANDLERS)
+        return f"Error: Unknown tool '{tool_name}'. Available tools: {available}", True
+
+    validator = TOOL_VALIDATORS.get(tool_name)
+    if validator:
+        validation_error = validator(tool_input)
+        if validation_error:
+            return f"Error: Invalid input for tool '{tool_name}': {validation_error}", True
+
+    try:
+        return handler(**tool_input), False
+    except TypeError as e:
+        # **tool_input 的参数名、数量或类型不匹配时，不要让整个 Agent 崩溃。
+        return f"Error: Invalid input for tool '{tool_name}': {e}", True
+    except Exception as e:
+        return f"Error: Tool '{tool_name}' failed: {e}", True
+
+
+# ═══════════════════════════════════════════════════════════
 #  agent_loop — 与 s01 结构完全一致，只改了工具执行那部分
 #  s01: output = run_bash(block.input["command"])
-#  s02: output = TOOL_HANDLERS[block.name](**block.input)
+#  s02: output, is_error = execute_tool(block.name, block.input)
 # ═══════════════════════════════════════════════════════════
 
 
@@ -221,12 +266,17 @@ def agent_loop(messages: list):
             # 工具调用相关的block的type是tool_use
             if block.type == "tool_use":
                 print(f"\033[33m> {block.name}\033[0m")
-                handler = TOOL_HANDLERS.get(block.name)
-                output = handler(**block.input) if handler else f"Unknown: {block.name}"
+                output, is_error = execute_tool(block.name, block.input)
                 print(str(output)[:200])
-                results.append(
-                    {"type": "tool_result", "tool_use_id": block.id, "content": output}
-                )
+                tool_result = {
+                    "type": "tool_result",
+                    "tool_use_id": block.id,
+                    "content": output,
+                }
+                if is_error:
+                    # 把失败告诉模型，让它根据错误信息修改工具名或参数后重试。
+                    tool_result["is_error"] = True
+                results.append(tool_result)
 
         messages.append({"role": "user", "content": results})
 
