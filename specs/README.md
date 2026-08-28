@@ -2,6 +2,8 @@
 
 这个目录用于个人开发与学习任务的轻量 Spec 管理。目录结构参考 Notion 页面 [内部开发 Spec 范式｜六类文档、作用与案例](https://app.notion.com/p/3c9d850183c58125a394f325e55a2ce4)。
 
+仓库根目录的 [`AGENTS.md`](../AGENTS.md) 是 Agent 自动发现入口；本文件是 Spec 目录、命名、状态与流转规则的唯一规范来源。
+
 ## 目录职责
 
 ```text
