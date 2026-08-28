@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 """
+这个似乎是一个，planing 的 agent 的最小示例？
+先计划要干几件事，然后不断loop去干，并且同时更新那些 计划的 状态
+直到轮次上限、或者 所有 计划都处于done的状态
+能这么理解这个项目么 ？
 s05: TodoWrite — add a planning tool on top of s04 hooks.
 
   +---------+      +-------+      +------------------+
@@ -170,6 +174,7 @@ def run_todo_write(todos: list) -> str:
             "in_progress": "\033[36m▸\033[0m",
             "completed": "\033[32m✓\033[0m",
         }[t["status"]]
+        # loop的过程中，不断更新那些todo 任务的状态
         lines.append(f"  [{icon}] {t['content']}")
     print("\n".join(lines))
     return f"Updated {len(CURRENT_TODOS)} tasks"
@@ -232,6 +237,7 @@ TOOLS = [
         "input_schema": {
             "type": "object",
             "properties": {
+                # todo list 的一个 schema ，是一个数组， 数组的每一项都是一个todo 任务对象，里面有status来表示状态完成情况
                 "todos": {
                     "type": "array",
                     "items": {
@@ -336,6 +342,8 @@ def agent_loop(messages: list):
     global rounds_since_todo
     while True:
         # s05: nag reminder — inject if model hasn't updated todos for 3 rounds
+        # nag 是啥？ 是提醒？ 提醒模型更新todo list？
+        # 原来1这个 上限 3 ，不是强制退出啊。。。是提醒llm要更新数据了。。。 那这个例子是不是会出现无限循环啊，玩意llm智商很低，就是不更新，，，
         if rounds_since_todo >= 3 and messages:
             messages.append(
                 {"role": "user", "content": "<reminder>Update your todos.</reminder>"}
