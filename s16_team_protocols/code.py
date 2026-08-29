@@ -31,7 +31,8 @@ from dataclasses import dataclass, asdict, field
 
 try:
     import readline
-    readline.parse_and_bind('set bind-tty-special-chars off')
+
+    readline.parse_and_bind("set bind-tty-special-chars off")
 except ImportError:
     pass
 
@@ -59,7 +60,7 @@ class Task:
     id: str
     subject: str
     description: str
-    status: str          # pending | in_progress | completed
+    status: str  # pending | in_progress | completed
     owner: str | None
     blockedBy: list[str]
 
@@ -68,12 +69,15 @@ def _task_path(task_id: str) -> Path:
     return TASKS_DIR / f"{task_id}.json"
 
 
-def create_task(subject: str, description: str = "",
-                blockedBy: list[str] | None = None) -> Task:
+def create_task(
+    subject: str, description: str = "", blockedBy: list[str] | None = None
+) -> Task:
     task = Task(
         id=f"task_{int(time.time())}_{random.randint(0, 9999):04d}",
-        subject=subject, description=description,
-        status="pending", owner=None,
+        subject=subject,
+        description=description,
+        status="pending",
+        owner=None,
         blockedBy=blockedBy or [],
     )
     save_task(task)
@@ -89,8 +93,9 @@ def load_task(task_id: str) -> Task:
 
 
 def list_tasks() -> list[Task]:
-    return [Task(**json.loads(p.read_text()))
-            for p in sorted(TASKS_DIR.glob("task_*.json"))]
+    return [
+        Task(**json.loads(p.read_text())) for p in sorted(TASKS_DIR.glob("task_*.json"))
+    ]
 
 
 def get_task(task_id: str) -> str:
@@ -116,8 +121,11 @@ def claim_task(task_id: str, owner: str = "agent") -> str:
     if task.status != "pending":
         return f"Task {task_id} is {task.status}, cannot claim"
     if not can_start(task_id):
-        deps = [d for d in task.blockedBy
-                if not _task_path(d).exists() or load_task(d).status != "completed"]
+        deps = [
+            d
+            for d in task.blockedBy
+            if not _task_path(d).exists() or load_task(d).status != "completed"
+        ]
         return f"Blocked by: {deps}"
     task.owner = owner
     task.status = "in_progress"
@@ -132,8 +140,11 @@ def complete_task(task_id: str) -> str:
         return f"Task {task_id} is {task.status}, cannot complete"
     task.status = "completed"
     save_task(task)
-    unblocked = [t.subject for t in list_tasks()
-                 if t.status == "pending" and t.blockedBy and can_start(t.id)]
+    unblocked = [
+        t.subject
+        for t in list_tasks()
+        if t.status == "pending" and t.blockedBy and can_start(t.id)
+    ]
     print(f"  \033[32m[complete] {task.subject} ✓\033[0m")
     msg = f"Completed {task.id} ({task.subject})"
     if unblocked:
@@ -147,18 +158,20 @@ def complete_task(task_id: str) -> str:
 PROMPT_SECTIONS = {
     "identity": "You are a coding agent. Act, don't explain.",
     "tools": "Available tools: bash, read_file, write_file, "
-             "get_task, create_task, list_tasks, claim_task, complete_task, "
-             "spawn_teammate, send_message, check_inbox, "
-             "request_shutdown, request_plan, review_plan.",
+    "get_task, create_task, list_tasks, claim_task, complete_task, "
+    "spawn_teammate, send_message, check_inbox, "
+    "request_shutdown, request_plan, review_plan.",
     "workspace": f"Working directory: {WORKDIR}",
     "memory": "Relevant memories are injected below when available.",
 }
 
 
 def assemble_system_prompt(context: dict) -> str:
-    sections = [PROMPT_SECTIONS["identity"],
-                PROMPT_SECTIONS["tools"],
-                PROMPT_SECTIONS["workspace"]]
+    sections = [
+        PROMPT_SECTIONS["identity"],
+        PROMPT_SECTIONS["tools"],
+        PROMPT_SECTIONS["workspace"],
+    ]
     memories = context.get("memories", "")
     if memories:
         sections.append(f"Relevant memories:\n{memories}")
@@ -180,6 +193,7 @@ def get_system_prompt(context: dict) -> str:
 
 # ── Tools ──
 
+
 def safe_path(p: str) -> Path:
     path = (WORKDIR / p).resolve()
     if not path.is_relative_to(WORKDIR):
@@ -190,8 +204,14 @@ def safe_path(p: str) -> Path:
 def run_bash(command: str, run_in_background: bool = False) -> str:
     # run_in_background is handled by agent_loop dispatch, not here
     try:
-        r = subprocess.run(command, shell=True, cwd=WORKDIR,
-                           capture_output=True, text=True, timeout=120)
+        r = subprocess.run(
+            command,
+            shell=True,
+            cwd=WORKDIR,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
         out = (r.stdout + r.stderr).strip()
         return out[:50000] if out else "(no output)"
     except subprocess.TimeoutExpired:
@@ -220,8 +240,10 @@ def run_write(path: str, content: str) -> str:
 
 # Task tools
 
-def run_create_task(subject: str, description: str = "",
-                    blockedBy: list[str] | None = None) -> str:
+
+def run_create_task(
+    subject: str, description: str = "", blockedBy: list[str] | None = None
+) -> str:
     task = create_task(subject, description, blockedBy)
     deps = f" (blockedBy: {', '.join(blockedBy)})" if blockedBy else ""
     print(f"  \033[34m[create] {task.subject}{deps}\033[0m")
@@ -234,12 +256,10 @@ def run_list_tasks() -> str:
         return "No tasks. Use create_task to add some."
     lines = []
     for t in tasks:
-        icon = {"pending": "○", "in_progress": "●",
-                "completed": "✓"}.get(t.status, "?")
+        icon = {"pending": "○", "in_progress": "●", "completed": "✓"}.get(t.status, "?")
         deps = f" (blockedBy: {', '.join(t.blockedBy)})" if t.blockedBy else ""
         owner = f" [{t.owner}]" if t.owner else ""
-        lines.append(f"  {icon} {t.id}: {t.subject} "
-                     f"[{t.status}]{owner}{deps}")
+        lines.append(f"  {icon} {t.id}: {t.subject} " f"[{t.status}]{owner}{deps}")
     return "\n".join(lines)
 
 
@@ -271,9 +291,19 @@ def is_slow_operation(tool_name: str, tool_input: dict) -> bool:
     if tool_name != "bash":
         return False
     cmd = tool_input.get("command", "").lower()
-    slow_keywords = ["install", "build", "test", "deploy", "compile",
-                     "docker build", "pip install", "npm install",
-                     "cargo build", "pytest", "make"]
+    slow_keywords = [
+        "install",
+        "build",
+        "test",
+        "deploy",
+        "compile",
+        "docker build",
+        "pip install",
+        "npm install",
+        "cargo build",
+        "pytest",
+        "make",
+    ]
     return any(kw in cmd for kw in slow_keywords)
 
 
@@ -311,8 +341,11 @@ def start_background_task(block) -> str:
 def collect_background_results() -> list[str]:
     """Collect completed background results as task_notification messages."""
     with background_lock:
-        ready_ids = [bid for bid, task in background_tasks.items()
-                     if task["status"] == "completed"]
+        ready_ids = [
+            bid
+            for bid, task in background_tasks.items()
+            if task["status"] == "completed"
+        ]
     notifications = []
     for bg_id in ready_ids:
         with background_lock:
@@ -325,9 +358,12 @@ def collect_background_results() -> list[str]:
             f"  <status>completed</status>\n"
             f"  <command>{task['command']}</command>\n"
             f"  <summary>{summary}</summary>\n"
-            f"</task_notification>")
-        print(f"  \033[32m[background done] {bg_id}: "
-              f"{task['command'][:40]} ({len(output)} chars)\033[0m")
+            f"</task_notification>"
+        )
+        print(
+            f"  \033[32m[background done] {bg_id}: "
+            f"{task['command'][:40]} ({len(output)} chars)\033[0m"
+        )
     return notifications
 
 
@@ -342,23 +378,37 @@ class MessageBus:
     Read is destructive: read_text + unlink (consumes messages).
     Teaching version: no file locking; real CC uses proper-lockfile."""
 
-    def send(self, from_agent: str, to_agent: str, content: str,
-             msg_type: str = "message", metadata: dict = None):
-        msg = {"from": from_agent, "to": to_agent,
-               "content": content, "type": msg_type,
-               "ts": time.time(), "metadata": metadata or {}}
+    def send(
+        self,
+        from_agent: str,
+        to_agent: str,
+        content: str,
+        msg_type: str = "message",
+        metadata: dict = None,
+    ):
+        msg = {
+            "from": from_agent,
+            "to": to_agent,
+            "content": content,
+            "type": msg_type,
+            "ts": time.time(),
+            "metadata": metadata or {},
+        }
         inbox = MAILBOX_DIR / f"{to_agent}.jsonl"
         with open(inbox, "a") as f:
             f.write(json.dumps(msg) + "\n")
-        print(f"  \033[33m[bus] {from_agent} → {to_agent}: "
-              f"({msg_type}) {content[:50]}\033[0m")
+        print(
+            f"  \033[33m[bus] {from_agent} → {to_agent}: "
+            f"({msg_type}) {content[:50]}\033[0m"
+        )
 
     def read_inbox(self, agent: str) -> list[dict]:
         inbox = MAILBOX_DIR / f"{agent}.jsonl"
         if not inbox.exists():
             return []
-        msgs = [json.loads(line) for line in inbox.read_text().splitlines()
-                if line.strip()]
+        msgs = [
+            json.loads(line) for line in inbox.read_text().splitlines() if line.strip()
+        ]
         inbox.unlink()  # consume: read + delete
         return msgs
 
@@ -368,14 +418,15 @@ active_teammates: dict[str, bool] = {}
 
 # ── Protocol State (s16 new) ──
 
+
 @dataclass
 class ProtocolState:
     request_id: str
-    type: str       # "shutdown" | "plan_approval"
+    type: str  # "shutdown" | "plan_approval"
     sender: str
     target: str
-    status: str     # pending | approved | rejected
-    payload: str    # plan text or shutdown reason
+    status: str  # pending | approved | rejected
+    payload: str  # plan text or shutdown reason
     created_at: float = field(default_factory=time.time)
 
 
@@ -395,27 +446,36 @@ def match_response(response_type: str, request_id: str, approve: bool):
         return
     # Validate response type matches request type
     if state.type == "shutdown" and response_type != "shutdown_response":
-        print(f"  \033[31m[protocol] type mismatch: expected shutdown_response, "
-              f"got {response_type}\033[0m")
+        print(
+            f"  \033[31m[protocol] type mismatch: expected shutdown_response, "
+            f"got {response_type}\033[0m"
+        )
         return
     if state.type == "plan_approval" and response_type != "plan_approval_response":
-        print(f"  \033[31m[protocol] type mismatch: expected plan_approval_response, "
-              f"got {response_type}\033[0m")
+        print(
+            f"  \033[31m[protocol] type mismatch: expected plan_approval_response, "
+            f"got {response_type}\033[0m"
+        )
         return
     if state.status != "pending":
-        print(f"  \033[33m[protocol] {request_id} already {state.status}, "
-              f"ignoring duplicate\033[0m")
+        print(
+            f"  \033[33m[protocol] {request_id} already {state.status}, "
+            f"ignoring duplicate\033[0m"
+        )
         return
     state.status = "approved" if approve else "rejected"
     icon = "✓" if approve else "✗"
     color = "32" if approve else "31"
-    print(f"  \033[{color}m[protocol] {state.type} {icon} "
-          f"({request_id}: {state.status})\033[0m")
+    print(
+        f"  \033[{color}m[protocol] {state.type} {icon} "
+        f"({request_id}: {state.status})\033[0m"
+    )
 
 
 # ── Unified Lead Inbox Consumer (s16 fix) ──
 # Both check_inbox tool and main loop call this function.
 # Protocol responses are routed via match_response before returning.
+
 
 def consume_lead_inbox(route_protocol: bool = True) -> list[dict]:
     """Read Lead's inbox. Route protocol responses, return all messages.
@@ -437,6 +497,7 @@ def consume_lead_inbox(route_protocol: bool = True) -> list[dict]:
 
 # ── Teammate Thread (s16: idle loop + dispatch) ──
 
+
 def spawn_teammate_thread(name: str, role: str, prompt: str) -> str:
     """Spawn a teammate agent in a background thread.
     Uses idle loop: after each LLM turn, waits for inbox messages
@@ -444,9 +505,11 @@ def spawn_teammate_thread(name: str, role: str, prompt: str) -> str:
     if name in active_teammates:
         return f"Teammate '{name}' already exists"
 
-    system = (f"You are '{name}', a {role}. "
-              f"Use tools to complete tasks. "
-              f"Check inbox for protocol messages (shutdown_request, etc).")
+    system = (
+        f"You are '{name}', a {role}. "
+        f"Use tools to complete tasks. "
+        f"Check inbox for protocol messages (shutdown_request, etc)."
+    )
 
     def handle_inbox_message(name: str, msg: dict, messages: list) -> bool:
         """Dispatch incoming protocol messages by type.
@@ -456,56 +519,99 @@ def spawn_teammate_thread(name: str, role: str, prompt: str) -> str:
         req_id = meta.get("request_id", "")
 
         if msg_type == "shutdown_request":
-            BUS.send(name, "lead", "Shutting down gracefully.",
-                     "shutdown_response",
-                     {"request_id": req_id, "approve": True})
-            print(f"  \033[35m[protocol] {name} approved shutdown "
-                  f"({req_id})\033[0m")
+            BUS.send(
+                name,
+                "lead",
+                "Shutting down gracefully.",
+                "shutdown_response",
+                {"request_id": req_id, "approve": True},
+            )
+            print(
+                f"  \033[35m[protocol] {name} approved shutdown " f"({req_id})\033[0m"
+            )
             return True  # stop the loop
 
         if msg_type == "plan_approval_response":
             approve = meta.get("approve", False)
             if approve:
-                messages.append({"role": "user",
-                    "content": f"[Plan approved] Proceed with the task."})
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": f"[Plan approved] Proceed with the task.",
+                    }
+                )
             else:
-                messages.append({"role": "user",
-                    "content": f"[Plan rejected] Feedback: {msg['content']}"})
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": f"[Plan rejected] Feedback: {msg['content']}",
+                    }
+                )
 
         return False  # continue
 
     def run():
         messages = [{"role": "user", "content": prompt}]
         sub_tools = [
-            {"name": "bash", "description": "Run a shell command.",
-             "input_schema": {"type": "object",
-                              "properties": {"command": {"type": "string"}},
-                              "required": ["command"]}},
-            {"name": "read_file", "description": "Read file.",
-             "input_schema": {"type": "object",
-                              "properties": {"path": {"type": "string"}},
-                              "required": ["path"]}},
-            {"name": "write_file", "description": "Write file.",
-             "input_schema": {"type": "object",
-                              "properties": {"path": {"type": "string"},
-                                             "content": {"type": "string"}},
-                              "required": ["path", "content"]}},
-            {"name": "send_message",
-             "description": "Send message to another agent.",
-             "input_schema": {"type": "object",
-                              "properties": {"to": {"type": "string"},
-                                             "content": {"type": "string"}},
-                              "required": ["to", "content"]}},
-            {"name": "submit_plan",
-             "description": "Submit a plan for Lead approval.",
-             "input_schema": {"type": "object",
-                              "properties": {"plan": {"type": "string"}},
-                              "required": ["plan"]}},
+            {
+                "name": "bash",
+                "description": "Run a shell command.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {"command": {"type": "string"}},
+                    "required": ["command"],
+                },
+            },
+            {
+                "name": "read_file",
+                "description": "Read file.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {"path": {"type": "string"}},
+                    "required": ["path"],
+                },
+            },
+            {
+                "name": "write_file",
+                "description": "Write file.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "path": {"type": "string"},
+                        "content": {"type": "string"},
+                    },
+                    "required": ["path", "content"],
+                },
+            },
+            {
+                "name": "send_message",
+                "description": "Send message to another agent.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "to": {"type": "string"},
+                        "content": {"type": "string"},
+                    },
+                    "required": ["to", "content"],
+                },
+            },
+            {
+                "name": "submit_plan",
+                "description": "Submit a plan for Lead approval.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {"plan": {"type": "string"}},
+                    "required": ["plan"],
+                },
+            },
         ]
         sub_handlers = {
-            "bash": run_bash, "read_file": run_read, "write_file": run_write,
-            "send_message": lambda to, content: (BUS.send(name, to, content),
-                                                  "Sent")[1],
+            "bash": run_bash,
+            "read_file": run_read,
+            "write_file": run_write,
+            "send_message": lambda to, content: (BUS.send(name, to, content), "Sent")[
+                1
+            ],
             "submit_plan": lambda plan: _teammate_submit_plan(name, plan),
         }
 
@@ -527,14 +633,19 @@ def spawn_teammate_thread(name: str, role: str, prompt: str) -> str:
                 break
             if non_protocol:
                 inbox_json = json.dumps(non_protocol)
-                messages.append({"role": "user",
-                    "content": "<inbox>" + inbox_json + "</inbox>"})
+                messages.append(
+                    {"role": "user", "content": "<inbox>" + inbox_json + "</inbox>"}
+                )
 
             # LLM turn
             try:
                 response = client.messages.create(
-                    model=MODEL, system=system, messages=messages[-20:],
-                    tools=sub_tools, max_tokens=8000)
+                    model=MODEL,
+                    system=system,
+                    messages=messages[-20:],
+                    tools=sub_tools,
+                    max_tokens=8000,
+                )
             except Exception:
                 break
 
@@ -548,7 +659,10 @@ def spawn_teammate_thread(name: str, role: str, prompt: str) -> str:
                     if not inbox:
                         continue
                     for msg in inbox:
-                        if msg.get("type") in ("shutdown_request", "plan_approval_response"):
+                        if msg.get("type") in (
+                            "shutdown_request",
+                            "plan_approval_response",
+                        ):
                             should_stop = handle_inbox_message(name, msg, messages)
                             if should_stop:
                                 shutdown_requested = True
@@ -559,8 +673,12 @@ def spawn_teammate_thread(name: str, role: str, prompt: str) -> str:
                         break
                     if non_protocol:
                         inbox_json = json.dumps(non_protocol)
-                        messages.append({"role": "user",
-                            "content": "<inbox>" + inbox_json + "</inbox>"})
+                        messages.append(
+                            {
+                                "role": "user",
+                                "content": "<inbox>" + inbox_json + "</inbox>",
+                            }
+                        )
                         break  # back to LLM turn with new messages
 
             # Execute tool calls
@@ -569,9 +687,13 @@ def spawn_teammate_thread(name: str, role: str, prompt: str) -> str:
                 if block.type == "tool_use":
                     handler = sub_handlers.get(block.name)
                     output = handler(**block.input) if handler else "Unknown"
-                    results.append({"type": "tool_result",
-                                    "tool_use_id": block.id,
-                                    "content": str(output)})
+                    results.append(
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": block.id,
+                            "content": str(output),
+                        }
+                    )
             messages.append({"role": "user", "content": results})
 
         # Send final summary to Lead
@@ -607,35 +729,44 @@ def _teammate_submit_plan(from_name: str, plan: str) -> str:
     """
     req_id = new_request_id()
     pending_requests[req_id] = ProtocolState(
-        request_id=req_id, type="plan_approval",
-        sender=from_name, target="lead",
-        status="pending", payload=plan)
-    BUS.send(from_name, "lead", plan,
-             "plan_approval_request",
-             {"request_id": req_id})
+        request_id=req_id,
+        type="plan_approval",
+        sender=from_name,
+        target="lead",
+        status="pending",
+        payload=plan,
+    )
+    BUS.send(from_name, "lead", plan, "plan_approval_request", {"request_id": req_id})
     return f"Plan submitted ({req_id}). Waiting for approval..."
 
 
 # ── Lead Protocol Tools (s16 new) ──
 
+
 def run_request_shutdown(teammate: str) -> str:
     req_id = new_request_id()
     pending_requests[req_id] = ProtocolState(
-        request_id=req_id, type="shutdown",
-        sender="lead", target=teammate,
-        status="pending", payload="")
-    BUS.send("lead", teammate, "Please shut down gracefully.",
-             "shutdown_request",
-             {"request_id": req_id})
-    print(f"  \033[35m[protocol] shutdown_request → {teammate} "
-          f"({req_id})\033[0m")
+        request_id=req_id,
+        type="shutdown",
+        sender="lead",
+        target=teammate,
+        status="pending",
+        payload="",
+    )
+    BUS.send(
+        "lead",
+        teammate,
+        "Please shut down gracefully.",
+        "shutdown_request",
+        {"request_id": req_id},
+    )
+    print(f"  \033[35m[protocol] shutdown_request → {teammate} " f"({req_id})\033[0m")
     return f"Shutdown request sent to {teammate} (req: {req_id})"
 
 
 def run_request_plan(teammate: str, task: str) -> str:
     """Lead asks a teammate to submit a plan for a task."""
-    BUS.send("lead", teammate, f"Please submit a plan for: {task}",
-             "message")
+    BUS.send("lead", teammate, f"Please submit a plan for: {task}", "message")
     return f"Asked {teammate} to submit a plan"
 
 
@@ -646,15 +777,20 @@ def run_review_plan(request_id: str, approve: bool, feedback: str = "") -> str:
     if state.status != "pending":
         return f"Request {request_id} already {state.status}"
     state.status = "approved" if approve else "rejected"
-    BUS.send("lead", state.sender, feedback or ("Approved" if approve else "Rejected"),
-             "plan_approval_response",
-             {"request_id": request_id, "approve": approve})
+    BUS.send(
+        "lead",
+        state.sender,
+        feedback or ("Approved" if approve else "Rejected"),
+        "plan_approval_response",
+        {"request_id": request_id, "approve": approve},
+    )
     icon = "✓" if approve else "✗"
     print(f"  \033[32m[protocol] plan {icon} ({request_id})\033[0m")
     return f"Plan {'approved' if approve else 'rejected'} ({request_id})"
 
 
 # ── Other Lead Tool Handlers ──
+
 
 def run_spawn_teammate(name: str, role: str, prompt: str) -> str:
     return spawn_teammate_thread(name, role, prompt)
@@ -681,17 +817,24 @@ def run_check_inbox() -> str:
 
 # ── Tool Dispatch ──
 
+
 def execute_tool(block) -> str:
     """Execute a tool call block, return output."""
     handler = {
-        "bash": run_bash, "read_file": run_read, "write_file": run_write,
-        "create_task": run_create_task, "list_tasks": run_list_tasks,
-        "get_task": run_get_task, "claim_task": run_claim_task,
+        "bash": run_bash,
+        "read_file": run_read,
+        "write_file": run_write,
+        "create_task": run_create_task,
+        "list_tasks": run_list_tasks,
+        "get_task": run_get_task,
+        "claim_task": run_claim_task,
         "complete_task": run_complete_task,
         "spawn_teammate": run_spawn_teammate,
-        "send_message": run_send_message, "check_inbox": run_check_inbox,
+        "send_message": run_send_message,
+        "check_inbox": run_check_inbox,
         "request_shutdown": run_request_shutdown,
-        "request_plan": run_request_plan, "review_plan": run_review_plan,
+        "request_plan": run_request_plan,
+        "review_plan": run_review_plan,
     }.get(block.name)
     if handler:
         return handler(**block.input)
@@ -701,91 +844,144 @@ def execute_tool(block) -> str:
 # ── Tool Definitions ──
 
 TOOLS = [
-    {"name": "bash", "description": "Run a shell command.",
-     "input_schema": {"type": "object",
-                      "properties": {
-                          "command": {"type": "string"},
-                          "run_in_background": {"type": "boolean"}},
-                      "required": ["command"]}},
-    {"name": "read_file", "description": "Read file contents.",
-     "input_schema": {"type": "object",
-                      "properties": {"path": {"type": "string"},
-                                     "limit": {"type": "integer"}},
-                      "required": ["path"]}},
-    {"name": "write_file", "description": "Write content to a file.",
-     "input_schema": {"type": "object",
-                      "properties": {"path": {"type": "string"},
-                                     "content": {"type": "string"}},
-                      "required": ["path", "content"]}},
-    {"name": "create_task",
-     "description": "Create a new task with optional blockedBy dependencies.",
-     "input_schema": {"type": "object",
-                      "properties": {
-                          "subject": {"type": "string"},
-                          "description": {"type": "string"},
-                          "blockedBy": {"type": "array",
-                                        "items": {"type": "string"}}},
-                      "required": ["subject"]}},
-    {"name": "list_tasks",
-     "description": "List all tasks with status, owner, and dependencies.",
-     "input_schema": {"type": "object", "properties": {},
-                      "required": []}},
-    {"name": "get_task",
-     "description": "Get full details of a specific task by ID.",
-     "input_schema": {"type": "object",
-                      "properties": {"task_id": {"type": "string"}},
-                      "required": ["task_id"]}},
-    {"name": "claim_task",
-     "description": "Claim a pending task. Sets owner, changes status to in_progress.",
-     "input_schema": {"type": "object",
-                      "properties": {"task_id": {"type": "string"}},
-                      "required": ["task_id"]}},
-    {"name": "complete_task",
-     "description": "Complete an in-progress task. Reports unblocked downstream tasks.",
-     "input_schema": {"type": "object",
-                      "properties": {"task_id": {"type": "string"}},
-                      "required": ["task_id"]}},
-    {"name": "spawn_teammate",
-     "description": "Spawn a teammate agent in a background thread.",
-     "input_schema": {"type": "object",
-                      "properties": {
-                          "name": {"type": "string"},
-                          "role": {"type": "string"},
-                          "prompt": {"type": "string"}},
-                      "required": ["name", "role", "prompt"]}},
-    {"name": "send_message",
-     "description": "Send message to a teammate via MessageBus.",
-     "input_schema": {"type": "object",
-                      "properties": {"to": {"type": "string"},
-                                     "content": {"type": "string"}},
-                      "required": ["to", "content"]}},
-    {"name": "check_inbox",
-     "description": "Check Lead's inbox. Routes protocol responses automatically.",
-     "input_schema": {"type": "object", "properties": {},
-                      "required": []}},
-    {"name": "request_shutdown",
-     "description": "Request a teammate to shut down gracefully.",
-     "input_schema": {"type": "object",
-                      "properties": {"teammate": {"type": "string"}},
-                      "required": ["teammate"]}},
-    {"name": "request_plan",
-     "description": "Ask a teammate to submit a plan for review.",
-     "input_schema": {"type": "object",
-                      "properties": {"teammate": {"type": "string"},
-                                     "task": {"type": "string"}},
-                      "required": ["teammate", "task"]}},
-    {"name": "review_plan",
-     "description": "Approve or reject a submitted plan by request_id.",
-     "input_schema": {"type": "object",
-                      "properties": {
-                          "request_id": {"type": "string"},
-                          "approve": {"type": "boolean"},
-                          "feedback": {"type": "string"}},
-                      "required": ["request_id", "approve"]}},
+    {
+        "name": "bash",
+        "description": "Run a shell command.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "command": {"type": "string"},
+                "run_in_background": {"type": "boolean"},
+            },
+            "required": ["command"],
+        },
+    },
+    {
+        "name": "read_file",
+        "description": "Read file contents.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"path": {"type": "string"}, "limit": {"type": "integer"}},
+            "required": ["path"],
+        },
+    },
+    {
+        "name": "write_file",
+        "description": "Write content to a file.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"path": {"type": "string"}, "content": {"type": "string"}},
+            "required": ["path", "content"],
+        },
+    },
+    {
+        "name": "create_task",
+        "description": "Create a new task with optional blockedBy dependencies.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "subject": {"type": "string"},
+                "description": {"type": "string"},
+                "blockedBy": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["subject"],
+        },
+    },
+    {
+        "name": "list_tasks",
+        "description": "List all tasks with status, owner, and dependencies.",
+        "input_schema": {"type": "object", "properties": {}, "required": []},
+    },
+    {
+        "name": "get_task",
+        "description": "Get full details of a specific task by ID.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"task_id": {"type": "string"}},
+            "required": ["task_id"],
+        },
+    },
+    {
+        "name": "claim_task",
+        "description": "Claim a pending task. Sets owner, changes status to in_progress.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"task_id": {"type": "string"}},
+            "required": ["task_id"],
+        },
+    },
+    {
+        "name": "complete_task",
+        "description": "Complete an in-progress task. Reports unblocked downstream tasks.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"task_id": {"type": "string"}},
+            "required": ["task_id"],
+        },
+    },
+    {
+        "name": "spawn_teammate",
+        "description": "Spawn a teammate agent in a background thread.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "role": {"type": "string"},
+                "prompt": {"type": "string"},
+            },
+            "required": ["name", "role", "prompt"],
+        },
+    },
+    {
+        "name": "send_message",
+        "description": "Send message to a teammate via MessageBus.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"to": {"type": "string"}, "content": {"type": "string"}},
+            "required": ["to", "content"],
+        },
+    },
+    {
+        "name": "check_inbox",
+        "description": "Check Lead's inbox. Routes protocol responses automatically.",
+        "input_schema": {"type": "object", "properties": {}, "required": []},
+    },
+    {
+        "name": "request_shutdown",
+        "description": "Request a teammate to shut down gracefully.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"teammate": {"type": "string"}},
+            "required": ["teammate"],
+        },
+    },
+    {
+        "name": "request_plan",
+        "description": "Ask a teammate to submit a plan for review.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"teammate": {"type": "string"}, "task": {"type": "string"}},
+            "required": ["teammate", "task"],
+        },
+    },
+    {
+        "name": "review_plan",
+        "description": "Approve or reject a submitted plan by request_id.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "request_id": {"type": "string"},
+                "approve": {"type": "boolean"},
+                "feedback": {"type": "string"},
+            },
+            "required": ["request_id", "approve"],
+        },
+    },
 ]
 
 
 # ── Context ──
+
 
 def update_context(context: dict, messages: list) -> dict:
     """Derive context from real state."""
@@ -803,17 +999,27 @@ def update_context(context: dict, messages: list) -> dict:
 
 # ── Agent Loop ──
 
+
 def agent_loop(messages: list, context: dict):
     system = get_system_prompt(context)
     while True:
         try:
             response = client.messages.create(
-                model=MODEL, system=system, messages=messages,
-                tools=TOOLS, max_tokens=8000)
+                model=MODEL,
+                system=system,
+                messages=messages,
+                tools=TOOLS,
+                max_tokens=8000,
+            )
         except Exception as e:
-            messages.append({"role": "assistant", "content": [
-                {"type": "text",
-                 "text": f"[Error] {type(e).__name__}: {e}"}]})
+            messages.append(
+                {
+                    "role": "assistant",
+                    "content": [
+                        {"type": "text", "text": f"[Error] {type(e).__name__}: {e}"}
+                    ],
+                }
+            )
             return
 
         messages.append({"role": "assistant", "content": response.content})
@@ -828,16 +1034,20 @@ def agent_loop(messages: list, context: dict):
 
             if should_run_background(block.name, block.input):
                 bg_id = start_background_task(block)
-                results.append({"type": "tool_result",
-                                "tool_use_id": block.id,
-                                "content": f"[Background task {bg_id} started] "
-                                           f"Result will be available when complete."})
+                results.append(
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": block.id,
+                        "content": f"[Background task {bg_id} started] "
+                        f"Result will be available when complete.",
+                    }
+                )
             else:
                 output = execute_tool(block)
                 print(str(output)[:300])
-                results.append({"type": "tool_result",
-                                "tool_use_id": block.id,
-                                "content": output})
+                results.append(
+                    {"type": "tool_result", "tool_use_id": block.id, "content": output}
+                )
 
         # Merge background tool results + notifications into one user message
         user_content = list(results)
@@ -873,8 +1083,8 @@ if __name__ == "__main__":
         inbox_msgs = consume_lead_inbox(route_protocol=True)
         if inbox_msgs:
             inbox_text = "\n".join(
-                f"From {m['from']}: {m['content'][:200]}" for m in inbox_msgs)
-            history.append({"role": "user",
-                            "content": f"[Inbox]\n{inbox_text}"})
+                f"From {m['from']}: {m['content'][:200]}" for m in inbox_msgs
+            )
+            history.append({"role": "user", "content": f"[Inbox]\n{inbox_text}"})
             print(f"\n\033[33m[Inbox: {len(inbox_msgs)} messages injected]\033[0m")
         print()

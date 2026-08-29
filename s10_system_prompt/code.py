@@ -19,7 +19,8 @@ from pathlib import Path
 
 try:
     import readline
-    readline.parse_and_bind('set bind-tty-special-chars off')
+
+    readline.parse_and_bind("set bind-tty-special-chars off")
 except ImportError:
     pass
 
@@ -94,6 +95,7 @@ def get_system_prompt(context: dict) -> str:
 
 # ── Tools ──
 
+
 def safe_path(p: str) -> Path:
     path = (WORKDIR / p).resolve()
     if not path.is_relative_to(WORKDIR):
@@ -103,8 +105,14 @@ def safe_path(p: str) -> Path:
 
 def run_bash(command: str) -> str:
     try:
-        r = subprocess.run(command, shell=True, cwd=WORKDIR,
-                           capture_output=True, text=True, timeout=120)
+        r = subprocess.run(
+            command,
+            shell=True,
+            cwd=WORKDIR,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
         out = (r.stdout + r.stderr).strip()
         return out[:50000] if out else "(no output)"
     except subprocess.TimeoutExpired:
@@ -132,26 +140,40 @@ def run_write(path: str, content: str) -> str:
 
 
 TOOLS = [
-    {"name": "bash", "description": "Run a shell command.",
-     "input_schema": {"type": "object",
-                      "properties": {"command": {"type": "string"}},
-                      "required": ["command"]}},
-    {"name": "read_file", "description": "Read file contents.",
-     "input_schema": {"type": "object",
-                      "properties": {"path": {"type": "string"},
-                                     "limit": {"type": "integer"}},
-                      "required": ["path"]}},
-    {"name": "write_file", "description": "Write content to a file.",
-     "input_schema": {"type": "object",
-                      "properties": {"path": {"type": "string"},
-                                     "content": {"type": "string"}},
-                      "required": ["path", "content"]}},
+    {
+        "name": "bash",
+        "description": "Run a shell command.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"command": {"type": "string"}},
+            "required": ["command"],
+        },
+    },
+    {
+        "name": "read_file",
+        "description": "Read file contents.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"path": {"type": "string"}, "limit": {"type": "integer"}},
+            "required": ["path"],
+        },
+    },
+    {
+        "name": "write_file",
+        "description": "Write content to a file.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"path": {"type": "string"}, "content": {"type": "string"}},
+            "required": ["path", "content"],
+        },
+    },
 ]
 
 TOOL_HANDLERS = {"bash": run_bash, "read_file": run_read, "write_file": run_write}
 
 
 # ── Context ──
+
 
 def update_context(context: dict, messages: list) -> dict:
     """Derive context from real state: which tools exist, whether memory files exist."""
@@ -169,13 +191,14 @@ def update_context(context: dict, messages: list) -> dict:
 
 # ── Agent Loop ──
 
+
 def agent_loop(messages: list, context: dict):
     """Main loop — uses assembled system prompt instead of hardcoded SYSTEM."""
     system = get_system_prompt(context)
     while True:
         response = client.messages.create(
-            model=MODEL, system=system, messages=messages,
-            tools=TOOLS, max_tokens=8000)
+            model=MODEL, system=system, messages=messages, tools=TOOLS, max_tokens=8000
+        )
         messages.append({"role": "assistant", "content": response.content})
         if response.stop_reason != "tool_use":
             return
@@ -188,8 +211,9 @@ def agent_loop(messages: list, context: dict):
             handler = TOOL_HANDLERS.get(block.name)
             output = handler(**block.input) if handler else f"Unknown: {block.name}"
             print(str(output)[:200])
-            results.append({"type": "tool_result",
-                            "tool_use_id": block.id, "content": output})
+            results.append(
+                {"type": "tool_result", "tool_use_id": block.id, "content": output}
+            )
         messages.append({"role": "user", "content": results})
 
         # Re-evaluate context and prompt after each tool round

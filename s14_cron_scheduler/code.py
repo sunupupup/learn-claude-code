@@ -29,7 +29,8 @@ from dataclasses import dataclass, asdict
 
 try:
     import readline
-    readline.parse_and_bind('set bind-tty-special-chars off')
+
+    readline.parse_and_bind("set bind-tty-special-chars off")
 except ImportError:
     pass
 
@@ -57,7 +58,7 @@ class Task:
     id: str
     subject: str
     description: str
-    status: str          # pending | in_progress | completed
+    status: str  # pending | in_progress | completed
     owner: str | None
     blockedBy: list[str]
 
@@ -66,12 +67,15 @@ def _task_path(task_id: str) -> Path:
     return TASKS_DIR / f"{task_id}.json"
 
 
-def create_task(subject: str, description: str = "",
-                blockedBy: list[str] | None = None) -> Task:
+def create_task(
+    subject: str, description: str = "", blockedBy: list[str] | None = None
+) -> Task:
     task = Task(
         id=f"task_{int(time.time())}_{random.randint(0, 9999):04d}",
-        subject=subject, description=description,
-        status="pending", owner=None,
+        subject=subject,
+        description=description,
+        status="pending",
+        owner=None,
         blockedBy=blockedBy or [],
     )
     save_task(task)
@@ -87,8 +91,9 @@ def load_task(task_id: str) -> Task:
 
 
 def list_tasks() -> list[Task]:
-    return [Task(**json.loads(p.read_text()))
-            for p in sorted(TASKS_DIR.glob("task_*.json"))]
+    return [
+        Task(**json.loads(p.read_text())) for p in sorted(TASKS_DIR.glob("task_*.json"))
+    ]
 
 
 def get_task(task_id: str) -> str:
@@ -114,8 +119,11 @@ def claim_task(task_id: str, owner: str = "agent") -> str:
     if task.status != "pending":
         return f"Task {task_id} is {task.status}, cannot claim"
     if not can_start(task_id):
-        deps = [d for d in task.blockedBy
-                if not _task_path(d).exists() or load_task(d).status != "completed"]
+        deps = [
+            d
+            for d in task.blockedBy
+            if not _task_path(d).exists() or load_task(d).status != "completed"
+        ]
         return f"Blocked by: {deps}"
     task.owner = owner
     task.status = "in_progress"
@@ -130,8 +138,11 @@ def complete_task(task_id: str) -> str:
         return f"Task {task_id} is {task.status}, cannot complete"
     task.status = "completed"
     save_task(task)
-    unblocked = [t.subject for t in list_tasks()
-                 if t.status == "pending" and t.blockedBy and can_start(t.id)]
+    unblocked = [
+        t.subject
+        for t in list_tasks()
+        if t.status == "pending" and t.blockedBy and can_start(t.id)
+    ]
     print(f"  \033[32m[complete] {task.subject} ✓\033[0m")
     msg = f"Completed {task.id} ({task.subject})"
     if unblocked:
@@ -145,17 +156,19 @@ def complete_task(task_id: str) -> str:
 PROMPT_SECTIONS = {
     "identity": "You are a coding agent. Act, don't explain.",
     "tools": "Available tools: bash, read_file, write_file, "
-             "create_task, list_tasks, get_task, claim_task, complete_task, "
-             "schedule_cron, list_crons, cancel_cron.",
+    "create_task, list_tasks, get_task, claim_task, complete_task, "
+    "schedule_cron, list_crons, cancel_cron.",
     "workspace": f"Working directory: {WORKDIR}",
     "memory": "Relevant memories are injected below when available.",
 }
 
 
 def assemble_system_prompt(context: dict) -> str:
-    sections = [PROMPT_SECTIONS["identity"],
-                PROMPT_SECTIONS["tools"],
-                PROMPT_SECTIONS["workspace"]]
+    sections = [
+        PROMPT_SECTIONS["identity"],
+        PROMPT_SECTIONS["tools"],
+        PROMPT_SECTIONS["workspace"],
+    ]
     memories = context.get("memories", "")
     if memories:
         sections.append(f"Relevant memories:\n{memories}")
@@ -177,6 +190,7 @@ def get_system_prompt(context: dict) -> str:
 
 # ── Tools ──
 
+
 def safe_path(p: str) -> Path:
     path = (WORKDIR / p).resolve()
     if not path.is_relative_to(WORKDIR):
@@ -187,8 +201,14 @@ def safe_path(p: str) -> Path:
 def run_bash(command: str, run_in_background: bool = False) -> str:
     # run_in_background is handled by agent_loop dispatch, not here
     try:
-        r = subprocess.run(command, shell=True, cwd=WORKDIR,
-                           capture_output=True, text=True, timeout=120)
+        r = subprocess.run(
+            command,
+            shell=True,
+            cwd=WORKDIR,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
         out = (r.stdout + r.stderr).strip()
         return out[:50000] if out else "(no output)"
     except subprocess.TimeoutExpired:
@@ -217,8 +237,10 @@ def run_write(path: str, content: str) -> str:
 
 # Task tools
 
-def run_create_task(subject: str, description: str = "",
-                    blockedBy: list[str] | None = None) -> str:
+
+def run_create_task(
+    subject: str, description: str = "", blockedBy: list[str] | None = None
+) -> str:
     task = create_task(subject, description, blockedBy)
     deps = f" (blockedBy: {', '.join(blockedBy)})" if blockedBy else ""
     print(f"  \033[34m[create] {task.subject}{deps}\033[0m")
@@ -231,12 +253,10 @@ def run_list_tasks() -> str:
         return "No tasks. Use create_task to add some."
     lines = []
     for t in tasks:
-        icon = {"pending": "○", "in_progress": "●",
-                "completed": "✓"}.get(t.status, "?")
+        icon = {"pending": "○", "in_progress": "●", "completed": "✓"}.get(t.status, "?")
         deps = f" (blockedBy: {', '.join(t.blockedBy)})" if t.blockedBy else ""
         owner = f" [{t.owner}]" if t.owner else ""
-        lines.append(f"  {icon} {t.id}: {t.subject} "
-                     f"[{t.status}]{owner}{deps}")
+        lines.append(f"  {icon} {t.id}: {t.subject} " f"[{t.status}]{owner}{deps}")
     return "\n".join(lines)
 
 
@@ -268,9 +288,19 @@ def is_slow_operation(tool_name: str, tool_input: dict) -> bool:
     if tool_name != "bash":
         return False
     cmd = tool_input.get("command", "").lower()
-    slow_keywords = ["install", "build", "test", "deploy", "compile",
-                     "docker build", "pip install", "npm install",
-                     "cargo build", "pytest", "make"]
+    slow_keywords = [
+        "install",
+        "build",
+        "test",
+        "deploy",
+        "compile",
+        "docker build",
+        "pip install",
+        "npm install",
+        "cargo build",
+        "pytest",
+        "make",
+    ]
     return any(kw in cmd for kw in slow_keywords)
 
 
@@ -284,11 +314,16 @@ def should_run_background(tool_name: str, tool_input: dict) -> bool:
 def execute_tool(block) -> str:
     """Execute a tool call block, return output."""
     handler = {
-        "bash": run_bash, "read_file": run_read, "write_file": run_write,
-        "create_task": run_create_task, "list_tasks": run_list_tasks,
-        "get_task": run_get_task, "claim_task": run_claim_task,
+        "bash": run_bash,
+        "read_file": run_read,
+        "write_file": run_write,
+        "create_task": run_create_task,
+        "list_tasks": run_list_tasks,
+        "get_task": run_get_task,
+        "claim_task": run_claim_task,
         "complete_task": run_complete_task,
-        "schedule_cron": run_schedule_cron, "list_crons": run_list_crons,
+        "schedule_cron": run_schedule_cron,
+        "list_crons": run_list_crons,
         "cancel_cron": run_cancel_cron,
     }.get(block.name)
     if handler:
@@ -323,8 +358,11 @@ def start_background_task(block) -> str:
 def collect_background_results() -> list[str]:
     """Collect completed background results as task_notification messages."""
     with background_lock:
-        ready_ids = [bid for bid, task in background_tasks.items()
-                     if task["status"] == "completed"]
+        ready_ids = [
+            bid
+            for bid, task in background_tasks.items()
+            if task["status"] == "completed"
+        ]
     notifications = []
     for bg_id in ready_ids:
         with background_lock:
@@ -337,9 +375,12 @@ def collect_background_results() -> list[str]:
             f"  <status>completed</status>\n"
             f"  <command>{task['command']}</command>\n"
             f"  <summary>{summary}</summary>\n"
-            f"</task_notification>")
-        print(f"  \033[32m[background done] {bg_id}: "
-              f"{task['command'][:40]} ({len(output)} chars)\033[0m")
+            f"</task_notification>"
+        )
+        print(
+            f"  \033[32m[background done] {bg_id}: "
+            f"{task['command'][:40]} ({len(output)} chars)\033[0m"
+        )
     return notifications
 
 
@@ -351,10 +392,10 @@ DURABLE_PATH = WORKDIR / ".scheduled_tasks.json"
 @dataclass
 class CronJob:
     id: str
-    cron: str        # "0 9 * * *"
-    prompt: str      # message to inject when fired
+    cron: str  # "0 9 * * *"
+    prompt: str  # message to inject when fired
     recurring: bool  # True = recurring, False = one-shot
-    durable: bool    # True = persist to disk
+    durable: bool  # True = persist to disk
 
 
 scheduled_jobs: dict[str, CronJob] = {}
@@ -372,8 +413,7 @@ def _cron_field_matches(field: str, value: int) -> bool:
         step = int(field[2:])
         return step > 0 and value % step == 0
     if "," in field:
-        return any(_cron_field_matches(f.strip(), value)
-                   for f in field.split(","))
+        return any(_cron_field_matches(f.strip(), value) for f in field.split(","))
     if "-" in field:
         lo, hi = field.split("-", 1)
         return int(lo) <= value <= int(hi)
@@ -425,7 +465,8 @@ def _validate_cron_field(field: str, lo: int, hi: int) -> str | None:
     if "," in field:
         for part in field.split(","):
             err = _validate_cron_field(part.strip(), lo, hi)
-            if err: return err
+            if err:
+                return err
         return None
     if "-" in field:
         parts = field.split("-", 1)
@@ -485,16 +526,19 @@ def load_durable_jobs():
         pass
 
 
-def schedule_job(cron: str, prompt: str, recurring: bool = True,
-                 durable: bool = True) -> CronJob | str:
+def schedule_job(
+    cron: str, prompt: str, recurring: bool = True, durable: bool = True
+) -> CronJob | str:
     """Register a new cron job. Returns CronJob or error string."""
     err = validate_cron(cron)
     if err:
         return err
     job = CronJob(
         id=f"cron_{random.randint(0, 999999):06d}",
-        cron=cron, prompt=prompt,
-        recurring=recurring, durable=durable,
+        cron=cron,
+        prompt=prompt,
+        recurring=recurring,
+        durable=durable,
     )
     with cron_lock:
         scheduled_jobs[job.id] = job
@@ -532,8 +576,10 @@ def cron_scheduler_loop():
                         if _last_fired.get(job.id) != minute_marker:
                             cron_queue.append(job)
                             _last_fired[job.id] = minute_marker
-                            print(f"  \033[35m[cron fire] {job.id} → "
-                                  f"{job.prompt[:40]}\033[0m")
+                            print(
+                                f"  \033[35m[cron fire] {job.id} → "
+                                f"{job.prompt[:40]}\033[0m"
+                            )
                         if not job.recurring:
                             scheduled_jobs.pop(job.id, None)
                             if job.durable:
@@ -564,8 +610,10 @@ print("  \033[35m[cron] scheduler thread started\033[0m")
 
 # ── Cron Tools ──
 
-def run_schedule_cron(cron: str, prompt: str,
-                      recurring: bool = True, durable: bool = True) -> str:
+
+def run_schedule_cron(
+    cron: str, prompt: str, recurring: bool = True, durable: bool = True
+) -> str:
     result = schedule_job(cron, prompt, recurring, durable)
     if isinstance(result, str):
         return f"Error: {result}"
@@ -581,8 +629,7 @@ def run_list_crons() -> str:
     for j in jobs:
         tag = "recurring" if j.recurring else "one-shot"
         dur = "durable" if j.durable else "session"
-        lines.append(f"  {j.id}: '{j.cron}' → {j.prompt[:40]} "
-                     f"[{tag}, {dur}]")
+        lines.append(f"  {j.id}: '{j.cron}' → {j.prompt[:40]} " f"[{tag}, {dur}]")
     return "\n".join(lines)
 
 
@@ -593,76 +640,120 @@ def run_cancel_cron(job_id: str) -> str:
 # ── Tool Definitions ──
 
 TOOLS = [
-    {"name": "bash", "description": "Run a shell command.",
-     "input_schema": {"type": "object",
-                      "properties": {
-                          "command": {"type": "string"},
-                          "run_in_background": {"type": "boolean"}},
-                      "required": ["command"]}},
-    {"name": "read_file", "description": "Read file contents.",
-     "input_schema": {"type": "object",
-                      "properties": {"path": {"type": "string"},
-                                     "limit": {"type": "integer"}},
-                      "required": ["path"]}},
-    {"name": "write_file", "description": "Write content to a file.",
-     "input_schema": {"type": "object",
-                      "properties": {"path": {"type": "string"},
-                                     "content": {"type": "string"}},
-                      "required": ["path", "content"]}},
-    {"name": "create_task",
-     "description": "Create a new task with optional blockedBy dependencies.",
-     "input_schema": {"type": "object",
-                      "properties": {
-                          "subject": {"type": "string"},
-                          "description": {"type": "string"},
-                          "blockedBy": {"type": "array",
-                                        "items": {"type": "string"}}},
-                      "required": ["subject"]}},
-    {"name": "list_tasks",
-     "description": "List all tasks with status, owner, and dependencies.",
-     "input_schema": {"type": "object", "properties": {},
-                      "required": []}},
-    {"name": "get_task",
-     "description": "Get full details of a specific task by ID.",
-     "input_schema": {"type": "object",
-                      "properties": {"task_id": {"type": "string"}},
-                      "required": ["task_id"]}},
-    {"name": "claim_task",
-     "description": "Claim a pending task. Sets owner, changes status to in_progress.",
-     "input_schema": {"type": "object",
-                      "properties": {"task_id": {"type": "string"}},
-                      "required": ["task_id"]}},
-    {"name": "complete_task",
-     "description": "Complete an in-progress task. Reports unblocked downstream tasks.",
-     "input_schema": {"type": "object",
-                      "properties": {"task_id": {"type": "string"}},
-                      "required": ["task_id"]}},
-    {"name": "schedule_cron",
-     "description": "Schedule a cron job. cron is 5-field: min hour dom month dow.",
-     "input_schema": {"type": "object",
-                      "properties": {
-                          "cron": {"type": "string",
-                                   "description": "5-field cron expression"},
-                          "prompt": {"type": "string",
-                                     "description": "Message to inject when fired"},
-                          "recurring": {"type": "boolean",
-                                        "description": "True=recurring, False=one-shot"},
-                          "durable": {"type": "boolean",
-                                      "description": "True=persist to disk"}},
-                      "required": ["cron", "prompt"]}},
-    {"name": "list_crons",
-     "description": "List all registered cron jobs.",
-     "input_schema": {"type": "object", "properties": {},
-                      "required": []}},
-    {"name": "cancel_cron",
-     "description": "Cancel a cron job by ID.",
-     "input_schema": {"type": "object",
-                      "properties": {"job_id": {"type": "string"}},
-                      "required": ["job_id"]}},
+    {
+        "name": "bash",
+        "description": "Run a shell command.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "command": {"type": "string"},
+                "run_in_background": {"type": "boolean"},
+            },
+            "required": ["command"],
+        },
+    },
+    {
+        "name": "read_file",
+        "description": "Read file contents.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"path": {"type": "string"}, "limit": {"type": "integer"}},
+            "required": ["path"],
+        },
+    },
+    {
+        "name": "write_file",
+        "description": "Write content to a file.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"path": {"type": "string"}, "content": {"type": "string"}},
+            "required": ["path", "content"],
+        },
+    },
+    {
+        "name": "create_task",
+        "description": "Create a new task with optional blockedBy dependencies.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "subject": {"type": "string"},
+                "description": {"type": "string"},
+                "blockedBy": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["subject"],
+        },
+    },
+    {
+        "name": "list_tasks",
+        "description": "List all tasks with status, owner, and dependencies.",
+        "input_schema": {"type": "object", "properties": {}, "required": []},
+    },
+    {
+        "name": "get_task",
+        "description": "Get full details of a specific task by ID.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"task_id": {"type": "string"}},
+            "required": ["task_id"],
+        },
+    },
+    {
+        "name": "claim_task",
+        "description": "Claim a pending task. Sets owner, changes status to in_progress.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"task_id": {"type": "string"}},
+            "required": ["task_id"],
+        },
+    },
+    {
+        "name": "complete_task",
+        "description": "Complete an in-progress task. Reports unblocked downstream tasks.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"task_id": {"type": "string"}},
+            "required": ["task_id"],
+        },
+    },
+    {
+        "name": "schedule_cron",
+        "description": "Schedule a cron job. cron is 5-field: min hour dom month dow.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "cron": {"type": "string", "description": "5-field cron expression"},
+                "prompt": {
+                    "type": "string",
+                    "description": "Message to inject when fired",
+                },
+                "recurring": {
+                    "type": "boolean",
+                    "description": "True=recurring, False=one-shot",
+                },
+                "durable": {"type": "boolean", "description": "True=persist to disk"},
+            },
+            "required": ["cron", "prompt"],
+        },
+    },
+    {
+        "name": "list_crons",
+        "description": "List all registered cron jobs.",
+        "input_schema": {"type": "object", "properties": {}, "required": []},
+    },
+    {
+        "name": "cancel_cron",
+        "description": "Cancel a cron job by ID.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"job_id": {"type": "string"}},
+            "required": ["job_id"],
+        },
+    },
 ]
 
 
 # ── Context ──
+
 
 def update_context(context: dict, messages: list) -> dict:
     """Derive context from real state."""
@@ -683,24 +774,33 @@ def update_context(context: dict, messages: list) -> dict:
 # cron_scheduler_loop produces work; queue_processor_loop wakes this loop when
 # queued work exists and no other agent turn is running.
 
+
 def agent_loop(messages: list, context: dict) -> dict:
     system = get_system_prompt(context)
     while True:
         # Layer 4: consume fired cron jobs → inject as messages
         fired = consume_cron_queue()
         for job in fired:
-            messages.append({"role": "user",
-                             "content": f"[Scheduled] {job.prompt}"})
+            messages.append({"role": "user", "content": f"[Scheduled] {job.prompt}"})
             print(f"  \033[35m[inject cron] {job.prompt[:50]}\033[0m")
 
         try:
             response = client.messages.create(
-                model=MODEL, system=system, messages=messages,
-                tools=TOOLS, max_tokens=8000)
+                model=MODEL,
+                system=system,
+                messages=messages,
+                tools=TOOLS,
+                max_tokens=8000,
+            )
         except Exception as e:
-            messages.append({"role": "assistant", "content": [
-                {"type": "text",
-                 "text": f"[Error] {type(e).__name__}: {e}"}]})
+            messages.append(
+                {
+                    "role": "assistant",
+                    "content": [
+                        {"type": "text", "text": f"[Error] {type(e).__name__}: {e}"}
+                    ],
+                }
+            )
             return context
 
         messages.append({"role": "assistant", "content": response.content})
@@ -715,16 +815,20 @@ def agent_loop(messages: list, context: dict) -> dict:
 
             if should_run_background(block.name, block.input):
                 bg_id = start_background_task(block)
-                results.append({"type": "tool_result",
-                                "tool_use_id": block.id,
-                                "content": f"[Background task {bg_id} started] "
-                                           f"Result will be available when complete."})
+                results.append(
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": block.id,
+                        "content": f"[Background task {bg_id} started] "
+                        f"Result will be available when complete.",
+                    }
+                )
             else:
                 output = execute_tool(block)
                 print(str(output)[:300])
-                results.append({"type": "tool_result",
-                                "tool_use_id": block.id,
-                                "content": output})
+                results.append(
+                    {"type": "tool_result", "tool_use_id": block.id, "content": output}
+                )
 
         # Merge background tool results + notifications into one user message
         user_content = list(results)

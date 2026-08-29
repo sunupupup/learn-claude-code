@@ -230,7 +230,10 @@ def execute_tool(tool_name: str, tool_input: dict) -> tuple[str, bool]:
     if validator:
         validation_error = validator(tool_input)
         if validation_error:
-            return f"Error: Invalid input for tool '{tool_name}': {validation_error}", True
+            return (
+                f"Error: Invalid input for tool '{tool_name}': {validation_error}",
+                True,
+            )
 
     try:
         return handler(**tool_input), False
