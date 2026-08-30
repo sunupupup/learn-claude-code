@@ -376,6 +376,7 @@ def spawn_subagent(description: str) -> str:
         messages.append({"role": "user", "content": results})
 
     # Issue 5: fallback if safety limit hit during tool_use
+    # 为啥用这个字段能判断是不是达到了 safety limit？ 哦哦 ，这边主要是看一个type是吧，防止最后一个type是tool result？ 只有type是 text 才真的代表结束了
     result = extract_text(messages[-1]["content"])
     if not result:
         # last message is tool_result, look backwards for assistant text
@@ -391,6 +392,7 @@ def spawn_subagent(description: str) -> str:
 
 
 # Add task tool to parent's tools
+# 主agent这边加了个 专门 的 sub agent 的工具 ， sub agent 也是一个特殊的工具被调用
 TOOLS.append(
     {
         "name": "task",
