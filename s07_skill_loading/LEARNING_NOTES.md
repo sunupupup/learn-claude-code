@@ -1,6 +1,6 @@
 # s07 Skill Loading 学习笔记
 
-> 学习进度：核心机制已理解并完成一次真实运行实验。已完成两级加载、注册表与模型上下文边界、State 与 Context、Skill 与 Tool、主 Agent 与 Subagent 的 Skill 使用边界校准；尚待独立伪代码和安全边界验收。
+> 学习进度：核心机制已理解并完成两次真实运行实验。已完成两级加载、注册表与模型上下文边界、State 与 Context、Skill 与 Tool、主 Agent 与 Subagent 的 Skill 使用边界校准，并完成辅助资源索引与受限读取扩展；尚待独立伪代码和资源安全边界验收。
 
 ## 一、本章核心结论
 
@@ -275,6 +275,8 @@ SYSTEM 中发现 Skill
 - 已校准：Skill 元信息参与决策，正文与资源参与执行。
 - 已校准：主 Agent 负责路由不等于只有主 Agent 可以使用 Skill。
 - 已验证：DeepSeek Anthropic 兼容接口能够完成一次真实 `load_skill` Tool Calling。
+- 已实现：独立增强版 `code_skill_enhance.py` 的 Skill 资源索引、`enhance_skill` 和 `advance_skill`。
+- 已验证：真实模型先调用 `load_skill`，再调用 `advance_skill` 读取被索引的辅助文件。
 - 待验收：独立伪代码、错误路径、安全边界和 Subagent Skill 方案。
 
 ## 十、与完整 Agent 工程的对应位置
@@ -286,3 +288,77 @@ SYSTEM 中发现 Skill
 - **安全与治理**：Skill 说明不能绕过 Tool 权限，Skill 来源和内容需要信任边界；
 - **多 Agent 编排**：决定由主 Agent 传递 Skill，还是由 Subagent 加载获准的 Skill；
 - **可观测性与 Eval**：验证模型是否选择正确 Skill、是否遵守正文以及加载成本是否合理。
+
+## 十一、辅助资源增强版：Enhance 与 Advance
+
+用户提出的“`SKILL.md` 里加索引，再读取 Skill 目录下的文件”的理解是正确方向。本次新增独立文件 [`code_skill_enhance.py`](./code_skill_enhance.py)，不修改原始 `code.py`，用两个教学命名的阶段展示渐进式展开：
+
+```text
+Catalog
+  ↓ 模型发现 Skill
+Enhance：load_skill / enhance_skill
+  ↓ SKILL.md 正文 + resources 索引
+Advance：advance_skill(name, path)
+  ↓ 一个被索引且通过路径校验的辅助文件
+```
+
+### 11.1 `resources` 是机器可读的入口索引
+
+`skills/agent-builder/SKILL.md` 的 frontmatter 现在可以声明：
+
+```yaml
+resources:
+  - path: references/minimal-agent.py
+    description: Minimal runnable Agent implementation.
+```
+
+启动扫描只把 `path` 和 `description` 放入注册表，不读取所有辅助文件正文。这样 Skill 正文是入口，资源正文仍然按需获取。
+
+### 11.2 Enhance：加载正文和资源目录
+
+```python
+enhance_skill("agent-builder")
+```
+
+返回完整 `SKILL.md`，并附加可用资源目录；它不会读取 `references/minimal-agent.py` 的内容。`load_skill` 是原章节 API 的兼容别名，实际分发到 `enhance_skill`。
+
+### 11.3 Advance：读取一个被允许的资源
+
+```python
+advance_skill(
+    "agent-builder",
+    "references/minimal-agent.py",
+    limit=200,
+)
+```
+
+`advance_skill` 依次执行：
+
+1. 查找 Skill 名称；
+2. 规范化相对路径；
+3. 检查路径是否出现在 `resources` allowlist；
+4. `Path.resolve()` 后确认仍在 Skill 目录内；
+5. 确认目标存在且是普通文件；
+6. 只读返回内容，并限制最多 400 行。
+
+因此不能把新工具理解成“允许模型读取 Skill 目录下任意文件”。它是“索引声明 + 路径校验 + 只读读取”的受限能力。
+
+### 11.4 Enhance / Advance 不是厂商标准 API
+
+`enhance_skill` 和 `advance_skill` 是本 Demo 为学习“渐进式 Skill 资源加载”而命名的函数，不是 Anthropic SDK 的专有字段。真实系统可能把同样的阶段实现为 Skill Tool、资源 Tool、MCP Resource 或框架内部的上下文装配器。
+
+### 11.5 当前明确不做的事
+
+- 不把所有 `references/`、`scripts/`、`assets/` 正文预先塞入 System Prompt；
+- 不自动执行 `scripts/`；
+- 不允许未声明、绝对路径、`..` 越界或符号链接逃逸；
+- 不让 Subagent 自动继承新资源工具；
+- 不实现注册表热刷新、资源版本、哈希校验或跨会话缓存。
+
+## 十二、扩展后的验收状态
+
+- `python -m py_compile s07_skill_loading/code_skill_enhance.py`：通过。
+- `python -m pytest tests/test_s07_skill_resources.py -q`：6 passed。
+- DeepSeek 真实运行：`load_skill` → `advance_skill` → 最终总结，成功。
+- 原始 `s07_skill_loading/code.py`：保持独立，未被增强版替换。
+- 待学习：资源索引的版本与缓存失效、Skill 来源信任、脚本执行审批，以及 Subagent 的角色级 Skill allowlist。

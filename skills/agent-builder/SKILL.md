@@ -8,6 +8,17 @@ description: |
   (4) ask about Claude Code, Cursor, or similar agent internals
   (5) want to build agents for business, research, creative, or operational tasks
   Keywords: agent, assistant, autonomous, workflow, tool use, multi-step, orchestration
+resources:
+  - path: references/agent-philosophy.md
+    description: Deeper explanation of the agent loop and design philosophy.
+  - path: references/minimal-agent.py
+    description: Minimal runnable Agent implementation.
+  - path: references/tool-templates.py
+    description: Reusable Tool schema templates.
+  - path: references/subagent-pattern.py
+    description: Context-isolated Subagent pattern.
+  - path: scripts/init_agent.py
+    description: Agent project scaffolding script; read-only in this demo.
 ---
 
 # Agent Builder
