@@ -1,0 +1,37 @@
+[
+  {
+    "document_id": "agent-basics",
+    "path": "documents/agent-basics.md",
+    "title": "Agent 基础",
+    "tenant_id": "demo",
+    "allowed_groups": ["engineering"]
+  },
+  {
+    "document_id": "rag-principles",
+    "path": "documents/rag-principles.md",
+    "title": "RAG 原理",
+    "tenant_id": "demo",
+    "allowed_groups": ["engineering"]
+  },
+  {
+    "document_id": "tool-security",
+    "path": "documents/tool-security.md",
+    "title": "Tool 与权限",
+    "tenant_id": "demo",
+    "allowed_groups": ["engineering", "security"]
+  },
+  {
+    "document_id": "evaluation",
+    "path": "documents/evaluation.md",
+    "title": "Agent 评测",
+    "tenant_id": "demo",
+    "allowed_groups": ["engineering", "qa"]
+  },
+  {
+    "document_id": "support-faq",
+    "path": "documents/support-faq.md",
+    "title": "客服 FAQ",
+    "tenant_id": "demo",
+    "allowed_groups": ["support"]
+  }
+]

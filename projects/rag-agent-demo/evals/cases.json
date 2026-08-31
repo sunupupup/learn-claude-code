@@ -1,0 +1,12 @@
+[
+  {"id": "answerable-rag", "question": "RAG 是什么？", "groups": ["engineering"], "expected": "answerable"},
+  {"id": "answerable-agent-loop", "question": "Agent Loop 如何停止？", "groups": ["engineering"], "expected": "answerable"},
+  {"id": "answerable-tools", "question": "Tool 调用由谁执行？", "groups": ["engineering"], "expected": "answerable"},
+  {"id": "answerable-evaluation", "question": "什么是 Eval Set？", "groups": ["qa"], "expected": "answerable"},
+  {"id": "answerable-support", "question": "退款期限是多少？", "groups": ["support"], "expected": "answerable"},
+  {"id": "no-answer", "question": "明年营收目标是多少？", "groups": ["engineering"], "expected": "no_evidence"},
+  {"id": "support-hidden-from-engineering", "question": "退款期限是多少？", "groups": ["engineering"], "expected": "no_evidence"},
+  {"id": "tenant-isolation", "question": "内部政策是什么？", "groups": ["engineering"], "tenant": "other", "expected": "no_evidence"},
+  {"id": "one-retrieval", "question": "RAG 是什么？", "groups": ["engineering"], "expected": "one_tool_call"},
+  {"id": "source-integrity", "question": "RAG 是什么？", "groups": ["engineering"], "expected": "known_source_only"}
+]

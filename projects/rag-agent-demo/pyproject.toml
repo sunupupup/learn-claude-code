@@ -1,0 +1,31 @@
+# 使用 setuptools 构建一个可安装的 Python 包；真实运行时依赖写在 project.dependencies。
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+# 这些元数据让 pip/构建工具知道项目名称、Python 最低版本和依赖边界。
+name = "rag-agent-demo"
+version = "0.1.0"
+description = "A production-oriented D1 RAG Agent learning demo"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    # OpenAI 同时负责 Embedding 和 Responses API 模型调用。
+    "openai>=1.68,<3",
+    # Qdrant client 负责 collection、向量 upsert 和带 ACL 的 query_points。
+    "qdrant-client>=1.14,<2",
+    # Pydantic 用于 Tool 输入、检索结果和最终答案的运行时校验。
+    "pydantic>=2.7,<3",
+]
+
+[project.scripts]
+# 安装后可以用 rag-agent-demo 命令进入 CLI；它仍会执行真实外部服务调用。
+rag-agent-demo = "rag_agent_demo.cli:main"
+
+[tool.setuptools.packages.find]
+# 包源码位于当前项目根目录下的 rag_agent_demo/。
+where = ["."]
+
+[tool.setuptools.package-data]
+rag_agent_demo = ["py.typed"]
