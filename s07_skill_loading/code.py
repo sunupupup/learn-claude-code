@@ -52,14 +52,17 @@ CURRENT_TODOS: list[dict] = []
 
 
 # s07: Skill catalog scan (used by build_system below)
+# 
 def _parse_frontmatter(text: str) -> tuple[dict, str]:
     """Parse YAML frontmatter from SKILL.md. Returns (meta, body)."""
     if not text.startswith("---"):
         return {}, text
+        # skill md 根据 --- 标识符，分割三部分，第一部分是 空行，第二部分是 meta 包含 name 和description，第三部分是 body，
     parts = text.split("---", 2)
     if len(parts) < 3:
         return {}, text
     try:
+        # 将 YAML frontmatter 解析成字典；name 和 description 稍后从字典中读取
         meta = yaml.safe_load(parts[1]) or {}
     except yaml.YAMLError:
         meta = {}
@@ -85,10 +88,12 @@ def _scan_skills():
             desc = meta.get("description", raw.split("\n")[0].lstrip("#").strip())
             SKILL_REGISTRY[name] = {"name": name, "description": desc, "content": raw}
 
-
+# 模块加载时扫描所有 Skill，将名称、描述和完整正文缓存到进程内注册表
+# 此时只有 Python 程序持有正文，模型还看不到完整内容
 _scan_skills()
 
 
+# skill 枚举的时候，只返回 标题 和 描述，这里关键信息
 def list_skills() -> str:
     """List all skills (name + one-line description)."""
     if not SKILL_REGISTRY:
@@ -104,6 +109,7 @@ def build_system() -> str:
     catalog = list_skills()
     return (
         f"You are a coding agent at {WORKDIR}. "
+        # skill的元信息作为顶层的context
         f"Skills available:\n{catalog}\n"
         "Use load_skill to get full details when needed."
     )
@@ -112,6 +118,8 @@ def build_system() -> str:
 SYSTEM = build_system()
 
 # s07: subagent gets its own system prompt — no skill loading, no task
+# 这个subagent还是只基本上具备写代码、查代码的能力
+# skill的加载，属于决策层，一般是主agent执行
 SUB_SYSTEM = (
     f"You are a coding agent at {WORKDIR}. "
     "Complete the task you were given, then return a concise summary. "
@@ -452,6 +460,7 @@ TOOLS = [
         },
     },
     # s07: skill tool (catalog is already in SYSTEM prompt, this loads full content)
+    # 动态加载skill的正文内容
     {
         "name": "load_skill",
         "description": "Load the full content of a skill by name.",
