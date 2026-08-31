@@ -302,7 +302,9 @@ Advance：advance_skill(name, path)
   ↓ 一个被索引且通过路径校验的辅助文件
 ```
 
-### 11.1 `resources` 是机器可读的入口索引
+### 11.1 `resources` 是本 Demo 的机器可读入口索引
+
+注意：官方 Agent Skills 规范定义了 `SKILL.md` 和可选的 `scripts/`、`references/`、`assets/` 目录，并提倡渐进披露；它没有要求使用 `resources:` 这个 frontmatter 字段。因此这里的 `resources` 是本 Demo 为实现 allowlist 而增加的自定义约定，不是通用标准字段。
 
 `skills/agent-builder/SKILL.md` 的 frontmatter 现在可以声明：
 
@@ -362,3 +364,97 @@ advance_skill(
 - DeepSeek 真实运行：`load_skill` → `advance_skill` → 最终总结，成功。
 - 原始 `s07_skill_loading/code.py`：保持独立，未被增强版替换。
 - 待学习：资源索引的版本与缓存失效、Skill 来源信任、脚本执行审批，以及 Subagent 的角色级 Skill allowlist。
+- 生产化延伸已加入 [W-2026-005：生产级 Skill 加载、资源与治理学习](../specs/work-pool/W-2026-005-study-production-skill-loading-and-governance.md)，当前保持 `ready`，不自动启动。
+
+## 十三、本轮验收回答与校准
+
+### 13.1 State、History、System 与 Context
+
+🔴 **已验证理解**：`SKILL_REGISTRY` 是 Agent 应用进程内的一份 Skill 文件快照，包含名称、描述和正文；`messages` 是 Agent 运行时的历史消息；`Model Context` 包含消息和 Tool Schema。
+
+需要补充的精确定义：
+
+- `SKILL_REGISTRY` 属于 Harness 的进程级 State，不属于某一次 Agent Run 的 State；
+- `messages` 是 Harness 保存的协议历史，也属于 Agent Run State，但生产系统可能在发送前筛选、压缩或摘要；
+- 当前代码在**每一次** `client.messages.create()` 中都传入 `system=SYSTEM`，不是只在第一次传入；
+- Anthropic API 中的 `system` 是独立请求字段，不是自动变成 `messages[0]` 的普通消息；
+- Model Context 是本次请求实际发给 LLM 的输入快照，通常包含 `system`、选中的历史消息、Tool Schema 和其他运行时输入。
+
+本 Demo 中 `SYSTEM` 在模块启动时由 `build_system()` 构建，之后内容保持不变，只是在每次 LLM 调用时重复传入；随着用户任务推进而变化的主要是 `messages`。生产系统也可以按 Run、租户、权限或动态上下文重新构建 System Prompt，但那仍然是独立的 `system` 输入，不是 `messages[0]`。
+
+### 13.2 资源读取伪代码
+
+🔴 **已验证理解**：先扫描 Skill 目录，再通过 Skill 名称和相对路径读取资源，这是主流程。
+
+原始伪代码省略了资源索引和安全校验，因此完整版本还要包含：
+
+```text
+scan_skills：
+  for each skill directory:
+    parse SKILL.md frontmatter
+    read optional resources allowlist
+    cache name, description, content, skill_root, resource_index
+
+enhance_skill(name)：
+  lookup name in registry
+  return SKILL.md + indexed resource catalog
+
+advance_skill(name, path)：
+  lookup name in registry
+  normalize path and reject absolute / '..' paths
+  require normalized path in resource_index
+  resolve target and require target inside skill_root
+  require target exists and is a file
+  read with size/line limit
+  return content or diagnostic error
+```
+
+不能直接把 `SKILLS_DIR / skill_name / path` 交给文件系统，因为 `skill_name` 和 `path` 都可能来自模型输入，必须经过注册表查找、allowlist 和真实路径校验。
+
+### 13.3 Workspace 边界与资源边界
+
+🔴 **已验证理解**：资源路径至少必须位于 workspace 下的 `skills/` 目录中。
+
+还要再收紧一层：不仅要在整个 `skills/` 下，还必须在**指定 Skill 的目录**下，并且出现在该 Skill 自己的资源索引中。否则同一个 workspace 内的其他 Skill 或未声明文件也可能被读取。
+
+### 13.4 Subagent 使用 Skill
+
+🔴 **已验证理解**：如果 Subagent 专门负责代码审查，那么把代码审查知识放进 Subagent 的上下文是合理的，主 Agent 可以只传递任务目标。
+
+这属于可行的方案 B，但还需要三个控制条件：
+
+1. Subagent 只获得角色所需的 Skill，而不是全部 Skill；
+2. Tool 权限由 Harness / Policy 强制控制，Skill 正文不能授予权限；
+3. 主 Agent 或独立 Validator 仍要验收 Subagent 的结果，不能只信自然语言总结。
+
+在小型单 Agent 系统中由主 Agent 统一加载更简单；在多 Agent 系统中，让实际执行任务的 Subagent 获得受限 Skill 往往更符合上下文隔离和职责分工。
+
+### 13.5 缺失资源的错误语义
+
+“不自动 fallback 到其他目录”这个安全直觉是正确的，但“返回空内容”不够安全。
+
+🔴 **校准后表述**：已声明但不存在的资源，应返回明确、可诊断的错误（或结构化错误 Tool Result），不应返回空字符串，也不应静默搜索其他目录。空字符串会把“资源缺失”伪装成“资源内容为空”，模型可能继续执行错误流程。
+
+### 13.6 第一次模型调用时的可见性
+
+🔴 **已验证理解**：Skill 的 `name` 和 `description` 在第一次调用时可见。
+
+完整分类是：
+
+| 内容 | 第一次模型调用前是否可见 |
+| --- | --- |
+| `agent-builder` 的 `name` | 是，来自 `SYSTEM` 目录 |
+| `agent-builder` 的 `description` | 是，来自 `SYSTEM` 目录 |
+| `agent-builder` 的完整 `SKILL.md` 正文 | 否，需先调用 `load_skill` |
+| `resources` 中的路径索引 | 原始 Demo 中否；增强版在 `load_skill` 返回后可见 |
+| `references/minimal-agent.py` 正文 | 否，需先调用 `advance_skill` |
+
+更准确的流程是：
+
+```text
+第一次调用：name + description
+  ↓ load_skill
+第二次调用可见：SKILL.md 正文 + 资源索引
+  ↓ advance_skill
+后续调用可见：某个辅助资源正文
+```
