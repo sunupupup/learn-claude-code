@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-s08_context_compact.py - Context Compact
+s08_context_compact.py - Context Compact（上下文压缩）
 
-Four-layer compaction pipeline inserted before LLM calls:
+Four-layer compaction pipeline inserted before LLM calls（四层压缩机制）:
 
-    L1: snip_compact      — trim middle messages when count > 50
-    L2: micro_compact     — replace old tool_results with placeholders
-    L3: tool_result_budget — persist large results to disk
-    L4: compact_history   — LLM full summary (1 API call)
+    L1: snip_compact       — 消息条数超过限制时，裁掉中间一段消息
+    L2: micro_compact      — 将较旧的 tool_result 正文替换为占位符
+    L3: tool_result_budget — 将当轮超大 tool_result 落盘，仅保留路径和预览
+    L4: compact_history    — 保存 transcript，再调用一次 LLM 生成历史摘要
 
-    Emergency: reactive_compact — when API still returns prompt_too_long
+    Emergency: reactive_compact — API 仍返回 prompt_too_long 时的应急压缩
 
     ┌─────────────────────────────────────────────────────────────┐
     │  messages[]                                                 │
@@ -23,7 +23,7 @@ Four-layer compaction pipeline inserted before LLM calls:
     │                                      └─ Yes → reactive      │
     └─────────────────────────────────────────────────────────────┘
 
-Core principle: cheap first, expensive last.
+Core principle: cheap first, expensive last（先执行本地确定性压缩，最后才调用 LLM 摘要）。
 Execution order matches CC source: budget → snip → micro → auto.
 
 Builds on s07 (skill loading). Usage:
@@ -51,6 +51,7 @@ if os.getenv("ANTHROPIC_BASE_URL"):
 
 WORKDIR = Path.cwd()
 SKILLS_DIR = WORKDIR / "skills"
+# 压缩前的完整会话流水，用于审计和恢复；落盘后不会自动回到模型上下文。
 TRANSCRIPT_DIR = WORKDIR / ".transcripts"
 TOOL_RESULTS_DIR = WORKDIR / ".task_outputs" / "tool-results"
 client = Anthropic(base_url=os.getenv("ANTHROPIC_BASE_URL"))
@@ -405,11 +406,20 @@ def _is_tool_result_message(msg):
 def snip_compact(messages, max_messages=50):
     if len(messages) <= max_messages:
         return messages
+    # 默认保留开头 3 条消息和最近的 max_messages - 3 条消息。
     keep_head, keep_tail = 3, max_messages - 3
+
+    # 待删除区间是 [head_end, tail_start)，删除后用一条占位消息替代。
+    # tool_use/tool_result 是 message.content 中的 block，不一定各占一条消息。
+    # 以下边界保护会扩大保留区，避免切口落在相邻的工具请求与结果之间；
+    # 它只检查消息类型，没有校验具体的 tool_use_id 是否匹配。
     head_end, tail_start = keep_head, len(messages) - keep_tail
+    # 头部若结束于 tool_use，则向右多保留紧随其后的 tool_result 消息。
     if head_end > 0 and _message_has_tool_use(messages[head_end - 1]):
         while head_end < len(messages) and _is_tool_result_message(messages[head_end]):
             head_end += 1
+
+    # 尾部若开始于 tool_result，则向左多保留它前面的 tool_use 消息。
     if (
         tail_start > 0
         and tail_start < len(messages)
@@ -428,6 +438,7 @@ def snip_compact(messages, max_messages=50):
 
 
 # L2: microCompact — old result placeholders
+# 收集 tool_result 的位置和原字典引用；后续修改 block["content"] 会原地修改 messages。
 def collect_tool_results(messages):
     blocks = []
     for mi, msg in enumerate(messages):
@@ -443,6 +454,8 @@ def micro_compact(messages):
     tool_results = collect_tool_results(messages)
     if len(tool_results) <= KEEP_RECENT:
         return messages
+    # 教学实现统一提示可重新调用。生产中的写操作不能盲目重试，应保留操作凭证、
+    # 资源 ID、幂等键和重试策略，或按工具风险类型使用专门的压缩器。
     for _, _, block in tool_results[:-KEEP_RECENT]:
         if len(block.get("content", "")) > 120:
             block["content"] = "[Earlier tool result compacted. Re-run if needed.]"
