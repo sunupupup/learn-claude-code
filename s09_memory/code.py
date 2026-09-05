@@ -2,21 +2,22 @@
 """
 s09_memory.py - Memory System
 
+一种可以跨会话持久保存的记忆系统。
 Persistent, cross-session knowledge for the coding agent.
 
 Storage:
     .memory/
-      MEMORY.md          ← index (one line per memory, ≤200 lines)
+      MEMORY.md          ← index (one line per memory, ≤200 lines)  只保存记忆名称、文件链接和描述，不保存完整正文
       feedback_tabs.md    ← individual memory files (Markdown + YAML frontmatter)
       user_profile.md
       project_facts.md
 
 Flow in agent_loop:
-    1. Load MEMORY.md index into SYSTEM prompt (cheap, always present)
-    2. Select relevant memories by filename/description → inject content
+    1. Load MEMORY.md index into SYSTEM prompt (cheap, always present)   索引进入 SYSTEM；具体正文按需注入当前 user turn
+    2. Select relevant memories by filename/description → inject content  不通过 memory tool；程序先用 side-query 选择文件，再读取正文
     3. Run compression pipeline from s08
-    4. After each turn ends → extract new memories from original messages
-    5. Periodically consolidate (Dream)
+    4. After each turn ends → extract new memories from original messages  顶层 user turn 结束且模型不再调用工具时，从压缩前快照提取候选记忆
+    5. Periodically consolidate (Dream)  达到简化阈值后，批量合并重复、冲突或过期记忆
 
 Builds on s08 (context compact). Usage:
 
@@ -42,11 +43,14 @@ if os.getenv("ANTHROPIC_BASE_URL"):
     os.environ.pop("ANTHROPIC_AUTH_TOKEN", None)
 
 WORKDIR = Path.cwd()
+
+# 创建 .memory 目录；MEMORY.md 会在首次重建索引时生成
 MEMORY_DIR = WORKDIR / ".memory"
 MEMORY_DIR.mkdir(exist_ok=True)
 MEMORY_INDEX = MEMORY_DIR / "MEMORY.md"
+
 SKILLS_DIR = WORKDIR / "skills"
-TRANSCRIPT_DIR = WORKDIR / ".transcripts"
+TRANSCRIPT_DIR = WORKDIR / ".transcripts"  # 保存压缩前的会话记录，供调试、审计或恢复参考
 TOOL_RESULTS_DIR = WORKDIR / ".task_outputs" / "tool-results"
 client = Anthropic(base_url=os.getenv("ANTHROPIC_BASE_URL"))
 MODEL = os.environ["MODEL_ID"]
@@ -72,15 +76,17 @@ def _parse_frontmatter(text: str) -> tuple[dict, str]:
             meta[k.strip()] = v.strip().strip('"').strip("'")
     return meta, parts[2].strip()
 
-
+# mem_type 是记忆分类：user、feedback、project 或 reference；当前教学代码未做运行时校验
 def write_memory_file(name: str, mem_type: str, description: str, body: str):
     """Write a single memory file with YAML frontmatter."""
+    # slug 是适合放进文件名的短标识；这里仅做基础规范化，不等于完整的文件名安全校验
     slug = name.lower().replace(" ", "-").replace("/", "-")
     filename = f"{slug}.md"
     filepath = MEMORY_DIR / filename
     filepath.write_text(
         f"---\nname: {name}\ndescription: {description}\ntype: {mem_type}\n---\n\n{body}\n"
     )
+    # 更新记忆的索引文件
     _rebuild_index()
     return filepath
 
@@ -95,6 +101,7 @@ def _rebuild_index():
         meta, body = _parse_frontmatter(raw)
         name = meta.get("name", f.stem)
         desc = meta.get("description", body.split("\n")[0][:80])
+        # 索引行格式：- [记忆名称](实际文件名) — 一行描述；type 和正文仍在单独文件中
         lines.append(f"- [{name}]({f.name}) — {desc}")
     MEMORY_INDEX.write_text("\n".join(lines) + "\n" if lines else "")
 
@@ -115,6 +122,7 @@ def read_memory_file(filename: str) -> str | None:
     return path.read_text()
 
 
+# 扫描所有记忆文件，解析并返回 filename、name、description、type、body 等信息
 def list_memory_files() -> list[dict]:
     """List all memory files with metadata."""
     result = []
@@ -134,7 +142,7 @@ def list_memory_files() -> list[dict]:
         )
     return result
 
-
+# 根据当前会话最近的用户消息，选择本次需要加载的记忆；选择阶段只发送目录，不发送正文
 def select_relevant_memories(messages: list, max_items: int = 5) -> list[str]:
     """Select relevant memory filenames by matching recent conversation against
     memory names/descriptions. Uses a simple LLM call (or falls back to keyword
@@ -158,6 +166,7 @@ def select_relevant_memories(messages: list, max_items: int = 5) -> list[str]:
                 recent_texts.append(content)
             if len(recent_texts) >= 3:
                 break
+    # 最多收集最近 3 条 user message，再截取最多 2000 个字符；这是成本与相关性的教学启发式
     recent = " ".join(reversed(recent_texts))[:2000]
 
     if not recent.strip():
@@ -169,6 +178,7 @@ def select_relevant_memories(messages: list, max_items: int = 5) -> list[str]:
         catalog_lines.append(f"{i}: {f['name']} — {f['description']}")
     catalog = "\n".join(catalog_lines)
 
+    # 让 LLM 根据 recent 用户内容和 memory catalog 选择相关文件；返回位置索引便于解析，之后再映射为 filename
     prompt = (
         "Given the recent conversation and the memory catalog below, "
         "select the indices of memories that are clearly relevant. "
@@ -187,6 +197,7 @@ def select_relevant_memories(messages: list, max_items: int = 5) -> list[str]:
         text = extract_text(response.content).strip()
         # Extract JSON array from response
         match = re.search(r"\[.*?\]", text, re.DOTALL)
+        # 先提取 JSON 数组，再逐项验证元素是否为整数且位于合法文件索引范围
         if match:
             indices = json.loads(match.group())
             selected = []
@@ -195,13 +206,17 @@ def select_relevant_memories(messages: list, max_items: int = 5) -> list[str]:
                     selected.append(files[idx]["filename"])
                     if len(selected) >= max_items:
                         break
+            # 输出文件名数组，供 load_memories() 读取对应正文
             return selected
     except Exception:
         pass
 
+    # 只有 side-query 抛异常或没有找到数组时才会走这里；合法但无效的索引不会再次 fallback
     # Fallback: keyword matching on name + description
+    # 按空白切分，并保留长度大于 3 个字符的片段；这不是真正的分词或语义检索
     keywords = [w.lower() for w in recent.split() if len(w) > 3]
     selected = []
+    # 对每个 memory 的 name+description 做子字符串匹配；这是简单降级策略，中文召回能力较弱
     for f in files:
         text = (f["name"] + " " + f["description"]).lower()
         if any(kw in text for kw in keywords):
@@ -213,6 +228,7 @@ def select_relevant_memories(messages: list, max_items: int = 5) -> list[str]:
 
 def load_memories(messages: list) -> str:
     """Load relevant memory content for injection into context."""
+    # 在本次顶层 agent loop 进入模型调用前，先准备相关 memory 正文
     selected_files = select_relevant_memories(messages)
     if not selected_files:
         return ""
@@ -223,13 +239,18 @@ def load_memories(messages: list) -> str:
         if content:
             parts.append(content)
     parts.append("</relevant_memories>")
+
+    # 拼成带 XML-like 边界的普通文本，不是真正经过 XML 解析的 XML
     return "\n\n".join(parts)
 
 
 def extract_memories(messages: list):
     """Extract new memories from recent dialogue. Runs after each turn."""
+    # 顶层 loop 结束后尝试提取候选记忆；是否写入还取决于 stop_reason、解析结果和内容校验
     # Collect recent conversation text
     dialogue_parts = []
+    # 只取最近 10 个 Message 对象，不是 10 个完整对话轮次；这是控制 side-query 成本的教学启发式
+    # 生产环境应评测重要记忆召回率、重复率、过期率，以及 Token、成本和延迟
     for msg in messages[-10:]:
         role = msg.get("role", "?")
         content = msg.get("content", "")
@@ -246,7 +267,7 @@ def extract_memories(messages: list):
     if not dialogue.strip():
         return
 
-    # Check existing memories to avoid duplicates
+    # 仅把已有记忆的 name+description 作为 LLM 的去重提示，不是确定性去重
     existing = list_memory_files()
     existing_desc = (
         "\n".join(f"- {m['name']}: {m['description']}" for m in existing)
@@ -286,6 +307,8 @@ def extract_memories(messages: list):
             desc = mem.get("description", "")
             body = mem.get("body", "")
             if desc and body:
+                # 相同 slug 会覆盖原文件，不同 slug 会新增文件；是否重复主要依赖 LLM 取名和描述
+                # 当前没有显式 update/delete 接口，也没有程序级的正文相似度或冲突检测
                 write_memory_file(name, mem_type, desc, body)
                 count += 1
         if count:
@@ -308,6 +331,7 @@ def consolidate_memories():
         for f in files
     )
 
+    # LLM 返回整理后的新集合；应只合并同一规则或同一事实，不能为了减少文件任意泛化
     prompt = (
         "Consolidate the following memory files. Rules:\n"
         "1. Merge duplicates into one\n"
@@ -328,7 +352,9 @@ def consolidate_memories():
             return
         items = json.loads(match.group())
 
-        # Remove old memory files (keep MEMORY.md)
+        # 批量替换旧集合：先删除旧记忆文件，保留 MEMORY.md；unlink() 会删除文件，当前实现不可回滚
+        # 教学实现没有锁、备份或原子替换，写入中途失败可能造成部分结果或索引不一致
+        # 如果 items 为空，旧文件会被删除，但下面不会调用 write_memory_file() 重建索引
         for f in MEMORY_DIR.glob("*.md"):
             if f.name != "MEMORY.md":
                 f.unlink()
@@ -339,6 +365,7 @@ def consolidate_memories():
             desc = mem.get("description", "")
             body = mem.get("body", "")
             if desc and body:
+                # 旧文件已在上面用 unlink() 删除；这里开始写入整理后的新文件
                 write_memory_file(name, mem_type, desc, body)
 
         print(
@@ -558,6 +585,7 @@ def _is_tool_result_message(msg):
     )
 
 
+# Message 级上下文裁剪：删除中间历史，保留头部和尾部，并尽量保护相邻的工具调用结果配对
 def snip_compact(msgs, mx=50):
     if len(msgs) <= mx:
         return msgs
@@ -591,7 +619,7 @@ def collect_tool_results(msgs):
                 blocks.append((mi, bi, block))
     return blocks
 
-
+# 保留最近 3 个 tool_result block；更早且超过 120 个字符的正文替换为不可自动恢复的占位符
 def micro_compact(msgs):
     tr = collect_tool_results(msgs)
     if len(tr) <= KEEP_RECENT:
@@ -602,6 +630,7 @@ def micro_compact(msgs):
     return msgs
 
 
+# 将超大的 tool result 落盘到 .task_outputs/tool-results/<tool_use_id>.txt，向上下文返回路径和预览
 def persist_large(tid, out):
     if len(out) <= PERSIST_THRESHOLD:
         return out
@@ -668,14 +697,17 @@ def summarize_history(msgs):
 
 
 def compact_history(msgs):
+    # 压缩前把完整 messages 写入 JSONL transcript，供后续调试、审计或人工恢复参考
     write_transcript(msgs)
     summary = summarize_history(msgs)
+    # 用一条摘要消息替换活跃 messages；原始 transcript 不会自动重新注入模型
     return [{"role": "user", "content": f"[Compacted]\n\n{summary}"}]
 
 
 def reactive_compact(msgs):
     write_transcript(msgs)
     summary = summarize_history(msgs)
+    # 应急压缩：摘要旧历史并保留最近 5 条；必要时向前多保留一条以保护工具调用配对
     tail_start = max(0, len(msgs) - 5)
     if (
         tail_start > 0
@@ -800,6 +832,7 @@ def agent_loop(messages: list):
         messages[:] = snip_compact(messages)
         messages[:] = micro_compact(messages)
 
+        # 如果粗略估算超过教学阈值，则进行一次历史摘要；CONTEXT_LIMIT 是字符数，不是真实 Token 上限
         if estimate_size(messages) > CONTEXT_LIMIT:
             print("[auto compact]")
             messages[:] = compact_history(messages)
@@ -827,6 +860,7 @@ def agent_loop(messages: list):
             )
             reactive_retries = 0
         except Exception as e:
+            # API 实际返回 prompt_too_long 或 too many tokens 后触发 reactive compact，当前最多重试一次
             if (
                 "prompt_too_long" in str(e).lower()
                 or "too many tokens" in str(e).lower()
@@ -839,6 +873,8 @@ def agent_loop(messages: list):
 
         messages.append({"role": "assistant", "content": response.content})
         if response.stop_reason != "tool_use":
+            # 只有模型结束本轮、不再请求工具时才提取；中间工具轮次不提取，API 失败或空数组通常不新增
+            # 写入过程中若发生异常，仍需防止已经写入部分记忆后留下不一致状态
             # s09: extract from pre-compression snapshot for full fidelity
             extract_memories(pre_compress)
             consolidate_memories()
@@ -862,6 +898,8 @@ if __name__ == "__main__":
     print("s09: Memory — persistent cross-session knowledge")
     print("输入问题，回车发送。输入 q 退出。\n")
     history = []
+    # 每个新的 CLI query 启动一个顶层 agent_loop；相关 memory 在该 loop 开始时选择一次，
+    # 不会在同一 loop 的每个工具调用轮次重新选择
     while True:
         try:
             query = input("\033[36ms09 >> \033[0m")
