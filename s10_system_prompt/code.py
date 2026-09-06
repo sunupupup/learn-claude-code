@@ -34,6 +34,14 @@ if os.getenv("ANTHROPIC_BASE_URL"):
 WORKDIR = Path.cwd()
 MEMORY_DIR = WORKDIR / ".memory"
 MEMORY_INDEX = MEMORY_DIR / "MEMORY.md"
+
+# 这两个配置故意保持显式：本章只演示“加载哪些来源”，
+# 不自动扫描任何未配置的指令文件或 Skill。
+AGENT_INSTRUCTION_FILES: tuple[Path, ...] = ()
+# 例如：("agent-builder",)；留空表示本次运行不加载 Skill。
+ACTIVE_SKILL_NAMES: tuple[str, ...] = ()
+SKILLS_DIR = WORKDIR / "skills"
+
 client = Anthropic(base_url=os.getenv("ANTHROPIC_BASE_URL"))
 MODEL = os.environ["MODEL_ID"]
 
@@ -58,11 +66,21 @@ def assemble_system_prompt(context: dict) -> str:
     sections.append(PROMPT_SECTIONS["workspace"])
 
     # 条件加载：只有 context 中存在非空 Memory 内容时才注入。
-    # 同样的模式也可以扩展到 AGENTS.md、已激活的 Skill 等外部来源；
+    # 同样的模式也可以扩展到其他运行时指令文件、已激活的 Skill 等外部来源；
     # 但不同来源仍需要各自的加载、作用域、信任和优先级规则。
     memories = context.get("memories", "")
     if memories:
         sections.append(f"Relevant memories:\n{memories}")
+
+    instructions = context.get("instructions", "")
+    if instructions:
+        # 只有加载到非空运行时指令时，才把这一段加入 System Prompt。
+        sections.append(f"Runtime instructions:\n{instructions}")
+
+    active_skills = context.get("active_skills", "")
+    if active_skills:
+        # Skill 必须先被显式选中并成功读取，才会进入当前 Prompt。
+        sections.append(f"Active skills:\n{active_skills}")
 
     return "\n\n".join(sections)
 
@@ -96,6 +114,10 @@ def get_system_prompt(context: dict) -> str:
     loaded = ["identity", "tools", "workspace"]
     if context.get("memories"):
         loaded.append("memory")
+    if context.get("instructions"):
+        loaded.append("instructions")
+    if context.get("active_skills"):
+        loaded.append("active_skills")
     print(f"  \033[32m[assembled] sections: {', '.join(loaded)}\033[0m")
     return _last_prompt
 
@@ -182,23 +204,78 @@ TOOL_HANDLERS = {"bash": run_bash, "read_file": run_read, "write_file": run_writ
 # ── Context ──
 
 
+# 文件缓存的结构：
+#   绝对路径 -> ((最后修改时间纳秒, 文件大小), 文件文本)
+# signature 为 None 表示文件当前不存在，这样文件后来创建时也能触发重新读取。
+_file_text_cache: dict[str, tuple[tuple[int, int] | None, str]] = {}
+
+
+def _read_cached_text(path: Path) -> str:
+    """只有文件状态变化时才重新读取文本文件。"""
+    # 统一使用绝对路径作为缓存 key，避免同一个文件通过相对路径和绝对路径
+    # 访问时产生两份缓存。
+    cache_key = str(path.resolve())
+
+    # 每次调用仍然需要检查文件元数据，但这里只是 stat，不会读取文件正文。
+    # mtime_ns 比普通 mtime 精度更高；再配合 size，可以覆盖大多数教学场景。
+    try:
+        stat = path.stat()
+        signature = (stat.st_mtime_ns, stat.st_size)
+    except FileNotFoundError:
+        # 文件被删除时，把当前状态记为“缺失”，避免继续使用旧内容。
+        signature = None
+
+    cached = _file_text_cache.get(cache_key)
+    if cached and cached[0] == signature:
+        # 文件的修改时间和大小都没有变化，直接复用上一次读取的正文。
+        return cached[1]
+
+    # 首次读取、文件发生变化，或文件从不存在变为存在时，才读取正文。
+    content = path.read_text().strip() if signature is not None else ""
+    _file_text_cache[cache_key] = (signature, content)
+    return content
+
+
+def _join_cached_files(paths: tuple[Path, ...]) -> str:
+    """读取一组已配置文件，并拼接其中非空的正文。"""
+    # 每个文件分别经过 _read_cached_text()，因此不会因为批量加载而绕过缓存。
+    contents = [_read_cached_text(path) for path in paths]
+    # 空文件和不存在的文件不进入最终 context，避免给 Prompt 增加无效内容。
+    return "\n\n".join(content for content in contents if content)
+
+
+def load_agents_in_scope() -> str:
+    """加载显式配置的运行时指令，不自动扫描未知文件。"""
+    # AGENT_INSTRUCTION_FILES 是外部配置入口；本例不在函数内部猜测文件位置。
+    return _join_cached_files(AGENT_INSTRUCTION_FILES)
+
+
+def load_selected_skills() -> str:
+    """根据显式选择的 Skill 名称，加载对应的 SKILL.md。"""
+    # ACTIVE_SKILL_NAMES 只保存 Skill 名称，真正的文件路径由统一目录规则拼出。
+    # 没有被选中的 Skill 不会读取，也不会进入 context。
+    paths = tuple(SKILLS_DIR / name / "SKILL.md" for name in ACTIVE_SKILL_NAMES)
+    return _join_cached_files(paths)
+
+
 # context 是运行时状态快照，不是完整的对话历史。
 # 本例每次重新读取 Memory、工具注册表和工作目录，并返回一个新的 dict。
 # 如果 MEMORY.md 不存在或为空，就不把空的 memory 内容放进 System Prompt。
 # 其他动态来源也可以采用相同模式，但需要分别处理作用域、信任和加载策略。
 def update_context(context: dict, messages: list) -> dict:
-    """Derive context from real state: which tools exist, whether memory files exist."""
-    memories = ""
-    if MEMORY_INDEX.exists():
-        content = MEMORY_INDEX.read_text().strip()
-        if content:
-            # 教学实现直接读取 MEMORY.md 的全部非空内容；
-            # 生产实现通常还需要按相关性、大小和权限进行筛选。
-            memories = content
+    """根据当前运行状态重新生成一份 context 快照。"""
+    # 教学实现直接读取 MEMORY.md 的全部非空内容；
+    # 生产实现通常还需要按相关性、大小和权限进行筛选。
+    memories = _read_cached_text(MEMORY_INDEX)
     return {
+        # 工具注册表是当前实际可执行的工具集合。
         "enabled_tools": list(TOOL_HANDLERS.keys()),
+        # 工作目录是本次 Agent 执行环境的一部分。
         "workspace": str(WORKDIR),
+        # Memory、运行时指令和 Skill 都是按需加载的动态文本。
         "memories": memories,
+        "instructions": load_agents_in_scope(),
+        "active_skills": load_selected_skills(),
     }
 
 

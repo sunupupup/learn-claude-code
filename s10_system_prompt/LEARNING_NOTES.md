@@ -226,7 +226,36 @@ agent_loop(messages, context):
 - 继续学习动态上下文的权限、注入防护、并发一致性和失效策略；
 - 进一步区分真实 Agent Runtime 中的系统指令、用户上下文、Skill 内容和 API Prompt Cache。
 
-## 八、下一步验收问题
+## 八、动态文件加载与 mtime 缓存
+
+为了观察“外部文件作为 context 来源”的最小实现，代码增加了两个显式加载器：
+
+```python
+{
+    "instructions": load_agents_in_scope(),
+    "active_skills": load_selected_skills(),
+}
+```
+
+当前实现有意不自动扫描或读取仓库的 `AGENTS.md`：
+
+- `load_agents_in_scope()` 只读取显式配置的 `AGENT_INSTRUCTION_FILES`；
+- `load_selected_skills()` 只读取显式选择的 `ACTIVE_SKILL_NAMES` 对应的 `skills/<name>/SKILL.md`；
+- 没有被配置或选中的来源，不会进入 context，也不会进入 System Prompt。
+
+文件读取通过 `_read_cached_text()` 统一处理：
+
+```text
+每次 update_context()
+  → 调用 Path.stat() 检查 mtime_ns + size
+  → 签名未变化：返回进程内缓存
+  → 签名变化或首次读取：重新 read_text()
+  → 文件删除：缓存为空内容
+```
+
+这里的 `mtime_ns + size` 是教学版失效判断。它可以避免每轮重复读取未变化的文件，但不是并发一致性方案，也不能严格保证 API 层 Prompt Cache 命中。生产系统还可能需要版本号、文件锁、事件通知、原子发布或内容 Hash。
+
+## 九、下一步验收问题
 
 1. 如果工具没有修改任何外部状态，下一次调用 `get_system_prompt(context)` 会发生什么？
 2. 如果工具修改了 `.memory/MEMORY.md`，但没有再次调用 `update_context()`，会发生什么？
