@@ -7,12 +7,16 @@ Need: pip install anthropic python-dotenv + .env with ANTHROPIC_API_KEY
 
 Changes from s10:
   - LLM call wrapped in try/except with three recovery paths
+  1. max_tokens 是正常响应的停止原因，不是异常；首次触发时把输出预算从 8K 提升到 64K，保持原 messages 重新生成
   - Path 1: max_tokens -> escalate 8K->64K (no append on first escalation),
             then continuation prompt (max 3)
+  2. prompt_too_long 是请求异常；先执行一次紧急压缩，再用压缩后的上下文重试
   - Path 2: prompt_too_long -> reactive compact -> retry (once)
+  3. 429 表示限流、529 表示服务过载；等待一段递增且带随机抖动的时间后重试
   - Path 3: 429/529 -> exponential backoff with jitter (max 10),
             fallback model on consecutive 529
-  - with_retry wrapper for transient errors
+  - with_retry is a plain Python wrapper around the model call; it resembles
+    LangChain wrap-style middleware conceptually, but is not a LangChain hook
   - RecoveryState tracks escalation / compact / 529 / model
 
 ASCII flow:
@@ -185,21 +189,27 @@ TOOL_HANDLERS = {"bash": run_bash, "read_file": run_read, "write_file": run_writ
 
 
 class RecoveryState:
-    """Track recovery attempts across the loop."""
+    """集中记录一次 agent_loop 内跨轮次共享的恢复状态。"""
 
     def __init__(self):
+        # 输出预算在一次 agent_loop 中最多只升级一次。
         self.has_escalated = False
+        # 64K 仍被截断后，最多追加三次续写提示。
         self.recovery_count = 0
+        # 记录连续的 529，用于达到阈值后选择备用模型。
         self.consecutive_529 = 0
+        # 紧急压缩最多执行一次，避免无收益地反复裁剪上下文。
         self.has_attempted_reactive_compact = False
         self.current_model = PRIMARY_MODEL
 
 
 def retry_delay(attempt, retry_after=None):
-    """Exponential backoff with jitter. Retry-After takes priority."""
+    """计算指数退避延迟；调用方传入 Retry-After 时优先采用服务端建议。"""
     if retry_after:
         return retry_after
+    # 基础延迟按 0.5、1、2、4……秒增长，并封顶在 32 秒。
     base = min(BASE_DELAY_MS * (2**attempt), 32000) / 1000
+    # 随机抖动把并发请求的重试时刻打散，避免它们再次同时冲击服务端。
     jitter = random.uniform(0, base * 0.25)
     return base + jitter
 
@@ -224,12 +234,16 @@ def with_retry(fn, state: RecoveryState):
                     f" wait {delay:.1f}s\033[0m"
                 )
                 time.sleep(delay)
+                # 等待结束后进入 for 循环的下一次调用。
                 continue
 
             # 529 overloaded -> exponential backoff + fallback model
+            # 529 表示供应商服务暂时过载；它与请求触发限流的 429 不同。
             if "overloaded" in name.lower() or "529" in msg or "overloaded" in msg:
                 state.consecutive_529 += 1
+                # 设计意图：当前模型连续三次 529 后，更新状态并选择备用模型。
                 if state.consecutive_529 >= MAX_CONSECUTIVE_529:
+                    # 教学实现尚未判断当前是否已经使用备用模型，后续 529 可能重复执行同一次“切换”。
                     if FALLBACK_MODEL:
                         state.current_model = FALLBACK_MODEL
                         state.consecutive_529 = 0
@@ -267,6 +281,9 @@ def is_prompt_too_long_error(e: Exception) -> bool:
     )
 
 
+# 教学版紧急压缩只保留最后五条消息，并在前面增加一条恢复提示，不会生成摘要。
+# 直接按数量截取可能破坏 assistant tool_use 与 user tool_result 的配对；生产实现需要
+# 选择协议安全的切点，并保留目标、关键状态、未完成副作用和可恢复的结果引用。
 def reactive_compact(messages: list) -> list:
     """Emergency compact — teaching version keeps last N messages.
     Real CC generates a compact summary via LLM, then retries with
@@ -313,6 +330,8 @@ def agent_loop(messages: list, context: dict):
     while True:
         # ── LLM call: with_retry handles 429/529, outer handles rest ──
         try:
+            # 应用层只把 429/529 视为可原样重试的瞬时错误；需要改变请求或无法自愈的
+            # 错误交给外层分类。生产实现还需与 SDK 自带重试统一预算，避免叠加重试。
             response = with_retry(
                 lambda mt=max_tokens, mdl=state.current_model: client.messages.create(
                     model=mdl,
@@ -325,10 +344,13 @@ def agent_loop(messages: list, context: dict):
             )
         except Exception as e:
             # Path 2: prompt_too_long -> reactive compact (once)
+            # 输入上下文超过模型或服务限制时，请求会在生成正常响应前被拒绝；具体由
+            # 网关、路由层还是模型服务校验取决于供应商实现，应用层只依赖错误契约。
             if is_prompt_too_long_error(e):
                 if not state.has_attempted_reactive_compact:
                     messages[:] = reactive_compact(messages)
                     state.has_attempted_reactive_compact = True
+                    # 回到 while 循环开头，用压缩后的 messages 重新调用模型。
                     continue
                 print("  \033[31m[unrecoverable] still too long after compact\033[0m")
                 messages.append(
@@ -344,7 +366,7 @@ def agent_loop(messages: list, context: dict):
                 )
                 return
 
-            # Unrecoverable
+            # 教学版对其他错误没有分类，因此停止当前循环；“未分类”不代表它们天然不可恢复。
             name = type(e).__name__
             print(f"  \033[31m[unrecoverable] {name}: {str(e)[:100]}\033[0m")
             messages.append(
@@ -358,8 +380,11 @@ def agent_loop(messages: list, context: dict):
             return
 
         # ── Path 1: max_tokens -> escalate or continue ──
+        # max_tokens 是正常响应中的停止原因，不是 API 异常；是否恢复取决于业务是否接受
+        # 截断结果。本章把它视为未完成，并尝试提高输出预算或续写。
         if response.stop_reason == "max_tokens":
             # First escalation: don't append truncated output, retry same request
+            # escalate 表示提高输出额度：不保存首次截断内容，用更大的 max_tokens 重新生成。
             if not state.has_escalated:
                 max_tokens = ESCALATED_MAX_TOKENS
                 state.has_escalated = True
