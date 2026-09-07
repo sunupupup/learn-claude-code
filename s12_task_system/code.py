@@ -6,9 +6,9 @@ Run:  python s12_task_system/code.py
 Need: pip install anthropic python-dotenv + .env with ANTHROPIC_API_KEY
 
 Changes from s11:
-  - Task dataclass (id, subject, description, status, owner, blockedBy)
-  - TASKS_DIR = .tasks/ for persistent JSON storage
-  - create_task / save_task / load_task / list_tasks / get_task
+  - Task dataclass (id, subject, description, status, owner, blockedBy)  task数据结构定义，方便持久化
+  - TASKS_DIR = .tasks/ for persistent JSON storage   原来task的状态，本地也会进行一个持久化啊，难怪有些coding agent能够中断然后继续呢
+  - create_task / save_task / load_task / list_tasks / get_task  原来关于task的工具，也需要这么多啊。。。突然有个小问题，codex开源的，他的默认的工具list，是不是非常非常多。。。最基本的一个hello，可能，我说可能，花费的token都上万了？
   - can_start: checks blockedBy all completed (missing deps = blocked)
   - claim_task: set owner + pending -> in_progress
   - complete_task: set completed + report unblocked downstream
@@ -16,7 +16,7 @@ Changes from s11:
 
 Note: Teaching code keeps a basic agent loop to stay focused on the task
 system. S11's full error recovery (RecoveryState, backoff, escalation,
-reactive compact, fallback model) is omitted — in real CC, tasks.ts and
+reactive compact, fallback model) is omitted — in real CC, tasks.ts and  这边说的是 claude code源码吧，那边不同的逻辑都是独立的模块，互相没有耦合是吧
 withRetry are independent layers that compose naturally.
 """
 
@@ -78,7 +78,7 @@ def create_task(
     save_task(task)
     return task
 
-
+# 这边 write_text， 默认是追加文本是吧 ？ 好像不是 ？ 好像是一次全量的重写 ？
 def save_task(task: Task):
     _task_path(task.id).write_text(json.dumps(asdict(task), indent=2))
 
@@ -103,6 +103,7 @@ def can_start(task_id: str) -> bool:
     """Check if all blockedBy dependencies are completed.
     Missing dependencies are treated as blocked."""
     task = load_task(task_id)
+    # 这个 blockedBy ？？ what ？？ 这边不是 llm 生成的么 ？？ 怎么会是一些id ？？
     for dep_id in task.blockedBy:
         if not _task_path(dep_id).exists():
             return False
@@ -152,6 +153,7 @@ def complete_task(task_id: str) -> str:
 
 PROMPT_SECTIONS = {
     "identity": "You are a coding agent. Act, don't explain.",
+    # 看来这边没有关于 task 的过多解释，仅仅罗列了 task 相关 tool 的名称而已
     "tools": "Available tools: bash, read_file, write_file, "
     "create_task, list_tasks, get_task, claim_task, complete_task.",
     "workspace": f"Working directory: {WORKDIR}",
@@ -300,12 +302,25 @@ TOOLS = [
     },
     {
         "name": "create_task",
+        # 初始化一个 task ，但是 这个 blockedBy 属性，乍一看看不懂啥意思 ？ 到时候生成也是自然语言么 ？
+        # 而且我看到，这边创建的只是一个 task 对象啊
+        # 没有多个 task 一起创建，创建一个数组，里面每个 task 对象都是独立的，blockedBy 也各自依赖好了 ？
+        # 所以有可能是 每次 task create 之后，agent 都把 task 的 id 当成是 message 回传给了 llm，然后llm会进行更进一步的 create_task 和 update_task 的操作 ？
+        # 也不对！ 我发现没有 update_task 的操作
+        # 难道agent只能先创建没有依赖的任务，比如 完成A模块、完成B模块 的俩task
+        # 然后 messages 里面有了这俩 任务任务id，然后创建了一个 依赖 任务A、任务B 的 任务C ？？
+        # 是这样的链路么 ？？ 但是system prompt里面根本没提到这个啊 ？？我有点怀疑这个 agent 能真实工作么 ？？？
+        # 假设我模拟一个场景啊，可能比较复杂，但是大概是这个agent的tool call链路
+        # agent 链路: create_task A -> get A id -> create_task B 依赖于 A id -> get B id -> claim_task A -> ...run_bash... -> complete_task A -> claim_task B -> ...run_bash... -> complete_task B -> done
+        # 我这个agent故事链路，对么 ？
+        # 如果对的话，那其实上面的各种tool内部的逻辑，都是一些预防、检查、防御性的逻辑是吧
         "description": "Create a new task with optional blockedBy dependencies.",
         "input_schema": {
             "type": "object",
             "properties": {
                 "subject": {"type": "string"},
                 "description": {"type": "string"},
+                # 而且这边的 blockedBy 是一个 string[]
                 "blockedBy": {"type": "array", "items": {"type": "string"}},
             },
             "required": ["subject"],
@@ -313,6 +328,8 @@ TOOLS = [
     },
     {
         "name": "list_tasks",
+        # 感觉这个 tool 应该是 开始之前，需要调用的，看下有没有未完成的任务
+        # 不对，这边应该是简要的list， 主要是 拿到 id，还需要 get_task 获取 task 的详细信息
         "description": "List all tasks with status, owner, and dependencies.",
         "input_schema": {"type": "object", "properties": {}, "required": []},
     },
@@ -327,6 +344,7 @@ TOOLS = [
     },
     {
         "name": "claim_task",
+        # claim表示认领、宣誓，表示开始执行处理一个任务
         "description": "Claim a pending task. Sets owner, changes status to in_progress.",
         "input_schema": {
             "type": "object",
@@ -376,7 +394,8 @@ def update_context(context: dict, messages: list) -> dict:
 
 # ── Agent Loop (simplified, focused on task system) ──
 
-
+# 这个其实没有任何变化，变化的是哪些task tool的定义 （llm去理解这些tool、去调用这些tool） 所以我要着重去理解tool的部分
+# 去理解 llm 如何知道 task 的含义、如何更新task、创建task、如何迭代task的状态等内容
 def agent_loop(messages: list, context: dict):
     system = get_system_prompt(context)
     while True:
@@ -418,7 +437,7 @@ def agent_loop(messages: list, context: dict):
         context = update_context(context, messages)
         system = get_system_prompt(context)
 
-
+# 这边 main 也没有任何改动
 if __name__ == "__main__":
     print("s12: task system")
     print("Enter a question, press Enter to send. Type q to quit.\n")

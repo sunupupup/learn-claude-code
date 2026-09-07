@@ -3,7 +3,7 @@
 - Status: ready
 - Area: Agent / Subagent / Delegation / Runtime / Isolation / Eval
 - Difficulty: D2 → D3（从可部署的单次委派进入稳健多用户与长任务边界）
-- Discovered From: `s06_subagent` 的上下文隔离、共享副作用与父 Agent 验收讨论
+- Discovered From: `s06_subagent` 的上下文隔离、共享副作用与父 Agent 验收讨论，以及 `s12_task_system` 中主 Agent、Subagent 与持久化任务状态的协同讨论
 - Owner: personal
 - Priority: medium
 
@@ -157,10 +157,52 @@ Subagent 的价值不由“调用了多少 Agent”证明，而由相对单 Agen
 
 优先使用确定性 Oracle：文件 Hash、Git Diff、测试退出码、Schema、权限策略和状态机断言。LLM Judge 只能用于难以规则化的语义质量，并需用人工样本校准。
 
+### Track G：多 Agent 协同与共享任务状态
+
+把一次性 Subagent 扩展为可协同的执行系统，重点研究“谁发现任务、谁认领任务、谁汇报结果、谁验证完成”：
+
+- 区分一次性同步 Subagent、异步 Subagent、后台 Worker、持久队友、Agent Team 和跨服务 Agent；
+- 设计任务作用域：`task_list_id` 表示一组长期目标，`task_id` 表示具体任务，`run_id` 表示一次执行尝试，`turn_id` 表示一次模型请求；不要用一次 LLM turn 的 ID 代替跨轮次任务列表 ID；
+- 比较共享任务看板、直接消息/收件箱、事件队列、图工作流和中心协调器五种协同方式；
+- 画出主 Agent 创建任务、Subagent 认领、执行、更新状态、提交 Artifact、主 Agent 验收的成功链；
+- 画出认领竞争、Subagent 崩溃、状态过期、结果重复、父 Agent 重启、取消和部分成功的失败链；
+- 研究 `pending → claimed/in_progress → completed/failed/cancelled/timed_out/partial` 的状态机、租约、心跳、释放和重新认领；
+- 研究消息的 `message_id`、`request_id`、`correlation_id`、顺序、确认、去重、重放和死信策略；
+- 明确任务状态、通信消息、模型上下文、长期 Memory、业务状态和 Artifact 引用不能互相替代；
+- 比较轮询 `list_tasks/get_task`、文件监听、消息通知和事件流，说明延迟、成本、丢失风险与恢复方式；
+- 设计父子 Agent 的结果契约：状态、摘要、证据、文件/资源引用、错误、未完成项、使用量和副作用；
+- 评估协同是否真的优于单 Agent：任务成功率、轨迹质量、上下文压力、吞吐、延迟、Token、成本和风险都要有基线。
+
+### Open-source study candidates
+
+启动时只选择一个主样本和最多一个对照样本，并重新核对 Commit、版本、许可证、活跃度和安全公告。以下项目用于建立候选池，不预先锁定实现方案：
+
+1. [LangGraph](https://github.com/langchain-ai/langgraph)：重点看 graph state、thread/checkpoint、持久化、子图边界、并发 fan-out/fan-in、人工介入和恢复；适合作为“显式状态与耐久执行”对照。
+2. [Microsoft Agent Framework](https://github.com/microsoft/agent-framework)：重点看 sequential、concurrent、handoff、group collaboration、checkpoint、Human-in-the-loop 和 OpenTelemetry；适合作为多 Agent Workflow 与平台化编排样本。
+3. [OpenHands Software Agent SDK](https://github.com/OpenHands/software-agent-sdk)：重点看 Agent、Conversation、Event、Tool、Workspace、Artifact、Agent Server 和父子运行关联；适合作为代码 Agent 的事件驱动样本。
+4. [AutoGen](https://github.com/microsoft/autogen)：适合阅读消息传递、事件驱动 Runtime、AgentChat 与 Core 的分层设计；其官方仓库目前标注为 maintenance mode，新项目应同时比较 Microsoft Agent Framework，不能把旧版示例直接当作当前生产建议。
+5. [CAMEL-AI](https://github.com/camel-ai/camel)：重点看角色协作、任务分解、模拟环境、数据生成和多 Agent 研究实验；适合作为研究型协作模式对照，需额外核对生产级持久化和权限边界。
+6. [CrewAI](https://github.com/crewAIInc/crewAI)：重点看 Crew/Flow 的角色编排、状态传递、任务依赖和可观测性；适合作为轻量高层抽象对照，不能只凭角色名称判断系统具备可靠协同。
+
+### Collaboration cautions
+
+- 先建立单 Agent 或确定性 Workflow 基线；“多几个 Agent”本身不是收益证据；
+- 共享文件夹不是完整的隔离方案，写入仍需 worktree、临时目录、锁、Patch 审查或服务端事务；
+- `claim` 必须具备原子性、租约或可恢复的 owner 语义，不能只依赖模型自觉；
+- Summary 不是完成证据，父 Agent 必须检查真实文件、测试、数据库状态、权限判定和 Artifact；
+- 重试前区分未执行、执行失败和执行成功但响应丢失，副作用工具要有幂等键和状态查询；
+- 取消、超时、进程崩溃和网络分区都要定义归属、清理、重试和人工接管；
+- 子 Agent 的 Context 隔离不等于身份、凭证、文件系统、网络和租户隔离，防止 Confused Deputy；
+- 任务消息要防重复、乱序、伪造和过期，协议变更要有 Schema、版本和兼容策略；
+- 为 Parent Run、Child Run、Task、Message、Tool Call 和副作用建立可关联 Trace，同时控制敏感数据进入日志；
+- 限制最大 Agent 数、深度、并发、步骤、时间和费用，防止递归扩张与成本放大；
+- 选择开源项目时同时检查许可证、依赖供应链、默认权限、数据外发、维护状态、测试和故障恢复证据。
+
 ## Relationship to Later Chapters
 
 - [`s08_context_compact`](../../s08_context_compact/)：比较上下文隔离、选择性继承和压缩；
 - [`s11_error_recovery`](../../s11_error_recovery/)：补齐错误分类、重试和终止状态；
+- [`s12_task_system`](../../s12_task_system/)：理解持久化任务、依赖、认领和完成状态；
 - [`s13_background_tasks`](../../s13_background_tasks/)：区分 Subagent 生命周期与异步后台执行；
 - [`s15_agent_teams`](../../s15_agent_teams/)：区分一次性子 Agent 与持久队友；
 - [`s18_worktree_isolation`](../../s18_worktree_isolation/)：研究文件副作用隔离和可审查合并。
