@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 """
 s13: Background Tasks — thread-based async execution + notification injection.
+中文概括：基于线程的后台执行与完成通知注入。
 
 Run:  python s13_background_tasks/code.py
 Need: pip install anthropic python-dotenv + .env with ANTHROPIC_API_KEY
 
 Changes from s12:
   - threading.Thread for background execution
-  - background_tasks dict for lifecycle tracking (bg_id, command, status)
-  - background_results dict + threading.Lock for thread-safe storage
+  - background_tasks dict for lifecycle tracking (bg_id, command, status) 后台任务生命周期状态
+  - background_results dict + threading.Lock for thread-safe storage 共享状态同步
   - should_run_background: model explicit request via run_in_background param
   - is_slow_operation: fallback heuristic when model doesn't specify
   - start_background_task: dispatch to daemon thread, return bg task id
-  - collect_background_results: gather completed, return as notifications
+  - collect_background_results: gather completed, return as notifications 收集完成结果并生成通知
   - agent_loop: slow ops → background + placeholder, inject notifications
   - Notifications use <task_notification> format, not reused tool_use_id
 
@@ -46,7 +47,7 @@ client = Anthropic(base_url=os.getenv("ANTHROPIC_BASE_URL"))
 MODEL = os.environ["MODEL_ID"]
 
 # ── Task System (from s12, synced) ──
-
+# 复用 s12 的文件型任务状态；它与本章新增的进程内后台任务状态不是同一套生命周期。
 TASKS_DIR = WORKDIR / ".tasks"
 TASKS_DIR.mkdir(exist_ok=True)
 
@@ -280,6 +281,8 @@ TOOLS = [
             "type": "object",
             "properties": {
                 "command": {"type": "string"},
+                # 模型可在 bash Tool Call 中显式请求后台执行；最终仍由 Harness 执行分派策略。
+                # 当前教学实现只为 bash Tool 暴露该参数。
                 "run_in_background": {"type": "boolean"},
             },
             "required": ["command"],
@@ -363,13 +366,14 @@ TOOL_HANDLERS = {
 
 
 # ── Background Tasks (s13 new) ──
-
+# s13 新增：进程内后台任务注册表、结果缓存与共享状态同步锁。
 _bg_counter = 0
 background_tasks: dict[str, dict] = {}  # bg_id → {tool_use_id, command, status}
 background_results: dict[str, str] = {}  # bg_id → output
 background_lock = threading.Lock()
 
 
+# Harness 的启发式兜底：仅将命中慢命令关键词的 bash 调用判为后台候选。
 def is_slow_operation(tool_name: str, tool_input: dict) -> bool:
     """Fallback heuristic: commands likely to take > 30s."""
     if tool_name != "bash":
@@ -391,6 +395,7 @@ def is_slow_operation(tool_name: str, tool_input: dict) -> bool:
     return any(kw in cmd for kw in slow_keywords)
 
 
+# 后台路由策略：true 直接后台；字段缺失或为 false 时仍执行 Harness 启发式判断。
 def should_run_background(tool_name: str, tool_input: dict) -> bool:
     """Model explicit request takes priority; fallback to heuristic."""
     if tool_input.get("run_in_background"):
@@ -410,6 +415,7 @@ def start_background_task(block) -> str:
     """Run tool in a daemon thread. Returns background task ID."""
     global _bg_counter
     _bg_counter += 1
+    # 以至少 4 位十进制数格式化进程内 ID，便于日志阅读；不提供跨进程唯一性。
     bg_id = f"bg_{_bg_counter:04d}"
     cmd = block.input.get("command", block.name)
 
@@ -419,6 +425,8 @@ def start_background_task(block) -> str:
             background_tasks[bg_id]["status"] = "completed"
             background_results[bg_id] = result
 
+    # 先注册 running 状态再启动线程，保证 worker 更新时对应任务记录已经存在。
+    # 与 worker、collector 使用同一把锁同步共享状态；计数器当前由单一主循环串行更新。
     with background_lock:
         background_tasks[bg_id] = {
             "tool_use_id": block.id,
@@ -431,6 +439,7 @@ def start_background_task(block) -> str:
     return bg_id
 
 
+# 在 Agent Loop 的 Tool 批次结束处轮询完成结果；这不是持续监听或主动唤醒。
 def collect_background_results() -> list[str]:
     """Collect completed background results as task_notification messages."""
     with background_lock:
@@ -441,9 +450,11 @@ def collect_background_results() -> list[str]:
         ]
     notifications = []
     for bg_id in ready_ids:
+        # 在同一临界区移除任务元数据和结果，保持两张共享表的对应关系。
         with background_lock:
             task = background_tasks.pop(bg_id)
             output = background_results.pop(bg_id, "")
+        # 教学版仅做 200 字符前缀截断；这不是语义摘要，也没有完整输出的恢复引用。
         summary = output[:200] if len(output) > 200 else output
         notifications.append(
             f"<task_notification>\n"
@@ -506,24 +517,29 @@ def agent_loop(messages: list, context: dict):
         if response.stop_reason != "tool_use":
             return
 
+        # 收集本次 assistant 响应中所有 tool_use 对应的 tool_result，组成下一条 user 消息。
         results = []
         for block in response.content:
             if block.type != "tool_use":
                 continue
             print(f"\033[36m> {block.name}\033[0m")
 
+            # 当前 Schema 仅允许 bash 提供 run_in_background；显式分支本身未再次校验工具名。
             if should_run_background(block.name, block.input):
                 bg_id = start_background_task(block)
+                # 后台分派后立即返回占位 tool_result，先完成原 tool_use 的消息协议配对。
                 results.append(
                     {
                         "type": "tool_result",
                         "tool_use_id": block.id,
+                        # 占位结果携带 bg_id；完成通知再用同一 ID 关联后台生命周期。
                         "content": f"[Background task {bg_id} started] "
                         f"Command: {block.input.get('command', '')}. "
                         f"Result will be available when complete.",
                     }
                 )
             else:
+                # 未命中后台路由的 Tool Call 在主循环中同步执行。
                 output = execute_tool(block)
                 print(str(output)[:300])
                 results.append(
@@ -532,6 +548,7 @@ def agent_loop(messages: list, context: dict):
 
         # Inject tool results + background notifications in one user message
         user_content = list(results)
+        # Tool 批次结束后轮询完成结果，并作为独立 text block 追加到下一条 user 消息。
         bg_notifications = collect_background_results()
         if bg_notifications:
             for notif in bg_notifications:

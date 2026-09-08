@@ -3,7 +3,7 @@
 - Status: ready
 - Area: Context Engineering / Tool Calling / Reliability / Idempotency / Eval
 - Difficulty: D2 → D3
-- Discovered From: `s08_context_compact` 的 `micro_compact`、工具结果落盘与副作用讨论
+- Discovered From: `s08_context_compact` 的 `micro_compact`、工具结果落盘与副作用讨论；`s13_background_tasks` 使用 `output[:200]` 生成后台通知摘要时，用户进一步确认 Bash 命令结果压缩是值得单独验证的生产级问题
 - Owner: personal
 - Priority: high
 
@@ -46,7 +46,7 @@ Tool Result 压缩不是单纯缩短字符串，而是一次状态迁移：
 3. 只读且可重复获取的结果，与转账、发信、创建资源等写操作采用不同策略。
 4. 不能仅根据工具名称判断风险；需要结合副作用、幂等性、可重试性、结果来源和业务约束。
 5. 完整结果落盘不代表模型仍能使用它；还需要稳定引用和显式恢复机制。
-6. 当前条目只记录后续学习，不立即修改 `s08_context_compact` 的运行逻辑。
+6. 当前条目只记录后续学习，不立即修改 `s08_context_compact` 或 `s13_background_tasks` 的运行逻辑，也不安装外部压缩工具。
 
 ## Result Envelope Fields To Preserve
 
@@ -85,6 +85,8 @@ Tool Result 压缩不是单纯缩短字符串，而是一次状态迁移：
 ### Track B：压缩策略与接口
 
 - 比较统一阈值、按工具定制 `compress_result()` 和元数据驱动策略；
+- 区分命令源头降噪（例如 quiet/JSON/short 输出）、固定 head-tail 截断、命令感知结构化压缩和 LLM 语义摘要；
+- 为 Bash 结果保留 `exit_code`、成功/失败/未知状态、stderr 或失败片段、截断说明和原始输出引用；
 - 为 Tool 定义 `side_effect`、`idempotent`、`retryable`、`retention` 和 `compressor` 元数据；
 - 设计 `raw_result → context_summary + result_ref + recovery_policy` 契约；
 - 研究摘要、截断、字段投影、Blob/Artifact 外置和重新查询的适用边界；
@@ -98,7 +100,23 @@ Tool Result 压缩不是单纯缩短字符串，而是一次状态迁移：
 - 处理部分成功、撤销失败、超时、并发重复与最终一致性；
 - 区分模型看到的摘要与业务系统中的权威状态。
 
-### Track D：开源实现阅读
+### Track D：Bash 输出压缩专项
+
+建立一组冻结的 Git、测试、构建和日志输出，先比较以下基线，不用某个项目自报的压缩比例替代自己的 Eval：
+
+1. `s13_background_tasks` 当前的 `output[:200]` 前缀截断；
+2. head-tail、错误关键词保留和命令自身的 quiet/short/JSON 输出；
+3. 按命令类型解析并投影关键字段；
+4. 摘要加 `result_ref`，需要时回取完整输出。
+
+任务启动时固定具体 Commit，再追踪两个 Bash 专项候选：
+
+1. [RTK / Rust Token Killer](https://github.com/rtk-ai/rtk)：研究命令代理、Git/Test/Build/Log 专用过滤器、底层退出码保留、失败原文落盘与回取，以及 Hook 如何在 Tool Result 进入模型前改写命令；
+2. [TRS / Token-Reducing Shell](https://github.com/dPeluChe/trs)：研究专用 Parser、无 Parser 时的通用降噪、结构化 JSON 输出和 Agent Hook 接入，与 RTK 做窄对照。
+
+两者都是当前生态实现候选，不预设为行业标准。必须区分项目自报的 Bash 输出压缩率、实际模型输入 Token 变化和整次 Agent Run 的质量/成本变化。
+
+### Track E：通用上下文实现阅读
 
 任务启动时固定具体 Commit，再追踪以下主样本：
 
@@ -108,9 +126,9 @@ Tool Result 压缩不是单纯缩短字符串，而是一次状态迁移：
 
 协议基线参考 [Anthropic Python SDK tool runner](https://github.com/anthropics/anthropic-sdk-python/blob/main/src/anthropic/lib/tools/_beta_runner.py)：确认一次 assistant 响应中的多个 `tool_use` block，如何由下一条 user 消息中的多个 `tool_result` block 按 ID 配对。该实现用于理解消息协议，不直接视为 Tool Result 压缩方案。
 
-资料初步检索日期：2026-09-04。正式启动任务时重新核对版本、活跃度、许可证和当前实现。
+通用实现资料初步检索日期：2026-09-04；Bash 专项候选于 2026-09-08 对照项目官方仓库与 Context7 `/rtk-ai/rtk`。正式启动任务时重新核对版本、活跃度、许可证和当前实现。
 
-### Track E：Eval 与故障实验
+### Track F：Eval 与故障实验
 
 至少实现并评测以下用例：
 
@@ -121,6 +139,8 @@ Tool Result 压缩不是单纯缩短字符串，而是一次状态迁移：
 5. 部分成功结果保留成功项、失败项与后续动作；
 6. `result_ref` 丢失、过期或无权限时给出明确失败，而不是假装恢复；
 7. 比较原始结果、统一摘要和类型化压缩器的 Token、正确率、延迟与恢复成功率。
+8. 构造“真正错误只出现在输出尾部”的 Bash 失败，证明前 200 字符截断会丢失诊断证据，而候选策略能保留失败摘要或稳定 `result_ref`。
+9. 对同一批 Git/Test/Build/Log 输出比较原文、命令自身降噪、head-tail、RTK 和 TRS；分别记录输出体积、模型任务正确率、回取次数、延迟与误删关键信息次数。
 
 优先使用确定性断言：ID 配对、Schema、状态机、幂等键、文件 Hash、数据库/服务端状态和副作用次数。LLM Judge 只用于摘要语义完整性，并使用人工样本校准。
 
@@ -134,6 +154,8 @@ Tool Result 压缩不是单纯缩短字符串，而是一次状态迁移：
 
 当前条目只进入 Work Pool，不自动开始。建议完成 `s08_context_compact` 和错误恢复/幂等基础后启动；也可以在 s08 结束时先做只读的 Track A-B 与开源代码追踪，不执行真实副作用。
 
+`s13_background_tasks` 学习期间只需理解 `output[:200]` 是不可恢复的字符截断，并记录它可能丢失失败尾部；完整 Bash 压缩器安装、对照和故障实验仍等待用户明确启动本 Work Pool。
+
 ## Success Criteria
 
 完成后应能够：
@@ -144,3 +166,4 @@ Tool Result 压缩不是单纯缩短字符串，而是一次状态迁移：
 4. 从至少两个开源项目追踪上下文压缩与工具消息配对实现；
 5. 用故障注入证明写操作不会因上下文压缩而被重复执行；
 6. 用 Eval 数据比较压缩率、任务正确率、恢复成功率、延迟和成本。
+7. 能说明 Bash 前缀截断、命令感知压缩与完整上下文 Condenser 的层级差异，并用冻结输出证明选定策略保留了退出状态、失败证据和原文恢复入口。
