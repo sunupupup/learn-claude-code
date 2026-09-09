@@ -8,7 +8,9 @@ Need: pip install anthropic python-dotenv + .env with ANTHROPIC_API_KEY
 Changes from s14:
   - MessageBus class: file-based mailboxes (.mailboxes/*.jsonl)
   - spawn_teammate_thread: creates teammate in background thread
+  # Teammate 拥有独立的 Agent Loop、messages 和简化工具集，不是 Lead Loop 中的普通函数调用。
   - Teammate runs own simplified agent_loop (bash, read, write, send_message)
+  # Lead 专属的团队管理工具是 spawn_teammate / check_inbox；send_message 是双方共享的通信工具。
   - Lead tools: spawn_teammate, send_message, check_inbox (3 new)
   - Lead inbox: teammate messages injected into history (not just printed)
   - Teaching version: teammates limited to 10 rounds (real CC uses idle loop)
@@ -324,6 +326,7 @@ def execute_tool(block) -> str:
         "schedule_cron": run_schedule_cron,
         "list_crons": run_list_crons,
         "cancel_cron": run_cancel_cron,
+        # s15 新增的团队工具：创建队友、发送 Agent 间消息、消费 Lead 的 inbox。
         "spawn_teammate": run_spawn_teammate,
         "send_message": run_send_message,
         "check_inbox": run_check_inbox,
@@ -644,7 +647,8 @@ class MessageBus:
     """File-based message bus. Each agent has a .jsonl inbox.
     Read is destructive: read_text + unlink (consumes messages).
     Teaching version: no file locking; real CC uses proper-lockfile."""
-
+    # 当前进程共享一个 BUS 实例；每个 Agent 通过自己的 <agent_id>.jsonl inbox 接收消息。
+    # from/to 记录路由信息，open(..., "a") 是追加写入模式；这里是文件总线辅助类，不是中央消息服务器。
     def send(
         self, from_agent: str, to_agent: str, content: str, msg_type: str = "message"
     ):
@@ -660,6 +664,7 @@ class MessageBus:
             f.write(json.dumps(msg) + "\n")
         print(f"  \033[33m[bus] {from_agent} → {to_agent}: " f"{content[:50]}\033[0m")
 
+    # 消费式读取会删除整个 inbox，教学上简单，但 read + unlink 不是原子操作，生产上可能丢失或重复消费消息。
     def read_inbox(self, agent: str) -> list[dict]:
         inbox = MAILBOX_DIR / f"{agent}.jsonl"
         if not inbox.exists():
@@ -670,16 +675,17 @@ class MessageBus:
         inbox.unlink()  # consume: read + delete
         return msgs
 
-
+# Lead 和 Teammate 共享同一个 MessageBus；Lead 的专属 inbox 是 lead.jsonl，而不是 BUS 本身。
 BUS = MessageBus()
 
 # Track spawned teammates
+# 只登记当前进程中活跃的 teammate 名称；它不是完整 Registry，暂不保存 thread、心跳或 checkpoint。
 active_teammates: dict[str, bool] = {}
 
 
 # ── Teammate Thread (s15 new) ──
 
-
+# 通过 daemon thread 启动一个独立的 Teammate Agent Loop。
 def spawn_teammate_thread(name: str, role: str, prompt: str) -> str:
     """Spawn a teammate agent in a background thread.
     Teaching version: max 10 rounds per teammate.
@@ -744,14 +750,17 @@ def spawn_teammate_thread(name: str, role: str, prompt: str) -> str:
             "bash": run_bash,
             "read_file": run_read,
             "write_file": run_write,
+            # Teammate 负责发送消息；Lead 通过 check_inbox 或 lead inbox 消费这些消息。
             "send_message": lambda to, content: (BUS.send(name, to, content), "Sent")[
                 1
             ],
         }
-
+        # 教学版只执行 10 轮；线程仍存活时可跨多个 Lead Turn 收发消息，持久 idle loop 留给后续学习。
         for _ in range(10):
+            # 读取当前 Teammate 自己的 inbox，例如 Alice 读取 alice.jsonl，而不是 Lead 的 inbox。
             inbox = BUS.read_inbox(name)
             if inbox:
+                # 在下一次模型调用前，把本轮读取到的消息作为上下文注入。
                 messages.append(
                     {"role": "user", "content": f"<inbox>{json.dumps(inbox)}</inbox>"}
                 )
@@ -797,6 +806,7 @@ def spawn_teammate_thread(name: str, role: str, prompt: str) -> str:
         active_teammates.pop(name, None)
         print(f"  \033[32m[teammate] {name} finished\033[0m")
 
+    # 只用于阻止同名活跃 Teammate 重复创建；没有持久成员登记或存活检测。
     active_teammates[name] = True
     threading.Thread(target=run, daemon=True).start()
     print(f"  \033[36m[teammate] {name} spawned as {role}\033[0m")
@@ -1047,6 +1057,7 @@ def agent_loop(messages: list, context: dict):
 
         # Merge background tool results + notifications into one user message
         user_content = list(results)
+        # 与 Agent inbox 共享“异步生产 → 后续注入”的抽象，但后台任务使用内存结果表，不是 MessageBus 协议。
         bg_notifications = collect_background_results()
         if bg_notifications:
             for notif in bg_notifications:
@@ -1084,3 +1095,7 @@ if __name__ == "__main__":
             history.append({"role": "user", "content": f"[Inbox]\n{inbox_text}"})
             print(f"\n\033[33m[Inbox: {len(inbox)} messages injected]\033[0m")
         print()
+
+
+# Teammate 线程独立于 Lead 的 agent_loop；Lead 的新 Query 不会重新启动它，Teammate 也不会自动唤醒 Lead。
+# 当前线程只在有限轮次内驻留；进程内跨 Lead Turn 的驻留，与跨 Session 的 Durable 状态是两个不同层次。

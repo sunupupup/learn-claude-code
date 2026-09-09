@@ -13,6 +13,8 @@ s01 → ... → s13 → s14 → `s15` → [s16](../s16_team_protocols/) → s17 
 
 "重构整个后端"涉及认证模块、数据库层、API 路由、测试。一个 Agent 在修 API 路由时，认证模块的细节已经不在上下文里了。上下文窗口就那么大，单个 Agent 的注意力覆盖不了所有模块。
 
+注释：所以，teammate的目的，还是拆分职责，不让主agent的上下文爆炸，有些任务，他只需要知道结果就行
+
 s06 的子 Agent 是临时工，叫来干一件事就走了。但有些任务需要能通信、能协作的队友。
 
 ---
@@ -61,6 +63,22 @@ class MessageBus:
         inbox.unlink()  # 消费式：读完删除
         return msgs
 ```
+
+文件格式是 JSONL（JSON Lines）：每行一个完整的 JSON 对象，用换行符分隔。选 JSONL 而不是 JSON 数组，是因为追加友好——`open("a")` 直接追加一行，不需要读取、解析、重写整个文件。实际运行时 `.mailboxes/alice.jsonl` 长这样：
+
+```jsonl
+{"from": "lead", "to": "alice", "content": "创建 schema.sql", "type": "message", "ts": 1788971215.58}
+{"from": "bob", "to": "alice", "content": "我在等你的 schema 结果", "type": "message", "ts": 1788971236.75}
+```
+
+队友完成任务后，Lead 的收件箱 `.mailboxes/lead.jsonl` 会收到两种消息——过程中主动发送的 `message` 和线程退出时自动发送的 `result`：
+
+```jsonl
+{"from": "alice", "to": "lead", "content": "Created schema.sql with ...", "type": "message", "ts": 1788971240.76}
+{"from": "alice", "to": "lead", "content": "I've completed the task: ...", "type": "result", "ts": 1788971241.45}
+```
+
+`read_inbox` 是消费式的：读完整个文件 → 返回 `list[dict]` → 删除文件。所以读完之后 `.mailboxes/` 里对应的 `.jsonl` 就没了。
 
 为什么用文件而不是内存队列？教学版选文件是因为直观、跨线程可观察。真实 CC 也用文件收件箱（`~/.claude/teams/{team}/inboxes/`），但加了 `proper-lockfile` 防并发写冲突。教学版的 `read_inbox` 有 read + unlink 竞态，多线程同时读可能丢消息，对教学场景可以接受。
 
