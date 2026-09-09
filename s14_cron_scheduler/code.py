@@ -2,6 +2,11 @@
 """
 s14: Cron Scheduler — independent daemon thread + queue processor.
 
+后台任务解决“慢操作不阻塞”，Cron Scheduler 进一步解决“没有用户实时输入时，
+怎样按时间产生新的 Agent 工作”。本章在 Agent Loop 外增加调度线程，用五字段
+Cron 表达式轮询到期条件；任务到期后先进入队列，再由 Queue Processor 在 Agent
+空闲时启动一轮执行，而不是让调度线程直接调用 LLM 或 Tool。
+
 Run:  python s14_cron_scheduler/code.py
 Need: pip install anthropic python-dotenv + .env with ANTHROPIC_API_KEY
 
@@ -150,11 +155,13 @@ def complete_task(task_id: str) -> str:
         print(f"  \033[33m[unblocked] {', '.join(unblocked)}\033[0m")
     return msg
 
+# 沿用 s12/s13 的文件型 Task System；它与本章新增的 CronJob 调度生命周期相互独立。
 
 # ── Prompt Assembly (from s10, synced) ──
 
 PROMPT_SECTIONS = {
     "identity": "You are a coding agent. Act, don't explain.",
+    # System Prompt 增加三个 Cron 工具名；真正的调用契约仍由下方 TOOLS Schema 定义。
     "tools": "Available tools: bash, read_file, write_file, "
     "create_task, list_tasks, get_task, claim_task, complete_task, "
     "schedule_cron, list_crons, cancel_cron.",
@@ -322,6 +329,7 @@ def execute_tool(block) -> str:
         "get_task": run_get_task,
         "claim_task": run_claim_task,
         "complete_task": run_complete_task,
+        # 对话中的主要入口是模型调用 Cron Tool；启动时也会恢复此前持久化的 Job。
         "schedule_cron": run_schedule_cron,
         "list_crons": run_list_crons,
         "cancel_cron": run_cancel_cron,
@@ -385,7 +393,7 @@ def collect_background_results() -> list[str]:
 
 
 # ── Cron Scheduler (s14 new) ──
-
+# 持久化文件保存 CronJob 定义；具体的五字段表达式位于 CronJob.cron。
 DURABLE_PATH = WORKDIR / ".scheduled_tasks.json"
 
 
@@ -399,12 +407,13 @@ class CronJob:
 
 
 scheduled_jobs: dict[str, CronJob] = {}
+# 教学版使用受 cron_lock 保护的普通 list，不是具有确认和重投能力的持久消息队列。
 cron_queue: list[CronJob] = []
 cron_lock = threading.Lock()
 agent_lock = threading.Lock()
 _last_fired: dict[str, str] = {}  # job_id → "YYYY-MM-DD HH:MM"
 
-
+# 原子化匹配一个字段和值；字段所属位置及合法范围由 validate_cron() 负责校验。
 def _cron_field_matches(field: str, value: int) -> bool:
     """Match a single cron field against a value."""
     if field == "*":
@@ -423,6 +432,7 @@ def _cron_field_matches(field: str, value: int) -> bool:
 def cron_matches(cron_expr: str, dt: datetime) -> bool:
     """Check if a 5-field cron expression matches the given datetime.
     Standard cron semantics: DOM and DOW use OR when both are constrained."""
+    # 无参数 split() 按连续空白字符切割，并自动忽略首尾及重复空白。
     fields = cron_expr.strip().split()
     if len(fields) != 5:
         return False
@@ -449,7 +459,7 @@ def cron_matches(cron_expr: str, dt: datetime) -> bool:
         return dom_ok
     return dom_ok or dow_ok
 
-
+# 校验单个字段的语法和值域；它不判断日期组合在日历上是否真实存在。
 def _validate_cron_field(field: str, lo: int, hi: int) -> str | None:
     """Validate a single cron field value is within [lo, hi]."""
     if field == "*":
@@ -485,7 +495,7 @@ def _validate_cron_field(field: str, lo: int, hi: int) -> str | None:
         return f"Value {val} out of bounds [{lo}-{hi}]"
     return None
 
-
+# 表达式级入口：先要求五个字段，再按分钟、小时、日、月、星期分别校验。
 def validate_cron(cron_expr: str) -> str | None:
     """Validate a cron expression. Returns error message or None."""
     fields = cron_expr.strip().split()
@@ -503,6 +513,7 @@ def validate_cron(cron_expr: str) -> str | None:
 def save_durable_jobs():
     """Persist durable jobs to .scheduled_tasks.json."""
     durable = [asdict(j) for j in scheduled_jobs.values() if j.durable]
+    # durable 只保证调度定义可在重启后恢复，不保证停机期间补跑或执行状态恢复。
     DURABLE_PATH.write_text(json.dumps(durable, indent=2))
 
 
@@ -547,7 +558,7 @@ def schedule_job(
     print(f"  \033[35m[cron register] {job.id} '{cron}' → {prompt[:40]}\033[0m")
     return job
 
-
+# 取消后先移除内存中的调度定义；durable Job 还需重写磁盘中的剩余定义。
 def cancel_job(job_id: str) -> str:
     """Cancel a cron job."""
     with cron_lock:
@@ -555,16 +566,18 @@ def cancel_job(job_id: str) -> str:
     if not job:
         return f"Job {job_id} not found"
     if job.durable:
+        # 这里只取消未来调度；已经进入 cron_queue 的那次触发不会被撤回。
         save_durable_jobs()
     print(f"  \033[31m[cron cancel] {job_id}\033[0m")
     return f"Cancelled {job_id}"
 
-
+# Scheduler 只产生“到期并入队”事件；Agent 工作由 Queue Processor 后续交付。
 def cron_scheduler_loop():
     """Independent daemon thread: poll every 1s, fire matching jobs.
     Individual job errors are caught to prevent one bad job from
     killing the entire scheduler thread."""
     while True:
+        # 每秒轮询一次；minute_marker 防止同一分钟内重复入队。
         time.sleep(1)
         now = datetime.now()
         # Date-aware marker prevents daily jobs from skipping on day 2+
@@ -610,7 +623,7 @@ print("  \033[35m[cron] scheduler thread started\033[0m")
 
 # ── Cron Tools ──
 
-
+# Tool Adapter 负责注册 Job；到期后的关键链路是 Scheduler → Queue → Agent Loop。
 def run_schedule_cron(
     cron: str, prompt: str, recurring: bool = True, durable: bool = True
 ) -> str:
@@ -779,6 +792,9 @@ def agent_loop(messages: list, context: dict) -> dict:
     system = get_system_prompt(context)
     while True:
         # Layer 4: consume fired cron jobs → inject as messages
+        # 到期的 CronJob 不是固定函数调用：Harness 将 prompt 转成带 [Scheduled]
+        # 标签的 user-role 消息，在下一次模型调用前注入上下文。标签只说明来源语义，
+        # 真正的交付时机由队列和锁控制；模型也只能在当前 Tool/权限边界内决定动作。
         fired = consume_cron_queue()
         for job in fired:
             messages.append({"role": "user", "content": f"[Scheduled] {job.prompt}"})
@@ -881,6 +897,7 @@ def queue_processor_loop():
         time.sleep(0.2)
         if not has_cron_queue():
             continue
+        # 非抢占式交付：Agent 忙时不打断当前模型或 Tool，等待下一次可获得锁的安全点。
         if not agent_lock.acquire(blocking=False):
             continue
         try:
