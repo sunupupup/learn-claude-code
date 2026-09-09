@@ -228,6 +228,15 @@ CC 的团队通信有 15 种结构化消息（`teammateMailbox.ts`）：
 
 文本消息被包装在 `<teammate-message>` XML 标签中交付给模型。
 
+这 15 种类型不是 15 个独立的 tool——它们共享同一个文件收件箱通道，只靠 `type` 字段区分语义。而且并非全部由模型主动发送，分两层：
+
+| 发送方 | 典型消息类型 | 说明 |
+|---|---|---|
+| **模型**（通过 `send_message`） | `plain text` | 模型自己决定要跟谁说什么 |
+| **Runtime / Harness** | `permission_request`、`idle_notification`、`shutdown_request` 等 | 运行时在特定事件发生时自动注入，模型不需要主动调用 |
+
+这种设计把协议复杂度从模型侧转移到 Runtime 侧：模型只暴露 `send_message` 一个通信 tool，确定性的事件驱动流程（权限审批、心跳、关机握手）由 Runtime 自动处理。工具越少，模型的选择空间越小，决策越稳定。
+
 ### 三、权限冒泡：双向轮询
 
 教学版省略了权限冒泡。CC 的实际流程（`permissionSync.ts`）：
