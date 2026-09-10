@@ -402,7 +402,7 @@ class CronJob:
     id: str
     cron: str  # "0 9 * * *"
     prompt: str  # message to inject when fired
-    recurring: bool  # True = recurring, False = one-shot
+    recurring: bool  # True = 循环任务（定期执行），False = 一次性任务（只执行一次）
     durable: bool  # True = persist to disk
 
 
@@ -553,6 +553,7 @@ def schedule_job(
     )
     with cron_lock:
         scheduled_jobs[job.id] = job
+    # 这个是专门用于持久化的标志，如果是True，下次重启的时候，任务不会丢失 
     if durable:
         save_durable_jobs()
     print(f"  \033[35m[cron register] {job.id} '{cron}' → {prompt[:40]}\033[0m")

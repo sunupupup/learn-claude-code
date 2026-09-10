@@ -107,6 +107,368 @@ registered → due → enqueued → delivered → model_called
 
 到期、入队、模型看到消息、模型采取动作和业务真正完成是不同事实。
 
+## 第 1 道验收题与我的 Demo
+
+### 题目
+
+> 每个工作日上午 9 点，让 Agent 检查当前任务并总结阻塞项；重启后仍保留这个计划。请写出从用户提出要求，到 LLM 收到定时消息的完整伪代码。至少覆盖注册、校验、持久化、时间匹配、分钟级去重、入队、等待 Agent 空闲、消息注入和模型调用；同时标出哪些步骤由确定性代码完成，哪些步骤由 LLM 完成，并解释 `durable` 的边界以及它与传统 Cron 的主要区别。
+
+### 我的核心思路
+
+🔴 **已验证理解**：我已经抓住了生产者—消费者主干：
+
+```text
+scheduled_jobs（调度定义）
+  → Scheduler 每秒检查一次
+  → 到期且本分钟尚未触发时生成执行事件
+  → job_queue（待交付事件）
+  → Queue Processor 等待 Agent 空闲
+  → Agent Loop 注入 user message
+  → 下一次 LLM Call
+```
+
+每秒检查并不表示同一个 Job 每秒执行一次。Scheduler 会记录该 Job 上一次触发的分钟；同一分钟再次匹配时忽略，进入新分钟且再次满足表达式时才产生新的执行事件。
+
+在题目场景中，第一次模型调用会把自然语言转换为类似下面的 Tool Call：
+
+```text
+LLM → create_job(
+  cron = "0 9 * * 1-5",
+  durable = true,
+  recurring = true,
+  prompt = "检查当前任务并总结阻塞项"
+)
+```
+
+### 润色后的完整伪代码
+
+下面保留我的 Demo 结构，只修正基础语法和几个会改变行为的状态边界：
+
+```text
+# ==================== Tool 定义：提供给 LLM ====================
+
+TOOLS = {
+  "create_job": {
+    "input_schema": {
+      "cron": {
+        "type": "string",
+        "description": "五字段 Cron 表达式"
+      },
+      "durable": {
+        "type": "boolean",
+        "description": "是否持久化调度定义，使进程重启后可以恢复"
+      },
+      "prompt": {
+        "type": "string",
+        "description": "任务到期后注入给 Agent 的消息"
+      },
+      "recurring": {
+        "type": "boolean",
+        "description": "是否为重复任务"
+      }
+    }
+  },
+  "delete_job": { ... },
+  "list_jobs": { ... }
+}
+
+
+# ==================== Runtime 状态 ====================
+
+scheduled_jobs = {}   # 调度定义：等待未来某个时间点匹配
+job_queue = Queue()   # 执行事件：已经到期，等待交付给 Agent
+last_fired = {}       # job_id -> 上次触发的分钟标记
+agent_lock = Lock()   # 保证同一时刻只有一个 Agent Turn 运行
+
+
+# ==================== Tool Handler：确定性代码 ====================
+
+function create_job(cron, durable, prompt, recurring = true):
+  validation_error = validate_cron(cron)
+  if validation_error exists:
+    return ToolError(validation_error)
+
+  job = Job(
+    id = generate_job_id(),
+    cron = cron,
+    durable = durable,
+    prompt = prompt,
+    recurring = recurring
+  )
+
+  # 新建的是“调度定义”，还没有到执行时间，不能直接放进 job_queue。
+  scheduled_jobs[job.id] = job
+
+  if durable:
+    persist_durable_jobs(scheduled_jobs)
+
+  return ToolResult(job)
+
+
+function delete_job(job_id):
+  job = scheduled_jobs.remove(job_id)
+  if job exists and job.durable:
+    persist_durable_jobs(scheduled_jobs)
+  return ToolResult(job exists)
+
+
+function list_jobs():
+  return ToolResult(scheduled_jobs.values())
+
+
+TOOLS_HANDLER = {
+  "create_job": create_job,
+  "delete_job": delete_job,
+  "list_jobs": list_jobs
+}
+
+
+# ==================== 启动恢复：确定性代码 ====================
+
+# 只恢复 durable 的调度定义，不恢复未持久化的队列事件或执行现场。
+scheduled_jobs.update(load_durable_jobs())
+
+
+# ==================== Job 生产者：确定性代码 ====================
+
+function produce_jobs():
+  while process_is_running:
+    sleep(1 second)
+    now = current_local_time()
+    minute_marker = format(now, "YYYY-MM-DD HH:mm")
+
+    for job in snapshot(scheduled_jobs.values()):
+      if cron_matches(job.cron, now):
+        # Scheduler 每秒轮询，但同一个 Job 在同一分钟只允许入队一次。
+        if last_fired[job.id] == minute_marker:
+          continue
+
+        job_queue.push(FiredJob(job_id = job.id, prompt = job.prompt))
+        last_fired[job.id] = minute_marker
+
+        # 重复任务保留定义；一次性任务在成功入队后移除定义。
+        if not job.recurring:
+          scheduled_jobs.remove(job.id)
+          if job.durable:
+            persist_durable_jobs(scheduled_jobs)
+
+
+# ==================== Agent 空闲唤醒器：确定性代码 ====================
+
+function queue_processor_loop():
+  while process_is_running:
+    sleep(200 milliseconds)
+
+    if job_queue.is_empty():
+      continue
+
+    # Agent 忙时不抢占当前 LLM Call 或 Tool，只等待下一个安全边界。
+    if agent_lock.try_acquire():
+      try:
+        agent_loop(messages = conversation_history)
+      finally:
+        agent_lock.release()
+
+
+# ==================== Agent Loop：Runtime + LLM ====================
+
+function agent_loop(messages):
+  while true:
+    # 确定性代码：在下一次模型调用前消费已经到期的事件。
+    for fired_job in job_queue.consume_all():
+      messages.append({
+        "role": "user",
+        "content": "[Scheduled] " + fired_job.prompt
+      })
+
+    # LLM：理解普通用户消息或定时消息，并决定回复或调用 Tool。
+    response = LLM(messages = messages, tools = TOOLS)
+    messages.append({ "role": "assistant", "content": response.content })
+
+    if response.stop_reason != "tool_use":
+      return
+
+    # 确定性代码：执行 LLM 选择的 Tool，并按协议回填 Tool Result。
+    tool_results = []
+    for tool_call in response.tool_calls:
+      handler = TOOLS_HANDLER[tool_call.name]
+      result = handler(**tool_call.input)
+      tool_results.append({
+        "type": "tool_result",
+        "tool_use_id": tool_call.id,
+        "content": result
+      })
+
+    messages.append({ "role": "user", "content": tool_results })
+
+
+# ==================== 进程启动 ====================
+
+start_daemon_thread(produce_jobs)
+start_daemon_thread(queue_processor_loop)
+```
+
+这份 Demo 中，LLM 负责两类语义判断：第一次理解“每个工作日上午 9 点……”并决定调用 `create_job`；任务到期后理解 `[Scheduled]` 消息并决定如何回复或调用其他 Tool。注册、校验、持久化、匹配、去重、入队、加锁和消息封装都由确定性 Runtime 代码完成。
+
+### 本次校准的关键点
+
+- `create_job()` 应写入 `scheduled_jobs`，不能直接写入 `job_queue`，否则任务会在注册后立刻执行；
+- 每秒轮询需要配合 `last_fired` 做分钟级去重；
+- `recurring=True` 表示保留调度定义，只有 `not recurring` 时才在入队后删除；
+- Agent Loop 不是永久不退出，因此需要 Queue Processor 在队列非空且 Agent 空闲时启动新的 Agent Turn；
+- `durable=True` 只保证调度定义可在重启后恢复，不保证停机期间补跑，也不保证排队事件和执行现场恢复；
+- 传统 Cron 到期后通常直接调用固定 Handler；这里到期后先注入消息，再由 LLM 根据上下文决定后续动作。
+
+## 第 2 道验收题：取消、队列与重启
+
+### 题目
+
+```yaml
+09:00:00  一个 recurring + durable Job 到期并进入 cron_queue
+09:00:00  Agent 正在执行其他任务，持有 agent_lock
+09:00:10  用户调用 cancel_job(job_id)
+09:00:25  Agent 释放 agent_lock
+09:00:30  Queue Processor 再次检查队列
+09:01:00  进程重启
+```
+
+需要回答：
+
+1. `cancel_job()` 后，`scheduled_jobs`、`cron_queue` 和 `.scheduled_tasks.json` 分别是什么状态？
+2. 09:00 已经入队的这次任务还会不会进入 Agent Loop？说明代码依据。
+3. 重启后会恢复调度定义、已入队事件，还是执行状态？
+4. 设计一个无副作用实验验证判断，并列出需要观察的日志或状态证据。
+
+### 我的回答与校准
+
+#### 1. 取消后的三份状态
+
+我的判断：
+
+> `scheduled_jobs` 和 `.scheduled_tasks.json` 空了，`cron_queue` 里还有一个等待消费的 Job。
+
+🔴 **已验证理解**：对于题目中的目标 Job，取消后会从 `scheduled_jobs` 和持久化文件中消失，但已经进入 `cron_queue` 的这次触发仍然保留。
+
+边界：只有当它是系统中唯一的 durable Job 时，`.scheduled_tasks.json` 才会整体为空；如果还有其他 durable Jobs，文件会保留其他定义。
+
+#### 2. 已入队事件是否还会进入 Agent Loop
+
+我的判断：
+
+> 会进入。`consume_cron_queue()` 会直接取得整个队列，不会额外检查 Job 是否刚刚从 `scheduled_jobs` 删除。
+
+🔴 **已验证理解**：这个判断正确。`cancel_job()` 只取消未来调度，不撤销已经产生的队列事件。09:00:30 Queue Processor 获得 `agent_lock` 后，会启动 Agent Turn；Agent Loop 调用 `consume_cron_queue()`，把这个 Job 转成 `[Scheduled]` user message。
+
+对应调用链：
+
+```text
+cancel_job()
+  → 只从 scheduled_jobs 删除定义并重写 durable 文件
+  → cron_queue 中的 Fired Job 保持不变
+
+queue_processor_loop()
+  → 获得 agent_lock
+  → run_agent_turn_locked()
+  → agent_loop()
+  → consume_cron_queue()
+  → 注入 [Scheduled] user message
+```
+
+#### 3. 重启后恢复什么
+
+我的直观回答：
+
+> 重启后，这个 Job 的东西就都没了。
+
+🔴 **已验证理解**：针对这个已经被取消的 Job，重启后不会恢复其调度定义、已入队事件或执行状态。
+
+更准确的边界是：
+
+- 只有重启时仍存在于 `.scheduled_tasks.json` 的 durable 调度定义会被恢复；
+- `cron_queue` 是内存队列，未持久化，重启后不会恢复；
+- 当前实现没有持久化执行状态，因此 running、succeeded 或 failed 等现场不会恢复；
+- 按题目时间线，09:00:30 到 09:01:00 之间，这次事件可能已经进入 Agent Loop；重启不会撤销重启前已经发生的模型调用。
+
+可以把本题结论压缩成一句话：
+
+> 🔴 取消只阻止未来触发，不撤回已入队事件；重启只恢复文件中仍存在的 durable 调度定义，不恢复内存队列和执行现场。
+
+### 无副作用验证实验
+
+不需要真的等待上午 9 点，也不需要赌 LLM 恰好在运行。测试应该主动控制时间、锁和模型调用：
+
+```text
+# 测试缝：把无限循环中的单次工作提取出来
+scheduler_tick(now)       # 使用测试传入的时间检查一次调度
+queue_processor_tick()    # 检查一次队列并尝试交付
+
+# 1. 准备并加载 recurring + durable Job
+write_json(job(cron = "0 9 * * *", recurring = true, durable = true))
+load_durable_jobs()
+
+assert job_id in scheduled_jobs
+assert job_id in read_json(.scheduled_tasks.json)
+
+# 2. 手动持锁，确定性地模拟 Agent 正忙
+agent_lock.acquire()
+
+# 3. 使用 Fake Clock 直接制造 09:00，不等待真实时间
+scheduler_tick(now = "2026-09-09 09:00:00")
+
+assert job_id in scheduled_jobs
+assert job_id in cron_queue
+assert job_id in read_json(.scheduled_tasks.json)
+assert logs contain "[cron fire]"
+
+# 4. 取消未来调度
+cancel_job(job_id)
+
+assert job_id not in scheduled_jobs
+assert job_id in cron_queue
+assert job_id not in read_json(.scheduled_tasks.json)
+assert logs contain "[cron cancel]"
+
+# 5. Agent 仍忙时，Queue Processor 不能消费
+queue_processor_tick()
+
+assert job_id in cron_queue
+assert no "[inject cron]" log exists
+
+# 6. 释放锁，使用 Fake LLM 记录消息但不执行任何真实 Tool
+agent_lock.release()
+queue_processor_tick(fake_llm)
+
+assert job_id not in cron_queue
+assert fake_llm.last_messages contains {
+  role: "user",
+  content: "[Scheduled] ..."
+}
+assert logs contain "[queue processor] delivering scheduled work"
+assert logs contain "[inject cron]"
+
+# 7. 清空内存并重新加载，模拟进程重启
+scheduled_jobs.clear()
+cron_queue.clear()
+last_fired.clear()
+load_durable_jobs()
+
+assert job_id not in scheduled_jobs
+assert cron_queue is empty
+assert no execution state was restored
+```
+
+这个实验走完整的 Runtime Workflow：
+
+```text
+Scheduler → Queue → Queue Processor → Agent Loop → Messages
+```
+
+但不调用真实 LLM。Fake LLM 只记录输入消息，因此不会产生模型 Tool 副作用。当前 Demo 虽然有 Scheduler 和 Queue Processor 后台线程，但 Agent Turn 受 `agent_lock` 串行化；测试可以通过手动持有和释放这把锁，确定性地模拟“Agent 忙”和“Agent 空闲”，不需要制造两个真实 Agent 并发。
+
+本题得到的测试经验：
+
+> 测试时间与并发逻辑时，不要努力制造时间巧合；应通过 Fake Clock、显式的单步 Tick、可控锁和 Fake LLM，把不确定的外部条件变成可重复的状态推进。
+
 ## Cron 表达式与匹配
 
 ### 五字段表达式
@@ -236,6 +598,9 @@ README 折叠区说明真实 CC 还涉及三个 Cron Tool、持久化与会话�
 - durable 只持久化调度定义，不等于 Durable Execution；
 - 消息标签、Runtime 调度和业务授权属于不同层；
 - 非抢占式消息注入发生在模型调用边界，而不是修改正在运行的 LLM 请求。
+- 已独立写出 Scheduler、Queue 和 Agent Loop 的完整伪代码主干，并完成关键状态边界校准。
+- 能区分取消调度定义、撤回已入队事件和进程重启恢复这三种不同语义。
+- 能用 Fake Clock、可控锁和 Fake LLM 设计无副作用的调度测试。
 
 ### 已纠正
 
@@ -246,10 +611,11 @@ README 折叠区说明真实 CC 还涉及三个 Cron Tool、持久化与会话�
 - Agent Tool 不是 CronJob 的唯一创建来源，启动加载和程序直接注册也存在；
 - Agent Loop 不会永远运行；无 Tool Use 时它会返回，之后由 Queue Processor 启动新 Turn；
 - 文本标签不能实现优先级插队或授权。
+- `create_job()` 注册的是未来调度定义，应写入 `scheduled_jobs`，而不是直接写入待执行的 `job_queue`；
+- 重复任务到期后应保留定义；被移除的是成功入队的一次性任务。
 
 ### 尚待验收
 
-- 独立写出完整注册、触发、交付和执行伪代码；
 - 实际运行一个无危险副作用的短任务，观察注册、入队、注入和模型响应顺序；
 - 验证 durable Job 写盘与重启加载；
 - 验证 Agent 忙时 Cron 事件等待、多个 Job 同时到期和取消已入队 Job；
@@ -258,7 +624,7 @@ README 折叠区说明真实 CC 还涉及三个 Cron Tool、持久化与会话�
 
 ## 本章验收结论
 
-当前已经达到“能够解释核心机制、区分关键边界并映射当前代码”的静态学习目标，但还没有达到完整章节运行验收：伪代码需要由学习者独立复述，真实调度与失败场景尚未运行。
+当前已经达到“能够解释核心机制、区分关键边界、映射当前代码，并独立写出完整伪代码主干”的静态学习目标。第 1 道伪代码验收已经通过校准；第 2 道取消与重启场景的静态判断和无副作用实验设计也已完成，但还没有实际运行该实验，因此尚未达到完整章节运行验收。
 
 建议下一步只做一个最小验收：先不用真实 LLM，根据固定时间手工推演或测试 `cron_matches()`，再运行一个无副作用的一分钟任务，记录以下五个时刻：
 
