@@ -97,7 +97,8 @@ def get_task(task_id: str) -> str:
     task = load_task(task_id)
     return json.dumps(asdict(task), indent=2)
 
-
+# `can_start` 主要检查当前 task 的 `blockedBy` 依赖是否都满足；
+# 依赖文件不存在或依赖任务尚未 `completed` 时，都不能开始。
 def can_start(task_id: str) -> bool:
     task = load_task(task_id)
     for dep_id in task.blockedBy:
@@ -111,11 +112,15 @@ def can_start(task_id: str) -> bool:
 # s17 还明确检查 owner，并根据实际返回值判断认领是否成功。
 def claim_task(task_id: str, owner: str = "agent") -> str:
     task = load_task(task_id)
+    # 这是认领任务的前两道 Harness/Runtime 防线：
+    # status 必须是 pending，且任务不能已经有 owner；后面还会检查依赖是否可启动。
     if task.status != "pending":
         return f"Task {task_id} is {task.status}, cannot claim"
     if task.owner:
         return f"Task {task_id} already owned by {task.owner}"
     if not can_start(task_id):
+        # 如果任务暂时不能开始，这里收集具体原因，便于调用方定位阻塞。
+        # deps 只包含已存在但尚未 completed 的依赖；missing 单独记录不存在的依赖 ID。
         deps = [
             d
             for d in task.blockedBy
@@ -126,8 +131,12 @@ def claim_task(task_id: str, owner: str = "agent") -> str:
         if deps:
             parts.append(f"blocked by: {deps}")
         if missing:
+            # 依赖文件缺失通常表示依赖 ID 错误、任务数据不完整或依赖被删除；
+            # 当前教学实现按 fail-closed 处理，不自动修复。
             parts.append(f"missing deps: {missing}")
         return "Cannot start — " + ", ".join(parts)
+
+    # 认领成功：把任务所有权交给 owner，并将状态从 pending 推进到 in_progress。
     task.owner = owner
     task.status = "in_progress"
     save_task(task)
@@ -386,6 +395,9 @@ def idle_poll(agent_name: str, messages: list, name: str, role: str) -> str:
         unclaimed = scan_unclaimed_tasks()
         if unclaimed:
             task = unclaimed[0]
+            # 工作阶段结束后，Teammate 进入 IDLE；Runtime 主动扫描并认领一个任务。
+            # 成功认领后把任务写入 messages，返回 work，让下一次 WORK 阶段的 LLM 看到任务并决定如何执行。
+            # s16 主要依赖 Lead 通过 inbox 派发；s17 把“发现和认领”下沉到 Teammate 的 idle_poll。
             result = claim_task(task["id"], agent_name)
             if "Claimed" in result:
                 messages.append(
@@ -512,6 +524,8 @@ def spawn_teammate_thread(name: str, role: str, prompt: str) -> str:
                 },
             },
             # s17 new: teammates can list, claim, and complete tasks
+            # Teammate 可用的任务工具：查看任务板、认领任务和标记任务完成。
+            # 任务创建主要由 Lead 的完整工具集完成，Teammate 不负责创建任务。
             {
                 "name": "list_tasks",
                 "description": "List all tasks on the board.",
@@ -578,6 +592,10 @@ def spawn_teammate_thread(name: str, role: str, prompt: str) -> str:
             # WORK phase
             should_shutdown = False
             for _ in range(10):
+                # WORK 阶段仍是有限循环，最多执行 10 轮 LLM ↔ Tool 交互；
+                # 结合 IDLE 中的自动认领，可以形成 claim_task → run_bash/read/write → complete_task 的任务处理链。
+                # s15 工作轮次耗尽后退出；s16 主要在完成一轮后进入 idle 等待 inbox；
+                # s17 在 WORK 结束后进入 idle_poll，除了 inbox 还会主动扫描任务板。
                 inbox = BUS.read_inbox(name)
                 for msg in inbox:
                     stopped = handle_inbox_message(name, msg, messages)
