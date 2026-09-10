@@ -6,6 +6,8 @@ Run:  python s17_autonomous_agents/code.py
 Need: pip install anthropic python-dotenv + .env with ANTHROPIC_API_KEY
 
 Changes from s16:
+# 新增：扫描 pending、没有 owner 且所有 blockedBy 依赖已完成的任务。
+# 这是“当前检查时可认领”的候选；真正 claim 时仍会再次校验。
   - scan_unclaimed_tasks: find pending, unowned tasks with deps completed
   - idle_poll: 60s polling loop (inbox + task board), dispatches shutdown in IDLE
   - claim_task: owner check + return value verification
@@ -105,7 +107,8 @@ def can_start(task_id: str) -> bool:
             return False
     return True
 
-
+# Task System 在 s12 已提供 claim_task；s17 复用它，并让 Teammate 在 IDLE 阶段自动调用。
+# s17 还明确检查 owner，并根据实际返回值判断认领是否成功。
 def claim_task(task_id: str, owner: str = "agent") -> str:
     task = load_task(task_id)
     if task.status != "pending":
@@ -331,7 +334,8 @@ def match_response(response_type: str, request_id: str, approve: bool):
 IDLE_POLL_INTERVAL = 5  # seconds
 IDLE_TIMEOUT = 60  # seconds
 
-
+# 这里是 s17 新增的自动发现入口：只在 Teammate 空闲时扫描可认领任务。
+# scan 只负责发现；真正的状态和所有权变更仍由 claim_task 完成。
 def scan_unclaimed_tasks() -> list[dict]:
     """Find pending, unowned tasks with all dependencies completed."""
     unclaimed = []
@@ -716,7 +720,13 @@ def run_review_plan(request_id: str, approve: bool, feedback: str = "") -> str:
 
 # ── Basic tool handlers ──
 
-
+# 这里创建的是 Task System 中的可认领工作项，不是 s13 的 Background Task。
+# Background Task 描述某次 Tool Call 的执行方式：run_in_background 决定同步执行还是放到后台。
+# s13 在 agent_loop 的分派阶段选择 start_background_task 或同步 execute_tool；
+# bg_id 追踪这次后台执行的生命周期，不能与 Task 的 task_id 混用。
+# Task System 来自 s12：示例流程中由主 Agent 按模型决策调用 list、claim、complete 等工具。
+# s17 新增 Teammate 在 IDLE 中自动扫描并认领；Runtime 负责发现与认领，
+# Teammate 的 LLM 仍负责实际工具执行，完成后继续寻找下一个可启动任务，直到无新任务或 idle 超时。
 def run_create_task(
     subject: str, description: str = "", blockedBy: list[str] | None = None
 ) -> str:
@@ -948,7 +958,9 @@ def update_context(context: dict, messages: list) -> dict:
 
 # ── Agent Loop ──
 
-
+# 从外往内看：main 负责读取用户输入和维护 Lead 的 history，agent_loop 负责 Lead 的 LLM ↔ Tool 循环。
+# Lead 侧的 agent_loop 基本沿用 s12；Lead 与 Teammate 的 tools 定义确实不同，
+# 但 s17 的关键新增还包括 Teammate 独立上下文、线程、WORK → IDLE 生命周期和自动认领。
 def agent_loop(messages: list, context: dict):
     system = get_system_prompt(context)
     while True:
