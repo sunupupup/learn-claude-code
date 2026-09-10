@@ -6,6 +6,7 @@ Run:  python s16_team_protocols/code.py
 Need: pip install anthropic python-dotenv + .env with ANTHROPIC_API_KEY
 
 Changes from s15:
+# 对send_message 的各种 message 进行区分， 通过统一的message和不同的type，来代替传统的一个行为一个tool的设计
   - ProtocolState dataclass (request_id, type, sender, status, created_at)
   - pending_requests dict: tracks in-flight protocol requests
   - dispatch_message: routes incoming messages by type to handlers
@@ -13,8 +14,10 @@ Changes from s15:
   - request_plan: Lead asks teammate to submit plan
   - handle_shutdown_request / handle_plan_response: teammate receives & responds
   - match_response: Lead correlates response to request via request_id (with type validation)
+#   哦？这边要重复利用空闲teammate了？ 我往下继续看
   - Teammate idle loop: waits for inbox messages instead of exiting after 10 rounds
   - Unified consume_lead_inbox: protocol routing + injection into history
+#   哎 ？奇怪，为啥lead agent这边要新加tool ？而不是放在 send_message里面
   - 3 new Lead tools: request_shutdown, request_plan, review_plan
   - 1 new teammate tool: submit_plan
 
@@ -160,6 +163,7 @@ PROMPT_SECTIONS = {
     "tools": "Available tools: bash, read_file, write_file, "
     "get_task, create_task, list_tasks, claim_task, complete_task, "
     "spawn_teammate, send_message, check_inbox, "
+    # 多了三个工具
     "request_shutdown, request_plan, review_plan.",
     "workspace": f"Working directory: {WORKDIR}",
     "memory": "Relevant memories are injected below when available.",
@@ -445,6 +449,8 @@ def match_response(response_type: str, request_id: str, approve: bool):
         print(f"  \033[31m[protocol] unknown request_id: {request_id}\033[0m")
         return
     # Validate response type matches request type
+    # 也是突然意识到，这边为啥只处理了这俩 type 的 msg？ 接着往下看，这俩type有啥特殊的？
+    # 好好看下 request_plan 和 request_shutdown 这俩新增工具的实现
     if state.type == "shutdown" and response_type != "shutdown_response":
         print(
             f"  \033[31m[protocol] type mismatch: expected shutdown_response, "
@@ -463,6 +469,9 @@ def match_response(response_type: str, request_id: str, approve: bool):
             f"ignoring duplicate\033[0m"
         )
         return
+    # 感觉到唯一有用的，是这边 ？ 改了一个全局变量 ？ 
+    # 上面拦了很多错误的pair，然后正确的pair，会将status变成approved或者rejected
+    # 最外层的loop的consume inbox也就只能看出这些了，然后我去看内部的loop会发生啥
     state.status = "approved" if approve else "rejected"
     icon = "✓" if approve else "✗"
     color = "32" if approve else "31"
@@ -491,6 +500,10 @@ def consume_lead_inbox(route_protocol: bool = True) -> list[dict]:
             msg_type = msg.get("type", "")
             if req_id and msg_type.endswith("_response"):
                 approve = meta.get("approve", False)
+                # 所以这个 match_response ？ 到底有啥用 ？
+                # 就是校验，这个inbox的msg_type，是不是和req_id对应的哪个 pending_request 是不是 请求响应 的一对？
+                # 但是有啥用呢1？ 不是一对 ？又没有新的messasge插入？agent会调整？？
+                # 难道还有更多的防护措施 ？ 我接着看 
                 match_response(msg_type, req_id, approve)
     return msgs
 
@@ -618,11 +631,13 @@ def spawn_teammate_thread(name: str, role: str, prompt: str) -> str:
         shutdown_requested = False
         while not shutdown_requested:
             # Check inbox for protocol messages
+            # 依旧teammate agent loop 处理inbox消息
             inbox = BUS.read_inbox(name)
             should_stop = False
             non_protocol = []
             for msg in inbox:
                 if msg.get("type") in ("shutdown_request", "plan_approval_response"):
+                    # 对于明确 需要 approve、reject 的 任务，通过严格的状态控制来约束
                     should_stop = handle_inbox_message(name, msg, messages)
                     if should_stop:
                         break
@@ -727,6 +742,8 @@ def _teammate_submit_plan(from_name: str, plan: str) -> str:
     gating would require blocking the teammate's tool dispatch until
     approval arrives.
     """
+
+    # teammate 创建 pending 的 task, 等待lead批准
     req_id = new_request_id()
     pending_requests[req_id] = ProtocolState(
         request_id=req_id,
@@ -753,6 +770,7 @@ def run_request_shutdown(teammate: str) -> str:
         status="pending",
         payload="",
     )
+    # 好像没啥不同？这个也是塞入一个message啊，唯一的区别就在于 BUS.send("lead", to, content) ， 这边会多 type 字段和 metedata的 request id
     BUS.send(
         "lead",
         teammate,
@@ -766,11 +784,15 @@ def run_request_shutdown(teammate: str) -> str:
 
 def run_request_plan(teammate: str, task: str) -> str:
     """Lead asks a teammate to submit a plan for a task."""
+    # 这边和 send message方法没任何区别啊。。。
     BUS.send("lead", teammate, f"Please submit a plan for: {task}", "message")
     return f"Asked {teammate} to submit a plan"
 
 
 def run_review_plan(request_id: str, approve: bool, feedback: str = "") -> str:
+    # 这个review pla方法，我看着也是lead全权review的是吧
+    # 这边其实是 teammate 创建 pending_requests ，然后 lead 来更新是吧
+    # 而 run_request_shutdown ，是 lead 来创建，teammate来更新状态
     state = pending_requests.get(request_id)
     if not state:
         return f"Request {request_id} not found"
@@ -1080,6 +1102,7 @@ if __name__ == "__main__":
                 print(block.text)
 
         # Check inbox → route protocol + inject into history
+        # 这边有点变化了，每次loop结束，都要从inbox中拿出一堆msg，放入 history 中作为 user msg
         inbox_msgs = consume_lead_inbox(route_protocol=True)
         if inbox_msgs:
             inbox_text = "\n".join(
@@ -1088,3 +1111,11 @@ if __name__ == "__main__":
             history.append({"role": "user", "content": f"[Inbox]\n{inbox_text}"})
             print(f"\n\033[33m[Inbox: {len(inbox_msgs)} messages injected]\033[0m")
         print()
+
+# 所以我之前疑惑 为啥不能全部作为 通用的 send_message 来处理
+# 这边的设计其实是，对于某些明确需要 pending、 reject、approve 状态流转的
+# 通过 tool 来控制，尤其是 创建者 ，比如 lead 的 request_shutdown
+# 还有 teammate 的 request_review_plan 
+# 消费者，必须通过 runtime 的处理机制，来保证消费的结果
+# 所以是丰富了通信协议和方式，但是我没有感受到，更加有效明显的作用哎
+# 增强了某些消息的处理方式 ？
