@@ -30,6 +30,20 @@ s17 当前只有进程内的 `active_teammates: dict[str, bool]`。它可以防�
 
 如果只保留“名字存在”或“任务已被领取”，生产系统很容易把僵尸 Worker 当成可复用 Worker，或者把仍然存活的 Worker 重复创建，丢失上下文并产生重复副作用。
 
+## 本章补记：Teammate 死亡后的任务恢复
+
+这是从 s17 的 timeout / shutdown 讨论中提炼出的重要生产考量：Teammate 中途死亡时，已经 claim 的任务可能仍停留在 `in_progress`。因此，“任务已被领取”绝不等于“任务仍在执行”，更不等于“任务已经完成”。
+
+后续学习需要明确以下恢复边界：
+
+- Teammate heartbeat 只能证明 Worker 最近仍有存活信号，不能证明业务动作或 Tool 已成功；
+- Task lease 过期后，任务不能无条件立即重试，因为旧 Worker 可能只是网络分区，仍在执行副作用；
+- 重新入队需要 lease、fencing token 或版本校验，配合幂等操作，避免旧 Worker 与新 Worker 并发写入；
+- 恢复状态应区分 `unknown`、`recovery`、`requeued` 和 `completed`，不能把 heartbeat 超时直接当作确定失败；
+- Lead / Registry 重启后，还要能根据持久化的任务状态和 Worker 身份继续判断是否恢复，而不是只依赖进程内字典。
+
+这部分是本 Work Pool 的高优先级生产学习目标，暂不扩展 s17 教学代码。
+
 ## Stable Mental Model
 
 ```text

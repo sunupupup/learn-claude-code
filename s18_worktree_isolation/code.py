@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 """
+学习起点：队友即使认领不同任务，也可能修改同一路径的文件。
+原始疑问：同一个大任务为什么还需要多个 worktree？
+校准：是否隔离取决于执行是否需要独立；同一目标也可分别尝试不同方案。
+目录隔离减少开发期间的覆盖，但不消除集成冲突，也不提供完整权限沙箱。
+原始问题与校准结论见 LEARNING_NOTES.draft.md 和 LEARNING_NOTES.md。
+
 s18: Worktree Isolation — git worktree + task-directory binding + event log.
 
 Run:  python s18_worktree_isolation/code.py
@@ -192,7 +198,7 @@ def run_git(args: list[str]) -> tuple[bool, str]:
     except subprocess.TimeoutExpired:
         return False, "Error: git timeout"
 
-
+# 生命周期事件日志提供审计线索；当前尚未实现完整调用链 Trace。
 def log_event(event_type: str, worktree_name: str, task_id: str = ""):
     """Append a lifecycle event to events.jsonl."""
     event = {
@@ -205,7 +211,7 @@ def log_event(event_type: str, worktree_name: str, task_id: str = ""):
     with open(events_file, "a") as f:
         f.write(json.dumps(event) + "\n")
 
-
+# Lead 可提前创建工作区并绑定任务；当前没有检测文件冲突后自动隔离的机制。
 def create_worktree(name: str, task_id: str = "") -> str:
     """Create a git worktree with a dedicated branch. Optionally bind to a task."""
     err = validate_worktree_name(name)
@@ -218,6 +224,7 @@ def create_worktree(name: str, task_id: str = "") -> str:
     if not ok:
         return f"Git error: {result}"
     if task_id:
+        # 仅写入任务的目录标识，不推进状态；队友显式认领包装函数会消费此字段。
         bind_task_to_worktree(task_id, name)
     log_event("create", name, task_id)
     print(f"  \033[33m[worktree] created: {name} at {path}\033[0m")
@@ -265,7 +272,9 @@ def remove_worktree(name: str, discard_changes: bool = False) -> str:
     if not path.exists():
         return f"Worktree '{name}' not found"
     if not discard_changes:
+        # 删除前检查文件与提交数量；计数函数未检查 Git 退出码，存在漏报边界。
         files, commits = _count_worktree_changes(path)
+        # 负值表示捕获到 Python 异常，不覆盖所有 Git 命令失败。
         if files < 0:
             return (
                 f"Cannot verify worktree '{name}' status. "
@@ -278,6 +287,7 @@ def remove_worktree(name: str, discard_changes: bool = False) -> str:
                 "Use discard_changes=true to force removal, "
                 "or keep_worktree to preserve for review."
             )
+    # 到达此处总会带 --force；discard_changes 控制是否跳过前面的改动检查。
     ok1, _ = run_git(["worktree", "remove", str(path), "--force"])
     if not ok1:
         return f"Failed to remove worktree directory for '{name}'"
@@ -288,6 +298,9 @@ def remove_worktree(name: str, discard_changes: bool = False) -> str:
 
 
 def keep_worktree(name: str) -> str:
+    # 原始疑问：“不调用 remove 不就行了？”文件系统结果相同，但这里显式记录保留决定。
+    # 返回值经 Tool Result 进入 Lead 上下文；未设置防删状态，remove 也不读取 keep 事件。
+    # 这是决策反馈，不保证模型后续不删除，也不限制只能保留一个工作区。
     """Keep worktree for manual review. Branch preserved."""
     err = validate_worktree_name(name)
     if err:
@@ -541,6 +554,7 @@ def idle_poll(agent_name: str, messages: list, name: str, role: str) -> str:
             if "Claimed" in result:
                 wt_info = ""
                 if task_data.get("worktree"):
+                    # 确实，这边在自动领取任务的时候，并没有将任务的worktree目录嗲入到下一轮loop，只是告诉了model接下来的工作目录，这边就依赖于model自行调用cd xxx的run bash了是吧 ？
                     wt_path = WORKTREES_DIR / task_data["worktree"]
                     wt_info = f"\nWork directory: {wt_path}"
                 messages.append(
@@ -644,6 +658,9 @@ def spawn_teammate_thread(name: str, role: str, prompt: str) -> str:
                 # Set worktree cwd if task has one
                 task = load_task(task_id)
                 if task.worktree:
+                    # 显式认领成功后记录队友默认目录，bash/read/write 适配层随后读取。
+                    # 无需模型另发 cd，也不修改全局进程 cwd。
+                    # idle_poll 自动认领绕过本包装函数，未同步 wt_ctx。
                     wt_ctx["path"] = str(WORKTREES_DIR / task.worktree)
                 else:
                     wt_ctx["path"] = None
@@ -732,6 +749,8 @@ def spawn_teammate_thread(name: str, role: str, prompt: str) -> str:
             },
         ]
 
+        # 专用工作区管理工具提供给 Lead；队友通过认领与文件工具适配层使用目录。
+        # 这里未实现文件冲突检测；工具分工也不是权限封锁，队友仍有通用 Bash。
         sub_handlers = {
             "bash": _run_bash,
             "read_file": _run_read,
@@ -1106,6 +1125,7 @@ TOOLS = [
         },
     },
     # s18 new: worktree tools
+    # Lead 决定何时调用工作区管理工具，Runtime 执行创建与校验。
     {
         "name": "create_worktree",
         "description": "Create an isolated git worktree with its own branch.",
@@ -1127,6 +1147,7 @@ TOOLS = [
             "required": ["name"],
         },
     },
+    # 可分别保留多个工作区；此工具不建立防删除约束。
     {
         "name": "keep_worktree",
         "description": "Keep a worktree for manual review.",
@@ -1174,7 +1195,7 @@ def update_context(context: dict, messages: list) -> dict:
 
 # ── Agent Loop ──
 
-
+# Lead 沿用模型调用、工具分发与结果回填循环，通过新增三个工具扩展能力。
 def agent_loop(messages: list, context: dict):
     system = get_system_prompt(context)
     while True:
@@ -1216,7 +1237,7 @@ def agent_loop(messages: list, context: dict):
         context = update_context(context, messages)
         system = get_system_prompt(context)
 
-
+# 入口仍负责读取用户输入、运行 Lead Loop，并消费队友消息。
 if __name__ == "__main__":
     print("s18: worktree isolation")
     print("Enter a question, press Enter to send. Type q to quit.\n")
