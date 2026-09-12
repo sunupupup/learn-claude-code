@@ -1055,7 +1055,14 @@ def trigger_hooks(event: str, *args):
 DENY_LIST = ["rm -rf /", "sudo", "shutdown", "reboot", "mkfs", "dd if="]
 DESTRUCTIVE = ["rm ", "> /etc/", "chmod 777"]
 
-
+# 这个是一个hook，挂在了 PreToolUse 中，在每次tool之前调用
+# 这个里面有三个策略
+# 1. 调用bash tool：会检查 inout.command
+#    是否在 DENY_LIST 中，如果存在，则拒绝执行
+#    是否在 DESTRUCTIVE 可能有破坏性的命令中，如果存在，需要人为的批准
+# 2. 调用 write_file 或者 edit_file 的动作
+#    检查文件路径的合法性，必须是 当前工作区的 相对路径
+# 3. 调用 mcp 相关的工具：仅做了简单的判断，判断某些可能的危险行为，也是需要认为批准
 def permission_hook(block):
     # The permission layer sees the raw tool_use before dispatch. It can deny,
     # ask the user, or allow execution to continue.
@@ -1067,6 +1074,7 @@ def permission_hook(block):
         if any(token in command for token in DESTRUCTIVE):
             print(f"\n\033[33m[permission] destructive command\033[0m")
             print(f"  {command}")
+            # 这边会需要人为的批准
             choice = input("  Allow? [y/N] ").strip().lower()
             if choice not in ("y", "yes"):
                 return "Permission denied by user"
@@ -1385,7 +1393,7 @@ def write_transcript(messages: list) -> Path:
             f.write(json.dumps(msg, default=str) + "\n")
     return path
 
-
+# 通过一次简单的llm call来进行压缩
 def summarize_history(messages: list) -> str:
     conversation = json.dumps(messages, default=str)[:80000]
     prompt = (
@@ -1411,6 +1419,10 @@ def reactive_compact(messages: list) -> list:
     print(f"  \033[31m[reactive compact] transcript saved: {transcript}\033[0m")
     try:
         summary = summarize_history(messages)
+    # 这边有error。。。怎么上面的 compact_history 没有error处理。。。
+    # 这个 error 啥意思
+    # 遇到任何错，都不能停止这次压缩 ？
+    # 感觉 就是 即使summary失败，也要继续执行后续的代码，messages 强制变成后几条
     except Exception:
         summary = "Earlier conversation was trimmed after a prompt-too-long error."
     tail_start = max(0, len(messages) - 5)
@@ -1445,6 +1457,11 @@ def retry_delay(attempt: int) -> float:
 
 
 def with_retry(fn, state: RecoveryState):
+    # 瞅瞅看这里面重试的机制如何
+    # 首先是最大重试次数是 3
+    # 429 ， sleep一会 ， 直接重试一次
+    # 529，也可以重试，但是他会额外最后用备份模型兜底
+    # 哦哦，难怪没找到 attempt 自增，他是一个 for in 循环。。。
     for attempt in range(MAX_RETRIES):
         try:
             result = fn()
@@ -1461,6 +1478,8 @@ def with_retry(fn, state: RecoveryState):
                 )
                 time.sleep(delay)
                 continue
+            # 529的比较特殊，也会直接重试，这边可能原因是llm服务商服务器负载太大
+            # 如果还是529，那就得用备用模型兜底重试了
             if "overloaded" in name or "529" in msg or "overloaded" in msg:
                 state.consecutive_529 += 1
                 if state.consecutive_529 >= MAX_CONSECUTIVE_529 and FALLBACK_MODEL:
@@ -1536,6 +1555,8 @@ def start_background_task(block, handlers: dict) -> str:
         result = call_tool_handler(handler, block.input, block.name)
         trigger_hooks("PostToolUse", block, result)
         with background_lock:
+            # 任务完成之后，放到一个 全局变量中
+            # agent那边，应该会loop前或者loop后，收集一次全量的成功的task结果吧，我继续看
             background_tasks[bg_id]["status"] = "completed"
             background_results[bg_id] = str(result)
 
@@ -1560,6 +1581,7 @@ def collect_background_results() -> list[str]:
     notifications = []
     for bg_id in ready:
         with background_lock:
+            # 搜集完之后，这些数据都会被删除掉，避免重复搜集
             task = background_tasks.pop(bg_id)
             output = background_results.pop(bg_id, "")
         summary = output[:200] if len(output) > 200 else output
@@ -2353,9 +2375,16 @@ agent_lock = threading.Lock()
 
 def prepare_context(messages: list) -> list:
     # Every LLM turn enters through the same context budget pipeline.
+    # 压缩大的tool result
     messages[:] = tool_result_budget(messages)
+    # 这个是 规定最长 50 条消息，多了就裁剪
     messages[:] = snip_compact(messages)
+    # 压缩早期的tool result，只保留最近的三条
     messages[:] = micro_compact(messages)
+
+    # 最后再做一下 整个 messgaes 的字符长度， 超过50000，进行一次全量的压缩
+    # 这边的压缩会经过一次llm的处理
+    # 并且保留压缩的 transcript 作为记录
     if estimate_size(messages) > CONTEXT_LIMIT:
         messages[:] = compact_history(messages)
     return messages
@@ -2370,6 +2399,7 @@ def build_user_content(results: list[dict]) -> list[dict]:
     return content
 
 
+# 收集后台完成的异步任务的结果，某些长时间的tool call，带着特殊的 rn_bg 的标识
 def inject_background_notifications(messages: list):
     notes = collect_background_results()
     if notes:
@@ -2385,6 +2415,7 @@ def call_llm(
     messages: list, context: dict, tools: list, state: RecoveryState, max_tokens: int
 ):
     system = assemble_system_prompt(context)
+    # llm call的 方法，这边包了一个 wrapper style hook
     return with_retry(
         lambda: client.messages.create(
             model=state.current_model,
@@ -2399,8 +2430,10 @@ def call_llm(
 
 def agent_loop(messages: list, context: dict):
     global rounds_since_todo
+    # 预置工具 + 已连接的mcp服务拿到的工具
     tools, handlers = assemble_tool_pool()
     state = RecoveryState()
+    # 想起来了，这个max token是llm输出token限制
     max_tokens = DEFAULT_MAX_TOKENS
 
     while True:
@@ -2411,6 +2444,7 @@ def agent_loop(messages: list, context: dict):
             messages.append({"role": "user", "content": f"[Scheduled] {job.prompt}"})
             print(f"  \033[35m[cron inject] {job.prompt[:60]}\033[0m")
 
+        # 找到了，这个是在loop循环中，每次llm call前，搜集bg task结果，放到messages中， 作为一种 user message
         inject_background_notifications(messages)
 
         if rounds_since_todo >= 3:
@@ -2418,7 +2452,10 @@ def agent_loop(messages: list, context: dict):
                 {"role": "user", "content": "<reminder>Update your todos.</reminder>"}
             )
             rounds_since_todo = 0
-
+# 每次call llm之前，一些必要的准备工作，其实就是llm call的参数准备
+# context: 这边的context，其实更多是和system prompt挂钩、tools 列表 、活跃状态的teammate、记忆内容、已连接的mcp服务 等
+# tools: 需要重新整合， build in tools + mcp tools
+# messages: 代表全量的 message， 需要一些必要的压缩，常见情况下最后一条是通常是 最新的 user query 、 或者 上次 tool call result
         prepare_context(messages)
         context = update_context(context, messages)
         tools, handlers = assemble_tool_pool()
@@ -2426,6 +2463,7 @@ def agent_loop(messages: list, context: dict):
         try:
             response = call_llm(messages, context, tools, state, max_tokens)
         except Exception as e:
+            # 这边是 llm 第三方api 返回的token太多的错误，进行一次紧急的压缩
             if is_prompt_too_long_error(e) and not state.has_attempted_reactive_compact:
                 messages[:] = reactive_compact(messages)
                 state.has_attempted_reactive_compact = True
@@ -2440,6 +2478,8 @@ def agent_loop(messages: list, context: dict):
             )
             return
 
+        # 这个其实是llm call成功了，但是 stop reason 不正常
+        # 加大一次 max_tokens 的输出，再试一次
         if response.stop_reason == "max_tokens":
             if not state.has_escalated:
                 max_tokens = ESCALATED_MAX_TOKENS
@@ -2453,6 +2493,8 @@ def agent_loop(messages: list, context: dict):
                 continue
             return
 
+        # llm call 结束了
+        # 重置状态，重试状态、llm call重试次数、max token重置 等
         max_tokens = DEFAULT_MAX_TOKENS
         state.has_escalated = False
         messages.append({"role": "assistant", "content": response.content})
@@ -2460,6 +2502,7 @@ def agent_loop(messages: list, context: dict):
             trigger_hooks("Stop", messages)
             return
 
+        # 拿到llm call的结果，开始执行tool call等操作了
         results = []
         compacted_now = False
         for block in response.content:
@@ -2467,6 +2510,7 @@ def agent_loop(messages: list, context: dict):
                 continue
             print(f"\033[36m> {block.name}\033[0m")
 
+            # 奇怪，突然有点忘记了，模型层 啥情况会主动调用compact tool啊 ？
             if block.name == "compact":
                 messages[:] = compact_history(messages)
                 messages.append(
@@ -2488,7 +2532,7 @@ def agent_loop(messages: list, context: dict):
                     }
                 )
                 continue
-
+            # 后台异步task，先用占位符的 bg_id 放到 tool call result中
             if should_run_background(block.name, block.input):
                 bg_id = start_background_task(block, handlers)
                 output = (
@@ -2540,17 +2584,26 @@ def cron_autorun_loop(history: list, context: dict):
             for job in fired:
                 history.append({"role": "user", "content": f"[Scheduled] {job.prompt}"})
                 terminal_print(f"  \033[35m[cron auto] {job.prompt[:60]}\033[0m")
+            # 这边有点不同了啊，之前的是cron job到时间了，给agent发个消息
+            # 现在直接单独起一个 agent loop来处理了，不干扰那边的上下文了
+            # 不对，这边还是公用这所有的 history 和 context
+            # 那这边执行的 agent_loop 和 main那边的agent_loop 有啥区别 。。。
+            # 感觉唯一的区别，就是不会检查收件箱。。。
+            # 因为这边只要负责完成最新的一个 user message， 也就是一个Scheduled任务就行
             agent_loop(history, context)
             context.update(update_context(context, history))
             print_turn_assistants(history, turn_start)
 
-
+# 先看main
 if __name__ == "__main__":
     CLI_ACTIVE = True
     print("s20: comprehensive agent")
     print("Enter a question, press Enter to send. Type q to quit.\n")
     history = []
+    # 对于一些动态数据，需要每次都update一下
+    # 里面包括 记忆内容、已连接的mcp服务、活跃状态的teammate
     context = update_context({}, [])
+    # 那些持久化的cron job，启动
     threading.Thread(
         target=cron_autorun_loop, args=(history, context), daemon=True
     ).start()
