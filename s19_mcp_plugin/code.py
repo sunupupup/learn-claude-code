@@ -4,7 +4,9 @@ s19: MCP Tools — MCPClient + tool discovery + assemble_tool_pool.
 
 Run:  python s19_mcp_plugin/code.py
 Need: pip install anthropic python-dotenv + .env with ANTHROPIC_API_KEY
-
+哦？看来多了很多方法和工具
+这边应该是mock了一个本地的 mcp server吧 ？子线程？
+我继续深入观察
 Changes from s18:
   - MCPClient class: discovers tools, calls tools via mock handler
   - normalize_mcp_name: normalize tool/server names
@@ -832,12 +834,27 @@ mcp_clients: dict[str, MCPClient] = {}
 
 _DISALLOWED_CHARS = re.compile(r"[^a-zA-Z0-9_-]")
 
-
+# 为啥要处理名字？有特殊字符咋了。。。
 def normalize_mcp_name(name: str) -> str:
     """Replace non [a-zA-Z0-9_-] with underscore."""
     return _DISALLOWED_CHARS.sub("_", name)
 
-
+# 如果是 外部的 mcp ，该怎么定义啊 ？
+# 就比如 cursor 里面的
+# {
+#   "mcpServers": {
+#     "context7": {
+#       "url": "https://mcp.context7.com/mcp",
+#       "headers": {
+#         "CONTEXT7_API_KEY": "<REDACTED_CONTEXT7_API_KEY>"
+#       }
+#     },
+#     "drawio": {
+#       "command": "npx",
+#       "args": ["@drawio/mcp"]
+#     },
+# }
+# 这种方式，agent是如何连接的 ？？
 def _mock_server_docs():
     client = MCPClient("docs")
     client.register(
@@ -901,14 +918,20 @@ MOCK_SERVERS = {
     "deploy": _mock_server_deploy,
 }
 
-
+# model 会决定，链接那个mcp server
 def connect_mcp(name: str) -> str:
     if name in mcp_clients:
         return f"MCP server '{name}' already connected"
     factory = MOCK_SERVERS.get(name)
+    # 看来是这边 ？
+    # 在初次 loop 的时候，首先会调用这个相当于是空的connect_mcp
+    # 来获取可用的mcp servver
+    # 不过为啥这个不妨到system prompt里面？
     if not factory:
         available = ", ".join(MOCK_SERVERS.keys())
         return f"Unknown server '{name}'. Available: {available}"
+    # 真实环境的mcp 是咋完成的 。。。 应该至少有个 ip + 端口吧
+    # 这边是主要的链接方法
     mcp_client = factory()
     mcp_clients[name] = mcp_client
     tool_names = [t["name"] for t in mcp_client.tools]
@@ -918,7 +941,8 @@ def connect_mcp(name: str) -> str:
         f"Discovered {len(mcp_client.tools)} tools: {', '.join(tool_names)}"
     )
 
-
+# 然后在这边，每次loop前，都会调用 一次 tool 的重加载
+# 这边就会拿到上面所连接的mcp的相关tools
 def assemble_tool_pool() -> tuple[list[dict], dict]:
     """Assemble builtin tools + all MCP tools into one pool."""
     tools = list(BUILTIN_TOOLS)
@@ -928,6 +952,7 @@ def assemble_tool_pool() -> tuple[list[dict], dict]:
         for tool_def in mcp_client.tools:
             safe_tool = normalize_mcp_name(tool_def["name"])
             prefixed = f"mcp__{safe_server}__{safe_tool}"
+            # 看来这边还是，在封装一遍tool的名字，
             tools.append(
                 {
                     "name": prefixed,
@@ -1180,8 +1205,10 @@ BUILTIN_TOOLS = [
             "required": ["name"],
         },
     },
+    # 唯一的区别，多了个 connect_mcp 工具
     {
         "name": "connect_mcp",
+        # 艹？？ 为啥可用的mcp写在这了。。。
         "description": "Connect to an MCP server (docs, deploy) and discover tools.",
         "input_schema": {
             "type": "object",
@@ -1228,8 +1255,11 @@ def update_context(context: dict, messages: list) -> dict:
 
 # ── Agent Loop (s19: dynamic tool pool, no prompt cache) ──
 
-
+# 再看一次loop
 def agent_loop(messages: list, context: dict):
+    # 有区别了，往里面看
+    # 可是奇怪啊，model这边咋知道有那些mcp可以调用的 ？？在哪有信息的注入 ？？
+    # 要么是 system ， 要么是 tools
     tools, handlers = assemble_tool_pool()
     system = assemble_system_prompt(context)
     while True:
@@ -1269,6 +1299,7 @@ def agent_loop(messages: list, context: dict):
             )
         messages.append({"role": "user", "content": results})
 
+        # lead 这边发起 connect mcp的处理
         if any(
             b.name == "connect_mcp" for b in response.content if b.type == "tool_use"
         ):
@@ -1276,7 +1307,7 @@ def agent_loop(messages: list, context: dict):
             context = update_context(context, messages)
             system = assemble_system_prompt(context)
 
-
+# 还是先观察注agent，没区别
 if __name__ == "__main__":
     print("s19: mcp tools")
     print("Enter a question, press Enter to send. Type q to quit.\n")
