@@ -1,4 +1,4 @@
-# W-2026-027：Claude Code / Codex Agent Runtime 源码与开源项目对照
+# W-2026-022：Claude Code / Codex Agent Runtime 源码与开源项目对照
 
 - Status: ready
 - Area: Agent Runtime Source Study / Multi-Agent / Registry / Lifecycle / Open-Source Comparison
@@ -113,7 +113,7 @@ source-verified ≠ documented ≠ observed-runtime ≠ production-proven
 3. 区分动态上下文注入、模型可调用查询 Tool、事件唤醒和底层心跳；
 4. 为每个结论标注 source-verified、documented、observed-runtime 或未确认；
 5. 选出最多两个主参考项目，避免同时泛读大量框架；
-6. 把源码观察转化为 W-2026-025/W-2026-026 可复用的设计问题，而不是直接复制产品名词。
+6. 把源码观察转化为 W-2026-019/W-2026-020 可复用的设计问题，而不是直接复制产品名词。
 
 ## Why Deferred
 
@@ -121,7 +121,7 @@ source-verified ≠ documented ≠ observed-runtime ≠ production-proven
 
 ## Start Trigger
 
-- 用户明确说“开始 W-2026-027”；
+- 用户明确说“开始 W-2026-022”；
 - 或明确说“开始看 Claude Code/Codex Agent 源码”；
 - 启动时按 [`specs/README.md`](../README.md) 创建对应 Change，并移除本 Work Pool 文件；
 - 启动前重新核验 Commit、许可证、官方文档 URL、源码目录和当前行为。
@@ -150,8 +150,8 @@ source-verified ≠ documented ≠ observed-runtime ≠ production-proven
 
 - [`s17 Autonomous Agents`](../../s17_autonomous_agents/README.md)
 - [`s17 学习笔记`](../../s17_autonomous_agents/LEARNING_NOTES.md)
-- [`W-2026-004：生产级 Subagent Runtime`](./W-2026-004-study-production-subagent-runtime.md)
-- [`W-2026-019：持久 Teammate 生命周期、Idle Loop 与唤醒`](./W-2026-019-study-persistent-teammate-lifecycle.md)
-- [`W-2026-020：Agent-to-Agent 协作方式与通信拓扑`](./W-2026-020-study-agent-to-agent-collaboration-patterns.md)
-- [`W-2026-025：Teammate Registry、存活检测与恢复`](./W-2026-025-study-teammate-registry-and-reuse.md)
-- [`W-2026-026：Lead 团队状态观察方式`](./W-2026-026-study-lead-team-state-observation.md)
+- [`W-2026-015：生产级 Subagent Runtime`](./W-2026-015-study-production-subagent-runtime.md)
+- [`W-2026-018：持久 Teammate 生命周期、Idle Loop 与唤醒`](./W-2026-018-study-persistent-teammate-lifecycle.md)
+- [`W-2026-016：Agent-to-Agent 协作方式与通信拓扑`](./W-2026-016-study-agent-to-agent-collaboration-patterns.md)
+- [`W-2026-019：Teammate Registry、存活检测与恢复`](./W-2026-019-study-teammate-registry-and-reuse.md)
+- [`W-2026-020：Lead 团队状态观察方式`](./W-2026-020-study-lead-team-state-observation.md)

@@ -544,7 +544,7 @@ Alice/Bob → 分别 load → check → save
 - 外部资源是否真正更新；
 - 任务是否由正确 owner 完成。
 
-因此任务状态、Teammate summary 和真实完成证据必须分开。完成验证属于 `W-2026-013`。
+因此任务状态、Teammate summary 和真实完成证据必须分开。完成验证属于 `W-2026-003`。
 
 ### 8.4 timeout 后任务可能无人领取
 
@@ -593,11 +593,11 @@ README 中关于真实 CC 的 `idle_notification`、task watcher、文件锁和�
 
 ## 10. 暂缓 Work Pool
 
-- [`W-2026-013：Task Completion Verification`](../specs/work-pool/W-2026-013-study-task-completion-verification.md)：完成状态与真实证据；
-- [`W-2026-017：Python 锁与 Agent 并发状态治理`](../specs/work-pool/W-2026-017-study-python-locks-and-agent-concurrency.md)：scan/claim 竞态、文件锁和原子性；
-- [`W-2026-018：Agent Team 层级设计与委派拓扑权衡`](../specs/work-pool/W-2026-018-study-agent-team-hierarchy-and-delegation.md)：层级 Team 与委派拓扑；
-- [`W-2026-019：持久 Teammate 生命周期、Idle Loop 与唤醒`](../specs/work-pool/W-2026-019-study-persistent-teammate-lifecycle.md)：持久驻留、恢复和 timeout 策略；
-- [`W-2026-020：Agent-to-Agent 协作方式与通信拓扑`](../specs/work-pool/W-2026-020-study-agent-to-agent-collaboration-patterns.md)：Task Board、Lead-Worker 和其他协作模式；
-- [`W-2026-021：生产级 Agent 权限、授权与审批治理`](../specs/work-pool/W-2026-021-study-production-agent-permissions-and-approval.md)：多 Agent 权限和审批边界。
+- [`W-2026-003：Task Completion Verification`](../specs/work-pool/W-2026-003-study-task-completion-verification.md)：完成状态与真实证据；
+- [`W-2026-008：Python 锁与 Agent 并发状态治理`](../specs/work-pool/W-2026-008-study-python-locks-and-agent-concurrency.md)：scan/claim 竞态、文件锁和原子性；
+- [`W-2026-017：Agent Team 层级设计与委派拓扑权衡`](../specs/work-pool/W-2026-017-study-agent-team-hierarchy-and-delegation.md)：层级 Team 与委派拓扑；
+- [`W-2026-018：持久 Teammate 生命周期、Idle Loop 与唤醒`](../specs/work-pool/W-2026-018-study-persistent-teammate-lifecycle.md)：持久驻留、恢复和 timeout 策略；
+- [`W-2026-016：Agent-to-Agent 协作方式与通信拓扑`](../specs/work-pool/W-2026-016-study-agent-to-agent-collaboration-patterns.md)：Task Board、Lead-Worker 和其他协作模式；
+- [`W-2026-005：生产级 Agent 权限、授权与审批治理`](../specs/work-pool/W-2026-005-study-production-agent-permissions-and-approval.md)：多 Agent 权限和审批边界。
 
 这些 Work Pool 仍然是后续学习主题，不因本章笔记完成而自动启动。

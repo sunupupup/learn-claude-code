@@ -1,4 +1,4 @@
-# W-2026-005：生产级 Skill 加载、资源与治理学习
+# W-2026-011：生产级 Skill 加载、资源与治理学习
 
 - Status: ready
 - Area: Agent Skills / Context Engineering / Security / Eval / Runtime

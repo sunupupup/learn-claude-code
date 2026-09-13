@@ -1,10 +1,10 @@
-# W-2026-014：Agent 双轨学习计划｜8 周冲刺与 24 周深入版
+# W-2026-001：Agent 双轨学习计划｜8 周冲刺与 24 周深入版
 
 - Status: ready
-- Current Plan: A — 8 周；B — 24 周长期保留，可由用户随时切换
+- Current Plan: A — 8 周阶段目标；B — 24 周深度主线长期保留，可由用户随时切换
 - Owner: personal
 - Priority: high
-- Updated: 2026-09-08
+- Updated: 2026-09-13
 - Execution: 本次维护两套计划与学习任务；具体代码、服务和付费实验在对应学习任务启动后执行
 
 ## 学习约定与导航
@@ -18,22 +18,24 @@
 
 本轮方向由教练明确推荐：**先成为能够独立设计、修改和验证 Agent 的工程师，再深入 Codex 执行框架。** 以一个“研发证据助手”作为主要练习载体，贯穿资料检索、工具调用、有限循环、上下文、错误处理和完成证据。
 
-## 共享补充线：LLM 基础桥接
+## 共享必修线：LLM Runtime 基础桥接
 
-两套计划都增加一条轻量的 LLM 基础线，用来补齐 Agent 工程所需的模型心智模型；它不替代 Agent 主线，也不把目标扩张为模型训练工程师。8 周版只要求能解释机制、做小实验并把结论用于 Agent 设计；24 周版再增加一个极小模型实验和原始论文切片。
+两套计划都必须完成 [W-2026-002：LLM Runtime 基础](./W-2026-002-study-llm-runtime-foundations.md)，用来补齐 Agent 工程所需的模型心智模型；它不替代 Agent 主线，也不把目标扩张为模型训练工程师。W-2026-002 维护 Token、Prompt、生成和缓存的详细计划，本节只维护总路线中的接入方式和停止线。
 
 ### 必须掌握的最小范围
 
 - **生成基础：**token、词表、logit、softmax、概率、temperature、top-p、停止条件；能解释“模型为什么是在预测下一个 token”，以及采样参数如何改变结果。
-- **训练基础：**交叉熵和 perplexity 的直觉；预训练、SFT、RLHF/DPO 的目标差别；知道指令遵循、幻觉和偏好行为分别可能从哪里产生。这里只做原理导入；严格 JSON、约束解码、LoRA/SFT、Eval 和部署回滚的实操统一进入 [W-2026-003 后训练对照实验](W-2026-003-study-strict-json-output-post-training.md)，不在本路线重复设计。
+- **训练基础：**交叉熵和 perplexity 的直觉；预训练、SFT、RLHF/DPO 的目标差别；知道指令遵循、幻觉和偏好行为分别可能从哪里产生。这里只做原理导入；严格 JSON、约束解码、LoRA/SFT、Eval 和部署回滚的实操统一进入 [W-2026-027 后训练对照实验](W-2026-027-study-strict-json-output-post-training.md)，不在本路线重复设计。
 - **Transformer：**Embedding、Q/K/V、Self-Attention、残差连接、归一化、FFN、位置编码/ RoPE；不要求先推完整反向传播，但要能用小数字手算一次注意力权重。
-- **推理基础：**输入/输出 token、上下文窗口、KV Cache、延迟、吞吐、成本；理解 Tool Calling 和结构化输出本质上仍是模型生成加程序校验与执行。
+- **推理基础：**输入/输出 Token、上下文窗口、Prefill、Decode、KV Cache、Prompt/Prefix Cache、Context Cache、延迟、吞吐、成本；理解 Tool Calling 和结构化输出本质上仍是模型生成加程序校验与执行。
 - **知识与适配：**Embedding、余弦相似度、切分、检索、重排；能比较 Prompt、RAG、Fine-tuning 的适用边界。
 - **质量与失败：**perplexity 不等于业务质量；能区分模型能力、指令、检索、上下文、工具和 Runtime 的失败，并为每类失败设计一个可验证实验。
 
-### 十个桥接课题
+### 十个桥接课题（总路线摘要）
 
 每个课题安排 60–90 分钟理解、30–45 分钟小实验或复述；8 周版每周最多增加 3 小时，不挤占当天主任务。
+
+W-2026-002 将这些摘要扩展为 12 个小课题，并补充 Tokenizer、Chat Template、Prompt 序列化、Prefill/Decode、缓存分层和 Agent 观测实验。Token Cache 不作为一个模糊总称使用，必须拆成 Tokenizer Cache、KV Cache、Prompt/Prefix Cache 和应用层 Context Cache。
 
 | 顺序 | 课题 | 必交的小成果 |
 | --- | --- | --- |
@@ -50,13 +52,31 @@
 
 ### 两套计划如何接入
 
-- **Plan A：**本周 s13–s20 只做第 1 课题的 30 分钟导入，不增加课程负担；第 2–5 周完成课题 2–8；第 6–7 周结合 Codex 完成课题 9；第 8 周完成课题 10 和一次口头总复述。
-- **Plan B：**在上述十个课题之外，增加一个字符级或极小 Transformer 实验、一次 attention 可视化和四篇原始论文切片：Transformer、RAG、InstructGPT、ReAct。实验用于理解机制，不要求训练大模型或复现论文结果。
+- **Plan A：**在 s20 收尾期间先完成 W-2026-002 的输入、生成和缓存主干；第 2–5 周把 Token 预算、Tool Calling、Context 和失败诊断接入主项目；第 6–8 周再结合 Codex 完成观测与源码切片。
+- **Plan B：**完整完成 W-2026-002 的 12 个课题，并增加一个字符级或极小 Transformer 实验、一次 Attention 可视化和四篇原始论文切片：Transformer、RAG、InstructGPT、ReAct。实验用于理解机制，不要求训练大模型或复现论文结果。
 - **共同停止线：**暂不把完整反向传播推导、分布式预训练、CUDA 优化、量化内核和大规模后训练列入必修；只有在模型适配或推理平台成为明确目标时才进入 24 周选修项。
 
 ### 通过标准
 
 完成桥接线后，应能独立回答：一次模型调用实际看到了什么；temperature 改变了哪一层；为什么合法 JSON 不代表语义正确；RAG 为什么可能比 Fine-tuning 更合适；输入 token、输出 token、KV Cache 和工具等待如何影响成本/延迟；一次 Agent 失败应先查模型、指令、检索、上下文、工具还是 Runtime。只会背术语、没有小实验或失败定位，不算完成。
+
+## 当前推荐执行线路：基础线 → 中间实验线 → 生产 Agent 主线
+
+这是根据当前章节学习进度新增的执行版路线，位于原有 Plan A 和 Plan B 之间；Plan A、Plan B 的完整细节继续保留，不因本路线新增而删除。
+
+| 阶段 | 建议时间 | 先看/先做什么 | 主要产出 |
+| --- | --- | --- | --- |
+| 0. 基线收尾 | 3–4 天 | s20 未完成问答、一次安全运行、完整 Loop 图 | 正常链、失败链、证据标签 |
+| 1. LLM Runtime 基础 | 2–3 周 | W-2026-002：Token、Tokenizer、Chat Template、生成和缓存 | Token 观察、Prompt 序列化、生成链和缓存分层 |
+| 2. 中间观测实验线 | 1–2 周 | Prompt Microscope、Generation Lab、Cache Branch Lab、Agent Measurement Lab | Token/延迟/成本账本和四类缓存实验 |
+| 3. 单 Agent 正确性与恢复 | 3–4 周 | W-2026-003 → W-2026-004 | 完成证据、Tool Result、截断、恢复和幂等边界 |
+| 4. 权限与业务副作用 | 3 周 | W-2026-005 + W-2026-006 | 审批、最终鉴权、未知结果、补偿和审计 |
+| 5. Context 与外部能力治理 | 3–4 周 | W-2026-007 → W-2026-008 → W-2026-009 → W-2026-010/W-2026-011 | 事件注入、并发、租户隔离、指令/Skill 版本和缓存失效 |
+| 6. Trace、Memory、MCP | 3 周 | W-2026-012 + W-2026-013 + W-2026-014 | 观测指标、跨会话记忆和一个真实有用的 MCP 服务 |
+| 7. Multi-Agent 与长生命周期 | 4–5 周 | W-2026-015 → W-2026-016 → W-2026-017/W-2026-018/W-2026-019/W-2026-020 | 委派选择、团队状态、持久队友、恢复和最终验收 |
+| 8. 真实项目与源码对照 | 持续穿插 | 研发证据助手为主项目，RAG、Chat2DB 或 mini-swe-agent 选切片，最后做 W-2026-022 | 真实反馈、失败诊断、源码对照和迁移结论 |
+
+执行时优先保持一个主项目：建议使用研发证据助手；RAG Demo、Chat2DB 和 mini-swe-agent 用作受控对照，不同时完整部署三个平台。
 
 ## 教练如何带学：明确任务，同时保留你的独立判断
 
@@ -238,7 +258,7 @@
 
 故障注入是受控实验，不能当作原项目真实事故。8 周只保证单用户、串行导出的范围，不宣称解决分布式 exactly-once；多进程并发和崩溃一致性作为深入项。
 
-关联专题：[工具副作用安全](W-2026-007-study-side-effect-tool-security.md)、[任务完成验证](W-2026-013-study-task-completion-verification.md)。只实施本任务需要的规则，不搭通用审批或验证平台。
+关联专题：[工具副作用安全](W-2026-006-study-side-effect-tool-security.md)、[任务完成验证](W-2026-003-study-task-completion-verification.md)。只实施本任务需要的规则，不搭通用审批或验证平台。
 
 **24 周深入项：**增加暂停/恢复、持久操作记录、并发重复导出、进程崩溃、撤销或版本回滚中的两项；为每项写不变量与故障实验。用户体验可加最小页面，但必须解释实际状态而非只显示模型文字。
 
@@ -273,7 +293,7 @@
 
 8 周目标是做出一次有证据的上下文取舍；若基线已经够用、候选没有收益，记录“不采用”也算有效实验。语义质量人工评审，确定性条件用程序检查，真实模型的随机结果记录运行次数与波动。
 
-关联专题：[System Prompt 与上下文](W-2026-011-study-system-prompt-production-context-governance.md)、[工具结果压缩与恢复](W-2026-006-study-tool-result-compaction-and-recovery.md)。[Reactive Compaction](W-2026-012-study-production-reactive-context-compaction.md) 只在有超限证据时深入。
+关联专题：[System Prompt 与上下文](W-2026-009-study-system-prompt-production-context-governance.md)、[工具结果压缩与恢复](W-2026-004-study-tool-result-compaction-and-recovery.md)。[Reactive Compaction](W-2026-024-study-production-reactive-context-compaction.md) 只在有超限证据时深入。
 
 **24 周深入项：**加入模型摘要与确定性选择对照、摘要失真与重取原文、跨会话记忆写入/删除中的一个；至少两轮对照，不把摘要压缩、服务端历史和本地裁剪混为一谈。
 
@@ -355,20 +375,32 @@
 
 | 专题 | 使用时机 |
 | --- | --- |
-| [W-001 Hook 生产实践](W-2026-001-study-agent-hook-production-practices.md) | 24 周：扩展点、顺序、短路与异常；8 周按需理解 |
-| [W-002 自进化](W-2026-002-study-agent-self-evolution-harnesses.md) | 有冻结评测、版本和回滚后选修 |
-| [W-003 后训练与严格 JSON](W-2026-003-study-strict-json-output-post-training.md) | 模型适配方向选修，不阻塞两条工程路线 |
-| [W-004 Subagent](W-2026-004-study-production-subagent-runtime.md) | 24 周：单 Agent 基线后做有限委派与隔离实验 |
-| [W-005 Skill 加载治理](W-2026-005-study-production-skill-loading-and-governance.md) | 项目出现多技能需求时增加一个资源或版本实验 |
-| [W-006 工具结果恢复](W-2026-006-study-tool-result-compaction-and-recovery.md) | 两条路线任务卡 5 |
-| [W-007 副作用安全](W-2026-007-study-side-effect-tool-security.md) | 两条路线任务卡 4 |
-| [W-008 Memory](W-2026-008-study-memory-production-practices.md) | 24 周：具体跨会话需求，不默认保存全部聊天 |
-| [W-016 Chat2DB](W-2026-016-study-chat2db-production-agent-db.md) | 24 周广度切片，避免整个平台扩张 |
-| [W-009 Codex 指令加载](W-2026-009-study-codex-project-instructions-loading.md) | 两条路线 Codex 上下文切片 |
-| [W-010 Skill 与可观测性](W-2026-010-study-agent-skill-engineering-observability.md) | 8 周取日志/轨迹问题清单；24 周可启动完整样本对照 |
-| [W-011 System Prompt 治理](W-2026-011-study-system-prompt-production-context-governance.md) | 两条路线任务卡 5 与 Codex |
-| [W-012 Reactive Compaction](W-2026-012-study-production-reactive-context-compaction.md) | 有超限或恢复证据时增加对照 |
-| [W-013 完成验证](W-2026-013-study-task-completion-verification.md) | 两条路线任务卡 4，24 周扩展持久化和并发 |
+| [W-002 LLM Runtime 基础](W-2026-002-study-llm-runtime-foundations.md) | 两条路线必修前置：Token、Prompt、生成、Prefill/Decode 和缓存分层 |
+| [W-003 完成验证](W-2026-003-study-task-completion-verification.md) | LLM 基础和中间观测线之后，建立可证明的完成状态 |
+| [W-004 工具结果恢复](W-2026-004-study-tool-result-compaction-and-recovery.md) | W-003 之后，学习结果压缩、恢复和幂等边界 |
+| [W-005 权限与审批](W-2026-005-study-production-agent-permissions-and-approval.md) | 单 Agent 副作用实验的控制面 |
+| [W-006 副作用安全](W-2026-006-study-side-effect-tool-security.md) | W-005 之后，接业务服务、未知结果、补偿和审计 |
+| [W-007 消息注入与引导](W-2026-007-study-agent-message-injection-steering.md) | Tool/后台/审批/定时事件进入 Context 时学习 |
+| [W-008 并发状态治理](W-2026-008-study-python-locks-and-agent-concurrency.md) | W-007 之后，补认领、队列、共享状态和恢复竞态 |
+| [W-009 System Prompt 治理](W-2026-009-study-system-prompt-production-context-governance.md) | Context、租户、Prompt 版本和缓存失效 |
+| [W-010 Codex 指令加载](W-2026-010-study-codex-project-instructions-loading.md) | Context 治理后的真实 Harness 源码切片 |
+| [W-011 Skill 加载治理](W-2026-011-study-production-skill-loading-and-governance.md) | 多技能、资源、版本、权限和渐进披露 |
+| [W-012 Skill 与可观测性](W-2026-012-study-agent-skill-engineering-observability.md) | 从中间观测实验开始贯穿，后续做完整 Trace/Eval 对照 |
+| [W-013 Memory](W-2026-013-study-memory-production-practices.md) | 有具体跨会话需求后学习写入、召回、遗忘和隔离 |
+| [W-014 有用的 MCP 服务](W-2026-014-build-useful-mcp-server.md) | 完成 Tool/权限/观测基础后实现一个真实有用的外部服务 |
+| [W-015 Subagent](W-2026-015-study-production-subagent-runtime.md) | 单 Agent 基线稳定后学习有限委派和隔离实验 |
+| [W-016 Agent-to-Agent 协作](W-2026-016-study-agent-to-agent-collaboration-patterns.md) | 先判断是否需要多 Agent，再比较协作拓扑 |
+| [W-017 Team 层级与委派](W-2026-017-study-agent-team-hierarchy-and-delegation.md) | W-016 之后选择一种受控层级实验 |
+| [W-018 持久 Teammate 生命周期](W-2026-018-study-persistent-teammate-lifecycle.md) | 需要跨轮运行、唤醒和退出时深入 |
+| [W-019 Teammate Registry](W-2026-019-study-teammate-registry-and-reuse.md) | 持久队友的存活检测、复用和死亡恢复 |
+| [W-020 Lead 状态观察](W-2026-020-study-lead-team-state-observation.md) | 团队状态查询、事件注入和新鲜度权衡 |
+| [W-021 Chat2DB](W-2026-021-study-chat2db-production-agent-db.md) | 24 周广度/领域切片，不完整部署平台 |
+| [W-022 Runtime 源码对照](W-2026-022-study-claude-code-codex-agent-runtime-sources.md) | 概念和主项目稳定后固定版本阅读 |
+| [W-023 Hook 生产实践](W-2026-023-study-agent-hook-production-practices.md) | 需要扩展点顺序、短路或异常治理时深入 |
+| [W-024 Reactive Compaction](W-2026-024-study-production-reactive-context-compaction.md) | 出现 Prompt 超限或恢复证据后深入，不与 W-004 重复 |
+| [W-025 RAG/Wiki/Ontology](W-2026-025-study-rag-vs-llm-wiki-vs-ontology.md) | 知识架构专项，保留为 someday |
+| [W-026 自进化](W-2026-026-study-agent-self-evolution-harnesses.md) | 冻结 Eval、版本和回滚成熟后选修 |
+| [W-027 后训练与严格 JSON](W-2026-027-study-strict-json-output-post-training.md) | 模型适配方向选修，不阻塞 Agent Runtime 主线 |
 
 两个 W-009 使用完整标题/链接区分。已有需求详情不复制到其他 Spec；章节学习继续记录在对应 LEARNING_NOTES.md。
 

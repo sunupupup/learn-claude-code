@@ -1,4 +1,4 @@
-# W-2026-010：Agent Skill 工程化与调用链可观测性学习
+# W-2026-012：Agent Skill 工程化与调用链可观测性学习
 
 - Status: ready
 - Area: Agent Skill / Context Engineering / Observability / Reliability / Security / Eval
@@ -6,7 +6,7 @@
 - Discovered From: 用户截图“精通 Agent Skill 工程化与可观测性”“Skill 的调用链路怎么监控和追踪？”
 - Owner: personal
 - Priority: high
-- Related: [W-2026-005：生产级 Skill 加载、资源与治理学习](./W-2026-005-study-production-skill-loading-and-governance.md)
+- Related: [W-2026-011：生产级 Skill 加载、资源与治理学习](./W-2026-011-study-production-skill-loading-and-governance.md)
 
 ## 原始简版学习点（来自截图）
 

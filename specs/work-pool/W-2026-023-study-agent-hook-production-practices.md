@@ -1,4 +1,4 @@
-# W-2026-001：调研小型 Agent 项目的 Hook 生产实践
+# W-2026-023：调研小型 Agent 项目的 Hook 生产实践
 
 - Status: ready
 - Area: Agent / Hook / Middleware

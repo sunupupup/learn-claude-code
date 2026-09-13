@@ -119,7 +119,7 @@ LLM 调用 claim_task(B)
 
 `task_list_id` 应表示一组跨轮次的长期目标；不要把一次 LLM 请求的 `turn_id` 当成任务目录，因为任务本身需要跨多个 turn 延续。目录隔离也不能代替原子写入、锁、租约、幂等和恢复。
 
-主 Agent 与 Subagent 的协同还需要额外的启动、通知、结果 Artifact、身份和验收机制。相关生产专题记录在 [`W-2026-004`](../specs/work-pool/W-2026-004-study-production-subagent-runtime.md)。
+主 Agent 与 Subagent 的协同还需要额外的启动、通知、结果 Artifact、身份和验收机制。相关生产专题记录在 [`W-2026-015`](../specs/work-pool/W-2026-015-study-production-subagent-runtime.md)。
 
 ## 六、代码中仍需记住的边界
 
@@ -188,5 +188,5 @@ Harness 自动运行 task-specific verifier
 
 - `s13_background_tasks`：慢操作、异步执行和完成通知；
 - `s15_agent_teams` / `s16_team_protocols`：持久队友、消息总线、请求响应和关机握手；
-- [`W-2026-004`](../specs/work-pool/W-2026-004-study-production-subagent-runtime.md)：生产级 Subagent 与多 Agent 协同；
-- [`W-2026-013`](../specs/work-pool/W-2026-013-study-task-completion-verification.md)：任务完成验证、验收证据与完成门。
+- [`W-2026-015`](../specs/work-pool/W-2026-015-study-production-subagent-runtime.md)：生产级 Subagent 与多 Agent 协同；
+- [`W-2026-003`](../specs/work-pool/W-2026-003-study-task-completion-verification.md)：任务完成验证、验收证据与完成门。

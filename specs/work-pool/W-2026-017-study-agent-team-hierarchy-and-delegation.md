@@ -1,4 +1,4 @@
-# W-2026-018：Agent Team 层级设计与委派拓扑权衡
+# W-2026-017：Agent Team 层级设计与委派拓扑权衡
 
 - Status: ready
 - Area: Agent Team / Hierarchical Delegation / Subagent / Runtime / Governance / Eval
@@ -111,7 +111,7 @@ Result Contract → Domain Validation → Root Integration → Final Verificatio
 
 ## Start Trigger
 
-- 用户明确说“开始 W-2026-018”；
+- 用户明确说“开始 W-2026-017”；
 - 或明确说“开始 Agent Team 层级/嵌套委派 Work Pool”；
 - 启动时按 [`specs/README.md`](../README.md) 创建对应 Change，并移除本 Work Pool 文件；
 - 启动真实项目调研前，重新核验版本、Commit、许可证、活动状态和当前官方资料。
@@ -127,16 +127,16 @@ Result Contract → Domain Validation → Root Integration → Final Verificatio
 ## Non-goals
 
 - 不在本任务中实现通用多 Agent 平台；
-- 不重复承担 W-2026-004 的全部 Subagent Runtime 调研；
-- 不重复承担 W-2026-015 的全部消息注入和 Steering 治理；
+- 不重复承担 W-2026-015 的全部 Subagent Runtime 调研；
+- 不重复承担 W-2026-007 的全部消息注入和 Steering 治理；
 - 不默认构建多层持久团队，只有评测证明其收益超过协调成本时才考虑。
 
 ## Related
 
 - [`s15 Agent Teams`](../../s15_agent_teams/README.md)
 - [`s15 学习笔记`](../../s15_agent_teams/LEARNING_NOTES.md)
-- [`W-2026-004：生产级 Subagent Runtime`](./W-2026-004-study-production-subagent-runtime.md)
-- [`W-2026-006：Tool Result 压缩、恢复与副作用安全`](./W-2026-006-study-tool-result-compaction-and-recovery.md)
-- [`W-2026-013：Task Completion Verification`](./W-2026-013-study-task-completion-verification.md)
-- [`W-2026-015：Agent 消息注入、插队与运行时事件交付`](./W-2026-015-study-agent-message-injection-steering.md)
-- [`W-2026-017：Python 锁与 Agent 并发状态治理`](./W-2026-017-study-python-locks-and-agent-concurrency.md)
+- [`W-2026-015：生产级 Subagent Runtime`](./W-2026-015-study-production-subagent-runtime.md)
+- [`W-2026-004：Tool Result 压缩、恢复与副作用安全`](./W-2026-004-study-tool-result-compaction-and-recovery.md)
+- [`W-2026-003：Task Completion Verification`](./W-2026-003-study-task-completion-verification.md)
+- [`W-2026-007：Agent 消息注入、插队与运行时事件交付`](./W-2026-007-study-agent-message-injection-steering.md)
+- [`W-2026-008：Python 锁与 Agent 并发状态治理`](./W-2026-008-study-python-locks-and-agent-concurrency.md)

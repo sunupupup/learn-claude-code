@@ -1,4 +1,4 @@
-# W-2026-025：可重复利用 Teammate 的 Registry、存活检测与恢复
+# W-2026-019：可重复利用 Teammate 的 Registry、存活检测与恢复
 
 - Status: ready
 - Area: Agent Team / Teammate Reuse / Registry / Heartbeat / TTL / Lease / Recovery
@@ -69,7 +69,7 @@ Registry 是权威状态来源；动态提示词、UI 状态和 Lead 的自然�
 ## Recommended Learning Order
 
 1. 回看 s17 的 `active_teammates`、`idle_poll()`、`timeout` 和 daemon thread；
-2. 对照 W-2026-019，区分“生命周期状态”与“存活检测/可复用资格”；
+2. 对照 W-2026-018，区分“生命周期状态”与“存活检测/可复用资格”；
 3. 设计最小 Registry schema：身份、状态、Session/Worker ID、当前任务、最后心跳、状态版本；
 4. 比较 heartbeat、主动 probe、事件通知和 TTL 的准确性、成本与误判；
 5. 研究 Task lease 与 Teammate lease 的关系，覆盖崩溃、网络分区、重复恢复和幂等；
@@ -111,11 +111,11 @@ Registry 是权威状态来源；动态提示词、UI 状态和 Lead 的自然�
 
 ## Why Deferred
 
-当前 s17 的主线是“Teammate 在 IDLE 中主动发现和认领任务”。Registry、heartbeat、lease 和跨进程恢复会同时牵涉 W-2026-017 的并发、W-2026-013 的完成验证、W-2026-019 的生命周期和 W-2026-004 的 Runtime，因此先独立登记，暂不扩展本章代码。
+当前 s17 的主线是“Teammate 在 IDLE 中主动发现和认领任务”。Registry、heartbeat、lease 和跨进程恢复会同时牵涉 W-2026-008 的并发、W-2026-003 的完成验证、W-2026-018 的生命周期和 W-2026-015 的 Runtime，因此先独立登记，暂不扩展本章代码。
 
 ## Start Trigger
 
-- 用户明确说“开始 W-2026-025”；
+- 用户明确说“开始 W-2026-019”；
 - 或明确说“开始学习 Teammate Registry / heartbeat / 复用 / 存活检测”；
 - 启动时按 [`specs/README.md`](../README.md) 创建对应 Change，并移除本 Work Pool 文件。
 
@@ -129,18 +129,18 @@ Registry 是权威状态来源；动态提示词、UI 状态和 Lead 的自然�
 
 ## Non-goals
 
-- 不重复承担 W-2026-019 的全部 idle/shutdown/inbox 课程；
-- 不重复承担 W-2026-017 的全部锁与并发课程；
-- 不重复承担 W-2026-013 的任务完成验证；
+- 不重复承担 W-2026-018 的全部 idle/shutdown/inbox 课程；
+- 不重复承担 W-2026-008 的全部锁与并发课程；
+- 不重复承担 W-2026-003 的任务完成验证；
 - 不默认选择“永久驻留 Teammate”，先用成本、可靠性和安全证据判断。
 
 ## Related
 
 - [`s17 Autonomous Agents`](../../s17_autonomous_agents/README.md)
 - [`s17 学习笔记`](../../s17_autonomous_agents/LEARNING_NOTES.md)
-- [`W-2026-004：生产级 Subagent Runtime`](./W-2026-004-study-production-subagent-runtime.md)
-- [`W-2026-013：Task Completion Verification`](./W-2026-013-study-task-completion-verification.md)
-- [`W-2026-017：Python 锁与 Agent 并发状态治理`](./W-2026-017-study-python-locks-and-agent-concurrency.md)
-- [`W-2026-019：持久 Teammate 生命周期、Idle Loop 与唤醒`](./W-2026-019-study-persistent-teammate-lifecycle.md)
-- [`W-2026-026：Lead 团队状态观察方式`](./W-2026-026-study-lead-team-state-observation.md)
-- [`W-2026-027：Claude Code / Codex Agent Runtime 源码对照`](./W-2026-027-study-claude-code-codex-agent-runtime-sources.md)
+- [`W-2026-015：生产级 Subagent Runtime`](./W-2026-015-study-production-subagent-runtime.md)
+- [`W-2026-003：Task Completion Verification`](./W-2026-003-study-task-completion-verification.md)
+- [`W-2026-008：Python 锁与 Agent 并发状态治理`](./W-2026-008-study-python-locks-and-agent-concurrency.md)
+- [`W-2026-018：持久 Teammate 生命周期、Idle Loop 与唤醒`](./W-2026-018-study-persistent-teammate-lifecycle.md)
+- [`W-2026-020：Lead 团队状态观察方式`](./W-2026-020-study-lead-team-state-observation.md)
+- [`W-2026-022：Claude Code / Codex Agent Runtime 源码对照`](./W-2026-022-study-claude-code-codex-agent-runtime-sources.md)

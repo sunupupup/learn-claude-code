@@ -1,4 +1,4 @@
-# W-2026-003：严格 JSON 输出与后训练对照实验
+# W-2026-027：严格 JSON 输出与后训练对照实验
 
 - Status: ready
 - Area: LLM / Structured Output / JSON Schema / SFT / LoRA / Eval
@@ -347,10 +347,10 @@ FFT 是有价值的进阶选修；只有当目标进一步转向 Agent 平台的
 
 ## Relationship to Existing Work
 
-本任务是 [`W-2026-002`](./W-2026-002-study-agent-self-evolution-harnesses.md) 中 E4 Model Evolution 的一个更小、更可控的前置实验：
+本任务是 [`W-2026-026`](./W-2026-026-study-agent-self-evolution-harnesses.md) 中 E4 Model Evolution 的一个更小、更可控的前置实验：
 
-- W-2026-003 回答“如何证明一次窄任务后训练真的改变了结构化输出行为”；
-- W-2026-002 再研究训练数据如何从 Agent 轨迹产生、如何经过 Eval Gate 晋级，以及模型与 Harness 如何共同演化。
+- W-2026-027 回答“如何证明一次窄任务后训练真的改变了结构化输出行为”；
+- W-2026-026 再研究训练数据如何从 Agent 轨迹产生、如何经过 Eval Gate 晋级，以及模型与 Harness 如何共同演化。
 
 本任务与 [`s05 TodoWrite 学习笔记`](../../s05_todo_write/LEARNING_NOTES.md) 的关系是：s05 负责理解 Tool Schema 和 Runtime 校验；本任务负责研究模型为什么更可能或被迫遵循该结构。
 

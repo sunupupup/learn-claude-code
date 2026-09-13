@@ -200,7 +200,7 @@ while True:
 - 已掌握：Reminder 与退出条件、一次 Run 与整个交互进程的区别。
 - 已校准：当前实现不会自动更新状态、不会检查全部完成、没有最大循环轮次。
 - 待验证：真实运行轨迹、无进展场景以及带程序强制边界的改进伪代码。
-- 后续专题：严格 JSON 输出、约束解码与后训练对照实验，见 [`W-2026-003`](../specs/work-pool/W-2026-003-study-strict-json-output-post-training.md)。
+- 后续专题：严格 JSON 输出、约束解码与后训练对照实验，见 [`W-2026-027`](../specs/work-pool/W-2026-027-study-strict-json-output-post-training.md)。
 
 ## 九、后续学习建议：严格 JSON 输出与后训练
 
@@ -267,7 +267,7 @@ SFT/LoRA 提高遵循概率，但不能单独提供严格保证；约束解码�
 - 输出截断率；
 - 延迟、Token、显存和训练成本。
 
-详细数据设计、实验边界、启动条件和验收标准只在 [`W-2026-003：严格 JSON 输出与后训练对照实验`](../specs/work-pool/W-2026-003-study-strict-json-output-post-training.md) 中维护。启动该任务时，应先把 Work Pool 文件转换成 `specs/changes/C-*.md`，再安装依赖或下载模型。
+详细数据设计、实验边界、启动条件和验收标准只在 [`W-2026-027：严格 JSON 输出与后训练对照实验`](../specs/work-pool/W-2026-027-study-strict-json-output-post-training.md) 中维护。启动该任务时，应先把 Work Pool 文件转换成 `specs/changes/C-*.md`，再安装依赖或下载模型。
 
 ### 9.4 后续阅读资料
 

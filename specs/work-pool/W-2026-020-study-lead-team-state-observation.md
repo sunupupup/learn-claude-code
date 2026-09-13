@@ -1,4 +1,4 @@
-# W-2026-026：Lead 感知团队状态：查询 Tool、动态上下文与事件注入
+# W-2026-020：Lead 感知团队状态：查询 Tool、动态上下文与事件注入
 
 - Status: ready
 - Area: Agent Observation / Registry Read Model / Tool Contract / Dynamic Context / Runtime Events
@@ -90,11 +90,11 @@ Runtime 再次读取并校验 Registry，不信任 Prompt 快照
 
 ## Why Deferred
 
-这个主题是一个小巧但独立的生产知识点。它依赖 W-2026-025 对 Registry/liveness 的定义，但不应在 s17 主线中直接实现；先保存问题、接口和评测边界，后续单独学习。
+这个主题是一个小巧但独立的生产知识点。它依赖 W-2026-019 对 Registry/liveness 的定义，但不应在 s17 主线中直接实现；先保存问题、接口和评测边界，后续单独学习。
 
 ## Start Trigger
 
-- 用户明确说“开始 W-2026-026”；
+- 用户明确说“开始 W-2026-020”；
 - 或明确说“开始学习 Registry 查询 Tool 和动态 system prompt 的取舍”；
 - 启动时按 [`specs/README.md`](../README.md) 创建对应 Change，并移除本 Work Pool 文件。
 
@@ -102,7 +102,7 @@ Runtime 再次读取并校验 Registry，不信任 Prompt 快照
 
 - 当前只登记学习任务，不修改 Lead Tool Schema 或 system prompt；
 - 不把动态上下文当作权限、任务 claim 或 shutdown 的最终控制边界；
-- 不重复承担 W-2026-015 的全部消息注入治理，但要引用其注入风险；
+- 不重复承担 W-2026-007 的全部消息注入治理，但要引用其注入风险；
 - 不假设所有生产系统都需要模型可调用的成员列表 Tool；
 - 不把 UI 面板存在、消息发送成功或任务状态当作唯一 liveness 证明。
 
@@ -117,8 +117,8 @@ Runtime 再次读取并校验 Registry，不信任 Prompt 快照
 
 - [`s17 Autonomous Agents`](../../s17_autonomous_agents/README.md)
 - [`s17 学习笔记`](../../s17_autonomous_agents/LEARNING_NOTES.md)
-- [`W-2026-015：Agent 消息注入、插队与运行时事件交付`](./W-2026-015-study-agent-message-injection-steering.md)
-- [`W-2026-019：持久 Teammate 生命周期、Idle Loop 与唤醒`](./W-2026-019-study-persistent-teammate-lifecycle.md)
-- [`W-2026-020：Agent-to-Agent 协作方式与通信拓扑`](./W-2026-020-study-agent-to-agent-collaboration-patterns.md)
-- [`W-2026-025：Teammate Registry、存活检测与恢复`](./W-2026-025-study-teammate-registry-and-reuse.md)
-- [`W-2026-027：Claude Code / Codex Agent Runtime 源码对照`](./W-2026-027-study-claude-code-codex-agent-runtime-sources.md)
+- [`W-2026-007：Agent 消息注入、插队与运行时事件交付`](./W-2026-007-study-agent-message-injection-steering.md)
+- [`W-2026-018：持久 Teammate 生命周期、Idle Loop 与唤醒`](./W-2026-018-study-persistent-teammate-lifecycle.md)
+- [`W-2026-016：Agent-to-Agent 协作方式与通信拓扑`](./W-2026-016-study-agent-to-agent-collaboration-patterns.md)
+- [`W-2026-019：Teammate Registry、存活检测与恢复`](./W-2026-019-study-teammate-registry-and-reuse.md)
+- [`W-2026-022：Claude Code / Codex Agent Runtime 源码对照`](./W-2026-022-study-claude-code-codex-agent-runtime-sources.md)

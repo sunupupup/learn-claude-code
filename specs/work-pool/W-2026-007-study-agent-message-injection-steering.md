@@ -1,4 +1,4 @@
-# W-2026-015：Agent 消息注入、插队与运行时事件交付学习
+# W-2026-007：Agent 消息注入、插队与运行时事件交付学习
 
 - Status: ready
 - Area: Agent Harness / Runtime / Context Engineering / Message Injection / Steering / Reliability / Security / Eval
@@ -12,12 +12,12 @@
   - [s11 Error Recovery](../../s11_error_recovery/README.md)
   - [s13 Background Tasks](../../s13_background_tasks/README.md)
   - [s14 Cron Scheduler](../../s14_cron_scheduler/README.md)
-  - [W-2026-004：生产级 Subagent Runtime](./W-2026-004-study-production-subagent-runtime.md)
-  - [W-2026-006：Tool Result 压缩、恢复与副作用安全](./W-2026-006-study-tool-result-compaction-and-recovery.md)
-  - [W-2026-007：副作用 Tool 的分层安全](./W-2026-007-study-side-effect-tool-security.md)
-  - [W-2026-011：System Prompt 与上下文治理](./W-2026-011-study-system-prompt-production-context-governance.md)
-  - [W-2026-012：Reactive Context Compaction](./W-2026-012-study-production-reactive-context-compaction.md)
-  - [W-2026-013：Task Completion Verification](./W-2026-013-study-task-completion-verification.md)
+  - [W-2026-015：生产级 Subagent Runtime](./W-2026-015-study-production-subagent-runtime.md)
+  - [W-2026-004：Tool Result 压缩、恢复与副作用安全](./W-2026-004-study-tool-result-compaction-and-recovery.md)
+  - [W-2026-006：副作用 Tool 的分层安全](./W-2026-006-study-side-effect-tool-security.md)
+  - [W-2026-009：System Prompt 与上下文治理](./W-2026-009-study-system-prompt-production-context-governance.md)
+  - [W-2026-024：Reactive Context Compaction](./W-2026-024-study-production-reactive-context-compaction.md)
+  - [W-2026-003：Task Completion Verification](./W-2026-003-study-task-completion-verification.md)
 
 ## Assumptions
 
@@ -286,7 +286,7 @@ event ingress
 
 ## Start Trigger
 
-- 用户明确说“开始 W-2026-015”或“开始消息注入 Work Pool”等同表达；
+- 用户明确说“开始 W-2026-007”或“开始消息注入 Work Pool”等同表达；
 - 建议先完成 `s14` 基础验收，至少能够独立解释 Scheduler、Queue、Queue Processor 和 Agent Loop；
 - 启动时按 [`specs/README.md`](../README.md) 创建对应的 `specs/changes/C-YYYY-NNN-*.md`，并移除本 Work Pool 文件；
 - 进入真实框架对照前，重新核验官方文档、版本、Commit、许可证和可运行条件。
@@ -305,9 +305,9 @@ event ingress
 
 - 不在本任务中修改模型权重、进行后训练或研究 Transformer 内部机制；
 - 不构建通用消息中间件或完整分布式 Agent 平台；
-- 不重复承担 `W-2026-011` 的全部 System Prompt 治理内容；
-- 不重复承担 `W-2026-012` 的全部 Context 压缩算法；
-- 不重复承担 `W-2026-013` 的全部完成验证器设计；
+- 不重复承担 `W-2026-009` 的全部 System Prompt 治理内容；
+- 不重复承担 `W-2026-024` 的全部 Context 压缩算法；
+- 不重复承担 `W-2026-003` 的全部完成验证器设计；
 - 不默认引入多 Agent；只有消息来源和协调需求确实需要时才研究跨 Agent 交付。
 
 ## Open Questions

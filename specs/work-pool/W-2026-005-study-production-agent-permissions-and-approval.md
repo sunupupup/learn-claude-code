@@ -1,4 +1,4 @@
-# W-2026-021：生产级 Agent 权限、授权与审批治理
+# W-2026-005：生产级 Agent 权限、授权与审批治理
 
 - Status: ready
 - Area: Agent Permission / Authorization / Approval / Runtime Security / Multi-Agent Governance
@@ -128,7 +128,7 @@ Lead 是请求路由和团队协调节点，不应因为能代收请求就自动
 
 ## Start Trigger
 
-- 用户明确说“开始 W-2026-021”；
+- 用户明确说“开始 W-2026-005”；
 - 或明确说“开始学习 Agent Permission / 权限审批 / Agent 授权”；
 - 启动时按 [`specs/README.md`](../README.md) 创建对应 Change，并移除本 Work Pool 文件；
 - 进入真实项目调研前，重新核验版本、Commit、许可证、活动状态和当前官方资料。
@@ -146,15 +146,15 @@ Lead 是请求路由和团队协调节点，不应因为能代收请求就自动
 
 - 不在本任务中实现通用 IAM、企业 RBAC/ABAC 平台或完整云权限系统；
 - 不默认实现生产级 Sandbox、Secrets Manager 或审批 UI；
-- 不重复承担 W-2026-007 的全部副作用 Tool 安全学习；
-- 不重复承担 W-2026-017 的全部 Python 锁与并发课程；
+- 不重复承担 W-2026-006 的全部副作用 Tool 安全学习；
+- 不重复承担 W-2026-008 的全部 Python 锁与并发课程；
 - 不根据某个厂商 README 的函数名推断所有 Agent Runtime 的通用行为。
 
 ## Related
 
 - [`s15 Agent Teams`](../../s15_agent_teams/README.md)
 - [`s15 学习笔记`](../../s15_agent_teams/LEARNING_NOTES.md)
-- [`W-2026-007：副作用 Tool 安全`](./W-2026-007-study-side-effect-tool-security.md)
-- [`W-2026-015：Agent 消息注入、插队与运行时事件交付`](./W-2026-015-study-agent-message-injection-steering.md)
-- [`W-2026-017：Python 锁与 Agent 并发状态治理`](./W-2026-017-study-python-locks-and-agent-concurrency.md)
-- [`W-2026-019：持久 Teammate 生命周期、Idle Loop 与唤醒`](./W-2026-019-study-persistent-teammate-lifecycle.md)
+- [`W-2026-006：副作用 Tool 安全`](./W-2026-006-study-side-effect-tool-security.md)
+- [`W-2026-007：Agent 消息注入、插队与运行时事件交付`](./W-2026-007-study-agent-message-injection-steering.md)
+- [`W-2026-008：Python 锁与 Agent 并发状态治理`](./W-2026-008-study-python-locks-and-agent-concurrency.md)
+- [`W-2026-018：持久 Teammate 生命周期、Idle Loop 与唤醒`](./W-2026-018-study-persistent-teammate-lifecycle.md)

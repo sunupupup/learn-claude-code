@@ -1,4 +1,4 @@
-# W-2026-008：Memory 生产实践与生命周期治理学习
+# W-2026-013：Memory 生产实践与生命周期治理学习
 
 - Status: ready
 - Area: Memory / Context Engineering / Reliability / Eval / Privacy / Security
@@ -6,7 +6,7 @@
 - Discovered From: `s09_memory` 的记忆提取、召回、整理和文件替换实现
 - Owner: personal
 - Priority: high
-- Related: [s09 Memory](../../s09_memory/README.md)、[W-2026-006](./W-2026-006-study-tool-result-compaction-and-recovery.md)、[W-2026-007](./W-2026-007-study-side-effect-tool-security.md)
+- Related: [s09 Memory](../../s09_memory/README.md)、[W-2026-004](./W-2026-004-study-tool-result-compaction-and-recovery.md)、[W-2026-006](./W-2026-006-study-side-effect-tool-security.md)
 
 ## Objective
 
@@ -188,7 +188,7 @@ supersedes / superseded_by
 - 不把 LLM 选择结果当作授权结果，权限必须由程序和数据层控制；
 - 不把保存 transcript 等同于可恢复的 Durable Execution；
 - 不在 Work Pool 阶段直接修改教学代码的业务逻辑；
-- 与 W-2026-006 重点交叉 Tool Result 恢复，与 W-2026-007 重点交叉副作用工具安全，但本任务聚焦 Memory 生命周期。
+- 与 W-2026-004 重点交叉 Tool Result 恢复，与 W-2026-006 重点交叉副作用工具安全，但本任务聚焦 Memory 生命周期。
 
 ## Start Trigger
 

@@ -1,4 +1,4 @@
-# W-2026-013：Agent Task Completion Verification 与完成证据学习
+# W-2026-003：Agent Task Completion Verification 与完成证据学习
 
 - Status: ready
 - Area: Agent / Task System / Verification / Eval / Reliability / Side Effects
@@ -125,9 +125,9 @@ Evidence Record
 ## Relationship to Related Work Pools
 
 - [`s12_task_system`](../../s12_task_system/)：当前教学任务状态、依赖和 `complete_task` 的起点；
-- [`W-2026-004`](W-2026-004-study-production-subagent-runtime.md)：父子 Agent、协同、结果契约和父级验收；
-- [`W-2026-006`](W-2026-006-study-tool-result-compaction-and-recovery.md)：副作用结果、操作凭证和响应丢失恢复；
-- [`W-2026-007`](W-2026-007-study-side-effect-tool-security.md)：写操作授权、幂等和安全门；
+- [`W-2026-015`](W-2026-015-study-production-subagent-runtime.md)：父子 Agent、协同、结果契约和父级验收；
+- [`W-2026-004`](W-2026-004-study-tool-result-compaction-and-recovery.md)：副作用结果、操作凭证和响应丢失恢复；
+- [`W-2026-006`](W-2026-006-study-side-effect-tool-security.md)：写操作授权、幂等和安全门；
 - [`s13_background_tasks`](../../s13_background_tasks/)：长验证和异步通知；
 - [`s16_team_protocols`](../../s16_team_protocols/)：验证请求、审批和请求响应关联。
 
@@ -137,7 +137,7 @@ s12 只需要理解“状态记录”和“依赖解锁”，立即实现通用 
 
 ## Start Trigger
 
-完成 s13、s15 和 s18 的基础学习后，明确说“开始 W-2026-013”或同等意思时启动。启动时先只读分析一个真实项目，再决定是否修改教学代码。
+完成 s13、s15 和 s18 的基础学习后，明确说“开始 W-2026-003”或同等意思时启动。启动时先只读分析一个真实项目，再决定是否修改教学代码。
 
 ## Expected Output
 

@@ -1,4 +1,4 @@
-# W-2026-006：Tool Result 压缩、恢复与副作用安全学习
+# W-2026-004：Tool Result 压缩、恢复与副作用安全学习
 
 - Status: ready
 - Area: Context Engineering / Tool Calling / Reliability / Idempotency / Eval

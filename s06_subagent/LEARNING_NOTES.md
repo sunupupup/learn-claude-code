@@ -209,7 +209,7 @@ s06 的 Subagent 是同步、临时、结果返回后销毁的执行单元。它
 
 ## 九、后续学习
 
-真实项目与生产级 Subagent Runtime 的系统调研已记录到 [`W-2026-004：生产级 Subagent 机制与真实项目调研`](../specs/work-pool/W-2026-004-study-production-subagent-runtime.md)。
+真实项目与生产级 Subagent Runtime 的系统调研已记录到 [`W-2026-015：生产级 Subagent 机制与真实项目调研`](../specs/work-pool/W-2026-015-study-production-subagent-runtime.md)。
 
 该任务当前只进入 Work Pool，不立即启动。建议先继续完成：
 

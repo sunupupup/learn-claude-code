@@ -1,4 +1,4 @@
-# W-2026-016：Chat2DB 生产级 Agent + 数据库工具学习
+# W-2026-021：Chat2DB 生产级 Agent + 数据库工具学习
 
 - Status: ready
 - Area: Agent Harness / Text2SQL / Tool Calling / Database / Security / MCP / Reliability / Eval
@@ -6,7 +6,7 @@
 - Discovered From: 图片中的 Chat2DB 项目，以及当前仓库 s01-s09 学习主线
 - Owner: personal
 - Priority: high
-- Related: [`s01-s20`](../../README-zh.md)、[`W-2026-001`](./W-2026-001-study-agent-hook-production-practices.md)、[`W-2026-003`](./W-2026-003-study-strict-json-output-post-training.md)、[`W-2026-005`](./W-2026-005-study-production-skill-loading-and-governance.md)、[`W-2026-006`](./W-2026-006-study-tool-result-compaction-and-recovery.md)、[`W-2026-007`](./W-2026-007-study-side-effect-tool-security.md)、[`W-2026-008`](./W-2026-008-study-memory-production-practices.md)
+- Related: [`s01-s20`](../../README-zh.md)、[`W-2026-023`](./W-2026-023-study-agent-hook-production-practices.md)、[`W-2026-027`](./W-2026-027-study-strict-json-output-post-training.md)、[`W-2026-011`](./W-2026-011-study-production-skill-loading-and-governance.md)、[`W-2026-004`](./W-2026-004-study-tool-result-compaction-and-recovery.md)、[`W-2026-006`](./W-2026-006-study-side-effect-tool-security.md)、[`W-2026-013`](./W-2026-013-study-memory-production-practices.md)
 
 ## Project Identity And Version Boundary
 
@@ -85,15 +85,15 @@ Result/State：返回分页结果、操作状态、错误、引用和审计证�
 | Chat2DB 观察面 | 对应当前章节 | 重点学习问题 |
 | --- | --- | --- |
 | `text2sql`、`execute_sql`、元数据查询 | s01 Agent Loop、s02 Tool Use | 一次 AI 请求如何变成多个工具调用；工具声明、参数 Schema、结果回传和多工具配对在哪里发生 |
-| 数据源、环境、账号、只读/写入边界 | s03 Permission、W-2026-007 | 模型建议、Harness 允许、数据库最终授权三者怎样分层；环境标签能否真正影响执行 |
-| SQL 解析、格式化、错误修复、执行前后处理 | s04 Hooks、W-2026-001 | 哪些是生命周期扩展点，哪些其实是业务 Workflow；失败 Hook 是否阻断执行，如何审计拒绝 |
+| 数据源、环境、账号、只读/写入边界 | s03 Permission、W-2026-006 | 模型建议、Harness 允许、数据库最终授权三者怎样分层；环境标签能否真正影响执行 |
+| SQL 解析、格式化、错误修复、执行前后处理 | s04 Hooks、W-2026-023 | 哪些是生命周期扩展点，哪些其实是业务 Workflow；失败 Hook 是否阻断执行，如何审计拒绝 |
 | AI Copilot、SQL 优化、查询诊断 | s05 TodoWrite、s10 System Prompt、s11 Error Recovery | 多步计划、运行时 Prompt 组装、错误反馈和重试是否由模型决定，哪些必须由 Harness 强制 |
-| SQL 生成、解释、报表和数据分析的上下文隔离 | s06 Subagent、W-2026-004 | 是否真的需要子 Agent；怎样隔离 Schema、结果、凭证和副作用；Summary 是否有真实证据 |
-| 插件、Driver 配置、CLI Skill、MCP Resource | s07 Skill Loading、s19 MCP Plugin、W-2026-005 | 能力发现、按需加载、版本、来源、权限和第三方可执行扩展的治理 |
-| 大 Schema、长 SQL、分页结果、流式响应 | s08 Context Compact、W-2026-006 | 什么可以压缩或外置；压缩后如何保留状态、结果引用和恢复策略 |
-| SQL 历史、保存查询、反馈、AI Dataset | s09 Memory、W-2026-008 | 哪些是历史记录、Run State、Memory 或 Knowledge Base；怎样避免把错误 SQL 和敏感数据长期记住 |
+| SQL 生成、解释、报表和数据分析的上下文隔离 | s06 Subagent、W-2026-015 | 是否真的需要子 Agent；怎样隔离 Schema、结果、凭证和副作用；Summary 是否有真实证据 |
+| 插件、Driver 配置、CLI Skill、MCP Resource | s07 Skill Loading、s19 MCP Plugin、W-2026-011 | 能力发现、按需加载、版本、来源、权限和第三方可执行扩展的治理 |
+| 大 Schema、长 SQL、分页结果、流式响应 | s08 Context Compact、W-2026-004 | 什么可以压缩或外置；压缩后如何保留状态、结果引用和恢复策略 |
+| SQL 历史、保存查询、反馈、AI Dataset | s09 Memory、W-2026-013 | 哪些是历史记录、Run State、Memory 或 Knowledge Base；怎样避免把错误 SQL 和敏感数据长期记住 |
 | 慢查询、数据迁移、导入导出、报表任务 | s12 Task System、s13 Background Tasks、s14 Cron Scheduler | 长任务的状态、取消、重启恢复、定时触发、幂等和部分成功 |
-| 团队数据源、审批、共享资源 | s15-s18、W-2026-007 | 当前 Community 与商业版治理边界；多 Agent 或多用户场景是否真的有身份和资源隔离 |
+| 团队数据源、审批、共享资源 | s15-s18、W-2026-006 | 当前 Community 与商业版治理边界；多 Agent 或多用户场景是否真的有身份和资源隔离 |
 | CLI JSON、MCP endpoint、Agent Skill | s19 MCP Plugin、s20 Comprehensive Agent | 协议工具、连接认证、能力发现、版本兼容、回环监听和失败关闭 |
 
 ## Preferred Incremental Learning Plan
@@ -270,13 +270,13 @@ list_tables → get_schema → text2sql → validate_read_only_sql
 
 ## Relationship To Existing Work Pool
 
-- `W-2026-001`：研究 Chat2DB 的 SQL/Tool 生命周期和观测扩展，但不重复泛化 Hook 理论；
-- `W-2026-003`：研究 Text2SQL/MCP 的结构化输入输出与运行时校验，但不把 JSON 合法当作 SQL 安全；
-- `W-2026-004`：只在 Chat2DB 的多步分析、报表或长任务确有委派证据时研究 Subagent，不预设必须使用；
-- `W-2026-005`：研究 Chat2DB CLI Skill、驱动/插件和 MCP 资源的发现、版本和执行权限；
-- `W-2026-006`：研究查询结果、错误信息和写操作结果的压缩、外置与恢复；
-- `W-2026-007`：把 `execute_sql`、数据源权限、只读账号、审批、幂等和未知结果作为业务 Tool 安全案例；
-- `W-2026-008`：区分查询历史、保存 SQL、反馈、AI Dataset、Memory 和权威数据库事实。
+- `W-2026-023`：研究 Chat2DB 的 SQL/Tool 生命周期和观测扩展，但不重复泛化 Hook 理论；
+- `W-2026-027`：研究 Text2SQL/MCP 的结构化输入输出与运行时校验，但不把 JSON 合法当作 SQL 安全；
+- `W-2026-015`：只在 Chat2DB 的多步分析、报表或长任务确有委派证据时研究 Subagent，不预设必须使用；
+- `W-2026-011`：研究 Chat2DB CLI Skill、驱动/插件和 MCP 资源的发现、版本和执行权限；
+- `W-2026-004`：研究查询结果、错误信息和写操作结果的压缩、外置与恢复；
+- `W-2026-006`：把 `execute_sql`、数据源权限、只读账号、审批、幂等和未知结果作为业务 Tool 安全案例；
+- `W-2026-013`：区分查询历史、保存 SQL、反馈、AI Dataset、Memory 和权威数据库事实。
 
 本任务不修改上述条目；启动后如出现需要独立追踪的实现工作，按 `specs/README.md` 从本 Work Pool 条目创建新的 Change。
 
@@ -312,7 +312,7 @@ list_tables → get_schema → text2sql → validate_read_only_sql
 本条目当前只进入 Work Pool，不自动下载、安装、运行或修改 Chat2DB。建议：
 
 1. 完成 s10 System Prompt 基础后，先启动 Phase 0-2 的只读源码追踪；
-2. 完成 s11 Error Recovery，并结合 `W-2026-007` 后，再启动 Phase 3 的 Tool/Permission/数据库安全实验；
+2. 完成 s11 Error Recovery，并结合 `W-2026-006` 后，再启动 Phase 3 的 Tool/Permission/数据库安全实验；
 3. 完成 s19 MCP Plugin 基础后，再启动 Phase 5 的 CLI/MCP 对照；
 4. 完成 s12-s14 基础后，再研究迁移、报表、后台和定时任务；
 5. 完成 s20 Comprehensive Agent 后，输出最终的跨章节迁移清单。

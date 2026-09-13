@@ -135,7 +135,7 @@ typed protocol message
 
 > s16 支持进程内、线程生命周期内的 Teammate 驻留和唤醒，但不是跨进程、跨 Session 的 Durable Teammate。
 
-证据：`./code.py:618-682`。生产级 idle、ack、重试、崩溃恢复和 checkpoint 暂缓到 [W-2026-019](../specs/work-pool/W-2026-019-study-persistent-teammate-lifecycle.md)。
+证据：`./code.py:618-682`。生产级 idle、ack、重试、崩溃恢复和 checkpoint 暂缓到 [W-2026-018](../specs/work-pool/W-2026-018-study-persistent-teammate-lifecycle.md)。
 
 ### 3.3 “为什么 Lead 要新增 Tool”
 
@@ -499,9 +499,9 @@ LLM 返回非 tool_use
 
 ## 8. 暂缓 Work Pool
 
-- [W-2026-017：Python 锁与 Agent 并发状态治理](../specs/work-pool/W-2026-017-study-python-locks-and-agent-concurrency.md)
-- [W-2026-019：持久 Teammate 生命周期、Idle Loop 与唤醒](../specs/work-pool/W-2026-019-study-persistent-teammate-lifecycle.md)
-- [W-2026-020：Agent-to-Agent 协作方式与通信拓扑](../specs/work-pool/W-2026-020-study-agent-to-agent-collaboration-patterns.md)
-- [W-2026-021：生产级 Agent 权限、授权与审批治理](../specs/work-pool/W-2026-021-study-production-agent-permissions-and-approval.md)
+- [W-2026-008：Python 锁与 Agent 并发状态治理](../specs/work-pool/W-2026-008-study-python-locks-and-agent-concurrency.md)
+- [W-2026-018：持久 Teammate 生命周期、Idle Loop 与唤醒](../specs/work-pool/W-2026-018-study-persistent-teammate-lifecycle.md)
+- [W-2026-016：Agent-to-Agent 协作方式与通信拓扑](../specs/work-pool/W-2026-016-study-agent-to-agent-collaboration-patterns.md)
+- [W-2026-005：生产级 Agent 权限、授权与审批治理](../specs/work-pool/W-2026-005-study-production-agent-permissions-and-approval.md)
 
 这些 Work Pool 仍是后续学习主题，不因本章笔记完成而自动启动。

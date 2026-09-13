@@ -1,4 +1,4 @@
-# W-2026-004：生产级 Subagent 机制与真实项目调研
+# W-2026-015：生产级 Subagent 机制与真实项目调研
 
 - Status: ready
 - Area: Agent / Subagent / Delegation / Runtime / Isolation / Eval

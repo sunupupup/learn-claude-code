@@ -556,7 +556,7 @@ DOM 是 Day of Month（月中日期），DOW 是 Day of Week（星期）。本�
 
 “Message Injection（消息注入）”属于 Agent Harness、Runtime 与 Context Engineering 的交叉问题，不是 LLM 模型内部机制；也不同于安全领域的 Prompt Injection 攻击。
 
-完整的生产级扩展已记录到 [`W-2026-015`](../specs/work-pool/W-2026-015-study-agent-message-injection-steering.md)，当前不在本章提前展开。
+完整的生产级扩展已记录到 [`W-2026-007`](../specs/work-pool/W-2026-007-study-agent-message-injection-steering.md)，当前不在本章提前展开。
 
 ## 当前教学实现的关键简化
 
@@ -634,8 +634,8 @@ registered → fired → queued → injected → model response
 
 ## 相关 Work Pool
 
-- [`W-2026-015`](../specs/work-pool/W-2026-015-study-agent-message-injection-steering.md)：消息注入、插队、安全边界、可靠交付与 Eval，`ready / medium`；本章学习过程中新增，尚未启动。
-- [`W-2026-013`](../specs/work-pool/W-2026-013-study-task-completion-verification.md)：区分模型声称完成、状态完成与证据验证。
-- [`W-2026-012`](../specs/work-pool/W-2026-012-study-production-reactive-context-compaction.md)：压缩和恢复时保持消息协议与 Tool 配对。
-- [`W-2026-011`](../specs/work-pool/W-2026-011-study-system-prompt-production-context-governance.md)：每次模型调用的上下文来源、权限和版本治理。
-- [`W-2026-007`](../specs/work-pool/W-2026-007-study-side-effect-tool-security.md)：定时或插队消息驱动副作用 Tool 时的权限、幂等和审批。
+- [`W-2026-007`](../specs/work-pool/W-2026-007-study-agent-message-injection-steering.md)：消息注入、插队、安全边界、可靠交付与 Eval，`ready / medium`；本章学习过程中新增，尚未启动。
+- [`W-2026-003`](../specs/work-pool/W-2026-003-study-task-completion-verification.md)：区分模型声称完成、状态完成与证据验证。
+- [`W-2026-024`](../specs/work-pool/W-2026-024-study-production-reactive-context-compaction.md)：压缩和恢复时保持消息协议与 Tool 配对。
+- [`W-2026-009`](../specs/work-pool/W-2026-009-study-system-prompt-production-context-governance.md)：每次模型调用的上下文来源、权限和版本治理。
+- [`W-2026-006`](../specs/work-pool/W-2026-006-study-side-effect-tool-security.md)：定时或插队消息驱动副作用 Tool 时的权限、幂等和审批。

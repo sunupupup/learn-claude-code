@@ -1,4 +1,4 @@
-# W-2026-011：System Prompt 生产级上下文治理、权限与缓存
+# W-2026-009：System Prompt 生产级上下文治理、权限与缓存
 
 - Status: ready
 - Area: Agent Harness / Context Engineering / Security / Reliability / Multi-tenancy / Eval
@@ -9,12 +9,12 @@
 - Related:
   - [s10 System Prompt](../../s10_system_prompt/README.md)
   - [s10 学习笔记](../../s10_system_prompt/LEARNING_NOTES.md)
-  - [W-2026-005：生产级 Skill 加载、资源与治理学习](./W-2026-005-study-production-skill-loading-and-governance.md)
-  - [W-2026-006：Tool Result 压缩、恢复与副作用安全学习](./W-2026-006-study-tool-result-compaction-and-recovery.md)
-  - [W-2026-007：生产级副作用 Tool 的分层安全与业务接入学习](./W-2026-007-study-side-effect-tool-security.md)
-  - [W-2026-008：Memory 生产实践与生命周期治理学习](./W-2026-008-study-memory-production-practices.md)
-  - [W-2026-009：Codex 项目指令发现与加载机制学习](./W-2026-009-study-codex-project-instructions-loading.md)
-  - [W-2026-010：Agent Skill 工程化与调用链可观测性学习](./W-2026-010-study-agent-skill-engineering-observability.md)
+  - [W-2026-011：生产级 Skill 加载、资源与治理学习](./W-2026-011-study-production-skill-loading-and-governance.md)
+  - [W-2026-004：Tool Result 压缩、恢复与副作用安全学习](./W-2026-004-study-tool-result-compaction-and-recovery.md)
+  - [W-2026-006：生产级副作用 Tool 的分层安全与业务接入学习](./W-2026-006-study-side-effect-tool-security.md)
+  - [W-2026-013：Memory 生产实践与生命周期治理学习](./W-2026-013-study-memory-production-practices.md)
+  - [W-2026-010：Codex 项目指令发现与加载机制学习](./W-2026-010-study-codex-project-instructions-loading.md)
+  - [W-2026-012：Agent Skill 工程化与调用链可观测性学习](./W-2026-012-study-agent-skill-engineering-observability.md)
 
 ## Objective
 
@@ -443,7 +443,7 @@ model / generation_id / tool_call_id
 
 满足以下条件后再启动：
 
-- 用户明确说“开始 W-2026-011”或同等意思；
+- 用户明确说“开始 W-2026-009”或同等意思；
 - 已完成 `s10` 基础验收，能写出 Prompt Section、Context Snapshot 和缓存判断伪代码；
 - 至少选择一个主样本项目和一个观测/Runtime 对照项目；
 - 启动时重新核验官方文档、版本、Commit、许可证和当前 API；

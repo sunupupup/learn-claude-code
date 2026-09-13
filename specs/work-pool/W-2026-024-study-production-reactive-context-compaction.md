@@ -1,4 +1,4 @@
-# W-2026-012：生产级 Reactive Context Compaction 学习
+# W-2026-024：生产级 Reactive Context Compaction 学习
 
 - Status: ready
 - Area: Context Engineering / Error Recovery / Durable Execution / Tool Calling / Eval
@@ -12,8 +12,8 @@
   - [s08 压缩方式对比](../../s08_context_compact/压缩方式对比.md)
   - [s11 Error Recovery](../../s11_error_recovery/README.md)
   - [s11 学习笔记](../../s11_error_recovery/LEARNING_NOTES.md)
-  - [W-2026-006：Tool Result 压缩、恢复与副作用安全](./W-2026-006-study-tool-result-compaction-and-recovery.md)
-  - [W-2026-011：System Prompt 生产级上下文治理、权限与缓存](./W-2026-011-study-system-prompt-production-context-governance.md)
+  - [W-2026-004：Tool Result 压缩、恢复与副作用安全](./W-2026-004-study-tool-result-compaction-and-recovery.md)
+  - [W-2026-009：System Prompt 生产级上下文治理、权限与缓存](./W-2026-009-study-system-prompt-production-context-governance.md)
 
 ## Objective
 
@@ -56,8 +56,8 @@ Reactive compact 不是一种独立的内容格式，而是一条由真实超限
 ## Scope Boundary With Related Work
 
 - 本任务研究“整个上下文在超限后的紧急恢复路径”。
-- `W-2026-006` 研究“单个或一组 Tool Result 如何压缩、外置、恢复与保证副作用安全”。
-- `W-2026-011` 研究更广泛的 Context 来源、租户隔离、权限、注入防护、缓存与版本治理。
+- `W-2026-004` 研究“单个或一组 Tool Result 如何压缩、外置、恢复与保证副作用安全”。
+- `W-2026-009` 研究更广泛的 Context 来源、租户隔离、权限、注入防护、缓存与版本治理。
 
 三者共享 Tool 配对、版本和恢复问题，但各自保持独立的主要事实来源，避免把所有 Context Engineering 议题合并成一个巨型任务。
 
@@ -169,7 +169,7 @@ Reactive compact 不是一种独立的内容格式，而是一条由真实超限
 
 ## Start Trigger
 
-- 用户明确说“开始 W-2026-012”或同等意思；
+- 用户明确说“开始 W-2026-024”或同等意思；
 - 已完成 `s11_error_recovery` 基础验收；
 - 启动时重新核验候选项目的官方文档、版本、Commit 和许可证；
 - 按 `specs/README.md` 创建对应的 `specs/changes/C-*.md`，并移除本 Work Pool 文件。
@@ -186,6 +186,6 @@ Reactive compact 不是一种独立的内容格式，而是一条由真实超限
 ## Non-goals
 
 - 不在该任务中构建通用 Agent Runtime 或完整分布式工作流平台；
-- 不重复研究 `W-2026-006` 已负责的全部 Tool Result 压缩策略；
+- 不重复研究 `W-2026-004` 已负责的全部 Tool Result 压缩策略；
 - 不把 Memory、RAG、System Prompt 和完整聊天历史混成同一种状态；
 - 不为了展示复杂度默认引入多 Agent、向量数据库或知识图谱。

@@ -1,4 +1,4 @@
-# W-2026-002：完整学习 Agent 自进化与可进化 Harness
+# W-2026-026：完整学习 Agent 自进化与可进化 Harness
 
 - Status: ready
 - Area: Agent / Self-Evolution / Memory / Harness / Eval / Post-training
@@ -125,10 +125,10 @@ Selection / Promotion Gate
 
 ## Relationship to Existing Work
 
-本任务复用 [W-2026-001：调研小型 Agent 项目的 Hook 生产实践](./W-2026-001-study-agent-hook-production-practices.md) 中关于生命周期、插件契约、异常、权限与观测的结论，但不与它重复：
+本任务复用 [W-2026-023：调研小型 Agent 项目的 Hook 生产实践](./W-2026-023-study-agent-hook-production-practices.md) 中关于生命周期、插件契约、异常、权限与观测的结论，但不与它重复：
 
-- W-2026-001 回答“扩展点如何安全运行”；
-- W-2026-002 回答“系统如何基于经验提出变化、验证变化并选择新版本”。
+- W-2026-023 回答“扩展点如何安全运行”；
+- W-2026-026 回答“系统如何基于经验提出变化、验证变化并选择新版本”。
 
 ## Reason Deferred
 

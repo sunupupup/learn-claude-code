@@ -1,4 +1,4 @@
-# W-2026-022：RAG vs LLM Wiki vs Ontology — 知识管理三范式对比
+# W-2026-025：RAG vs LLM Wiki vs Ontology — 知识管理三范式对比
 
 - Status: someday
 - Area: Knowledge Management / RAG / LLM Wiki / Ontology / Knowledge Graph / Agent Memory
@@ -155,11 +155,11 @@ RAG       = 知识的 "搜索引擎"（在大规模未编译数据中找到相�
 
 | 交叉点 | 说明 | 相关 Work Pool |
 |--------|------|---------------|
-| Agent 长期记忆 | LLM Wiki 本质上是 Agent 长期记忆的一种实现 | W-2026-008 |
-| Context 压缩 | Wiki 的预编译 = 极端的 context compaction | W-2026-006、W-2026-012 |
-| Tool 结果处理 | Agent 的 tool 结果可以编译进 wiki 而非丢弃 | W-2026-006 |
-| 知识检索 Tool | RAG、wiki 查询、图遍历都可以是 Agent 的 Tool | W-2026-010 |
-| 可观测性 | Ontology 提供的可追溯性对 Agent 审计至关重要 | W-2026-010、W-2026-021 |
+| Agent 长期记忆 | LLM Wiki 本质上是 Agent 长期记忆的一种实现 | W-2026-013 |
+| Context 压缩 | Wiki 的预编译 = 极端的 context compaction | W-2026-004、W-2026-024 |
+| Tool 结果处理 | Agent 的 tool 结果可以编译进 wiki 而非丢弃 | W-2026-004 |
+| 知识检索 Tool | RAG、wiki 查询、图遍历都可以是 Agent 的 Tool | W-2026-012 |
+| 可观测性 | Ontology 提供的可追溯性对 Agent 审计至关重要 | W-2026-012、W-2026-005 |
 
 ## 关键资源
 
@@ -230,19 +230,19 @@ RAG       = 知识的 "搜索引擎"（在大规模未编译数据中找到相�
 
 ## Start Trigger
 
-- 用户明确说"开始 W-2026-022"；
-- 或在学习 Agent Memory（W-2026-008）时自然需要对比知识管理方案；
+- 用户明确说"开始 W-2026-025"；
+- 或在学习 Agent Memory（W-2026-013）时自然需要对比知识管理方案；
 - 或想尝试用 LLM Wiki 模式改进本仓库的笔记组织。
 
 ## Boundaries
 
 - 不构建生产级 RAG/KG 系统，只做概念对比和小规模实验
-- 不重复 W-2026-008 的 Agent Memory 完整调研
+- 不重复 W-2026-013 的 Agent Memory 完整调研
 - 不安装重量级图数据库，如需实验优先用轻量方案
 
 ## Related
 
-- [`W-2026-008：Memory 生产实践`](./W-2026-008-study-memory-production-practices.md)
-- [`W-2026-006：Tool Result 压缩与恢复`](./W-2026-006-study-tool-result-compaction-and-recovery.md)
-- [`W-2026-012：Reactive Context Compaction`](./W-2026-012-study-production-reactive-context-compaction.md)
-- [`W-2026-010：Skill 工程化与可观测性`](./W-2026-010-study-agent-skill-engineering-observability.md)
+- [`W-2026-013：Memory 生产实践`](./W-2026-013-study-memory-production-practices.md)
+- [`W-2026-004：Tool Result 压缩与恢复`](./W-2026-004-study-tool-result-compaction-and-recovery.md)
+- [`W-2026-024：Reactive Context Compaction`](./W-2026-024-study-production-reactive-context-compaction.md)
+- [`W-2026-012：Skill 工程化与可观测性`](./W-2026-012-study-agent-skill-engineering-observability.md)

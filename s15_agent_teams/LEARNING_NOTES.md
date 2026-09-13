@@ -384,7 +384,7 @@ s15 当前使用了 `background_lock` 和 `cron_lock` 保护部分内存字典/�
 - `MessageBus.read_inbox()` 的 read + unlink 不是原子消费；
 - 多个 Agent 对共享工作区文件的写入也没有文件级协调。
 
-Python 锁与 Agent 并发状态治理暂放在 [W-2026-017](../specs/work-pool/W-2026-017-study-python-locks-and-agent-concurrency.md)。
+Python 锁与 Agent 并发状态治理暂放在 [W-2026-008](../specs/work-pool/W-2026-008-study-python-locks-and-agent-concurrency.md)。
 
 ## 教学实现、通用原理与版本相关事实
 
@@ -489,7 +489,7 @@ pending_permissions[request_id] = {
 
 所以，给当前 Teammate 发送一条“permission approved”文本，只会得到一条普通消息，不会自动解除某个 Bash 调用的阻塞。
 
-本案例对应的生产级延伸主题已登记在 [W-2026-021：生产级 Agent 权限、授权与审批治理](../specs/work-pool/W-2026-021-study-production-agent-permissions-and-approval.md)。
+本案例对应的生产级延伸主题已登记在 [W-2026-005：生产级 Agent 权限、授权与审批治理](../specs/work-pool/W-2026-005-study-production-agent-permissions-and-approval.md)。
 
 ## 本章掌握状态
 
@@ -508,10 +508,10 @@ pending_permissions[request_id] = {
 ### 尚未在本章内完成、明确暂缓的内容
 
 - 体面的 `shutdown_request → shutdown_approved` 关机协议和消息类型：进入 s16；
-- idle loop、唤醒、ack、重试、崩溃恢复和 Checkpoint：进入 [W-2026-019](../specs/work-pool/W-2026-019-study-persistent-teammate-lifecycle.md)；
-- Python 锁、文件锁、原子消费和共享状态治理：进入 [W-2026-017](../specs/work-pool/W-2026-017-study-python-locks-and-agent-concurrency.md)；
-- 扁平 Team、层级 Team、嵌套委派与权限/预算边界：进入 [W-2026-018](../specs/work-pool/W-2026-018-study-agent-team-hierarchy-and-delegation.md)；
-- Agent-to-Agent 协作模式、Handoff、任务板、Peer 和 Durable Team 的生产比较：进入 [W-2026-020](../specs/work-pool/W-2026-020-study-agent-to-agent-collaboration-patterns.md)；
+- idle loop、唤醒、ack、重试、崩溃恢复和 Checkpoint：进入 [W-2026-018](../specs/work-pool/W-2026-018-study-persistent-teammate-lifecycle.md)；
+- Python 锁、文件锁、原子消费和共享状态治理：进入 [W-2026-008](../specs/work-pool/W-2026-008-study-python-locks-and-agent-concurrency.md)；
+- 扁平 Team、层级 Team、嵌套委派与权限/预算边界：进入 [W-2026-017](../specs/work-pool/W-2026-017-study-agent-team-hierarchy-and-delegation.md)；
+- Agent-to-Agent 协作模式、Handoff、任务板、Peer 和 Durable Team 的生产比较：进入 [W-2026-016](../specs/work-pool/W-2026-016-study-agent-to-agent-collaboration-patterns.md)；
 - 真实 CC 源码的当前版本核验：不在本章中把 README 的版本性描述当作最终证据。
 
 ### 完成判定

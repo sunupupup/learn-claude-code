@@ -1,4 +1,4 @@
-# W-2026-028：实现一个真实有用的 MCP 服务
+# W-2026-014：实现一个真实有用的 MCP 服务
 
 - Status: ready
 - Area: MCP / Agent Harness / Tool Integration
@@ -14,7 +14,7 @@
 
 ## Why Deferred / Start Trigger
 
-当前先学习 s19，一次处理一个概念；此条目不自动启动实现。用户明确说“开始 W-2026-028”或“开始做真实 MCP 服务”时，按 [Spec 规范](../README.md) 创建 Change 并移除本 Work Pool 文件。建议启动前能复述 s19 的发现、组装、调用链。
+当前先学习 s19，一次处理一个概念；此条目不自动启动实现。用户明确说“开始 W-2026-014”或“开始做真实 MCP 服务”时，按 [Spec 规范](../README.md) 创建 Change 并移除本 Work Pool 文件。建议启动前能复述 s19 的发现、组装、调用链。
 
 ## 后续基础协议学习清单
 
@@ -108,9 +108,9 @@
 
 - [s19 MCP 教程](../../s19_mcp_plugin/README.md)
 - [s19 教学代码](../../s19_mcp_plugin/code.py)
-- [W-2026-014 学习路线](./W-2026-014-agent-engineering-master-learning-roadmap.md)
-- [W-2026-005 Skill 加载与治理](./W-2026-005-study-production-skill-loading-and-governance.md)：比较资源接入与 Skill 加载边界。
-- [W-2026-007 副作用工具安全](./W-2026-007-study-side-effect-tool-security.md)：包含写操作时参考。
-- [W-2026-010 工程化与可观测性](./W-2026-010-study-agent-skill-engineering-observability.md)：复用跨层 Trace、治理与 Eval 的学习问题。
-- [W-2026-021 权限与审批治理](./W-2026-021-study-production-agent-permissions-and-approval.md)：对照身份、授权、审批与执行边界。
-- [W-2026-016 Chat2DB 实践](./W-2026-016-study-chat2db-production-agent-db.md)：已有系统 MCP 接入对照，不等于本任务的服务实现。
+- [W-2026-001 学习路线](./W-2026-001-agent-engineering-master-learning-roadmap.md)
+- [W-2026-011 Skill 加载与治理](./W-2026-011-study-production-skill-loading-and-governance.md)：比较资源接入与 Skill 加载边界。
+- [W-2026-006 副作用工具安全](./W-2026-006-study-side-effect-tool-security.md)：包含写操作时参考。
+- [W-2026-012 工程化与可观测性](./W-2026-012-study-agent-skill-engineering-observability.md)：复用跨层 Trace、治理与 Eval 的学习问题。
+- [W-2026-005 权限与审批治理](./W-2026-005-study-production-agent-permissions-and-approval.md)：对照身份、授权、审批与执行边界。
+- [W-2026-021 Chat2DB 实践](./W-2026-021-study-chat2db-production-agent-db.md)：已有系统 MCP 接入对照，不等于本任务的服务实现。

@@ -263,7 +263,7 @@ block = {"content": "..."}  # 只重新绑定局部变量，不会替换 message
 }
 ```
 
-进一步学习已记录到 [W-2026-006：Tool Result 压缩、恢复与副作用安全学习](../specs/work-pool/W-2026-006-study-tool-result-compaction-and-recovery.md)，当前只进入 Work Pool，不自动启动。
+进一步学习已记录到 [W-2026-004：Tool Result 压缩、恢复与副作用安全学习](../specs/work-pool/W-2026-004-study-tool-result-compaction-and-recovery.md)，当前只进入 Work Pool，不自动启动。
 
 ## 九、当前关键伪代码
 

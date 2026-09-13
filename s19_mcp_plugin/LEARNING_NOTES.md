@@ -13,7 +13,7 @@ MCP 是 Model Context Protocol（模型上下文协议）。它规定 Host 与�
 3. 模型如何调用带命名空间的 MCP 工具；
 4. 工具池变化后，为什么需要重新组装工具和 prompt。
 
-真实 MCP Server、真实传输、JSON-RPC 报文和生产级治理暂缓到 [W-2026-028](../specs/work-pool/W-2026-028-build-useful-mcp-server.md)。
+真实 MCP Server、真实传输、JSON-RPC 报文和生产级治理暂缓到 [W-2026-014](../specs/work-pool/W-2026-014-build-useful-mcp-server.md)。
 
 ## 一、术语和角色
 
@@ -507,7 +507,7 @@ Host 或客户端决定读取
 
 ## 八、教学实现和生产实现的差距
 
-本章代码成功展示了工具发现和调用分发，但没有提供生产保证。完整的生产验收矩阵保存在 [W-2026-028](../specs/work-pool/W-2026-028-build-useful-mcp-server.md)；这里保留最重要的边界：
+本章代码成功展示了工具发现和调用分发，但没有提供生产保证。完整的生产验收矩阵保存在 [W-2026-014](../specs/work-pool/W-2026-014-build-useful-mcp-server.md)；这里保留最重要的边界：
 
 ### 协议和生命周期
 
@@ -572,7 +572,7 @@ Host 或客户端决定读取
 
 ## 十、与 Work Pool 的关系
 
-[W-2026-028：实现一个真实有用的 MCP 服务](../specs/work-pool/W-2026-028-build-useful-mcp-server.md) 当前状态是 ready，尚未启动。
+[W-2026-014：实现一个真实有用的 MCP 服务](../specs/work-pool/W-2026-014-build-useful-mcp-server.md) 当前状态是 ready，尚未启动。
 
 它已经记录：
 
@@ -585,7 +585,7 @@ Host 或客户端决定读取
 
 本章的学习目标已经达到：能够解释 s19 教学 Demo 的发现、组装、调用链，并能用真实 Context7 报文校准 MCP 的基本机制。
 
-本章没有达到“已经实现生产级 MCP 服务”的目标；那是 W-2026-028 启动后的工作。
+本章没有达到“已经实现生产级 MCP 服务”的目标；那是 W-2026-014 启动后的工作。
 
 跨章节的 Agent 流程、状态机、数据流和面试表达方法，统一记录在
 [Agent 流程与状态建模方法](../docs/agent-engineering/agent-flow-and-state-modeling.md)。

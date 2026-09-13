@@ -262,7 +262,7 @@ Lead → check task status → merge worktree
 - 完成与清理分开：所需提交、产物和验证证据已有去处，且没有遗漏的未提交改动，再清理工作区。
 - npm run build / npm run test 是我举的项目命令示例，本次没有运行，也没有确认本仓库提供这些脚本。
 
-这个例子连接到 [W-2026-013](../specs/work-pool/W-2026-013-study-task-completion-verification.md)：completed 是状态，验证记录才说明具体证明了什么；后续扩展内容仍在原 Work Pool 维护。
+这个例子连接到 [W-2026-003](../specs/work-pool/W-2026-003-study-task-completion-verification.md)：completed 是状态，验证记录才说明具体证明了什么；后续扩展内容仍在原 Work Pool 维护。
 
 ## 10. 关联章节与暂缓主题
 
@@ -270,8 +270,8 @@ Lead → check task status → merge worktree
 
 既有 Work Pool 继续保持原状态，本次未自动启动或重复登记：
 
-- [W-2026-013 完成验证](../specs/work-pool/W-2026-013-study-task-completion-verification.md)：完成状态与真实证据。
-- [W-2026-017 并发治理](../specs/work-pool/W-2026-017-study-python-locks-and-agent-concurrency.md)：认领竞态与共享状态。
-- [W-2026-021 权限治理](../specs/work-pool/W-2026-021-study-production-agent-permissions-and-approval.md)：目录隔离与权限边界。
-- [W-2026-025 队友恢复](../specs/work-pool/W-2026-025-study-teammate-registry-and-reuse.md)：队友退出后任务与产物如何接管。
-- [W-2026-027 产品源码对照](../specs/work-pool/W-2026-027-study-claude-code-codex-agent-runtime-sources.md)：固定版本核验真实 Runtime。
+- [W-2026-003 完成验证](../specs/work-pool/W-2026-003-study-task-completion-verification.md)：完成状态与真实证据。
+- [W-2026-008 并发治理](../specs/work-pool/W-2026-008-study-python-locks-and-agent-concurrency.md)：认领竞态与共享状态。
+- [W-2026-005 权限治理](../specs/work-pool/W-2026-005-study-production-agent-permissions-and-approval.md)：目录隔离与权限边界。
+- [W-2026-019 队友恢复](../specs/work-pool/W-2026-019-study-teammate-registry-and-reuse.md)：队友退出后任务与产物如何接管。
+- [W-2026-022 产品源码对照](../specs/work-pool/W-2026-022-study-claude-code-codex-agent-runtime-sources.md)：固定版本核验真实 Runtime。

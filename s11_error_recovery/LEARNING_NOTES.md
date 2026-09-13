@@ -48,7 +48,7 @@ prompt_too_long 异常    → 改变上下文后重试一次
 
 🔴 **已验证理解**：上下文压缩必须选择协议安全的切点，保留 Tool 调用和结果之间的 ID 与因果关系，不能只按消息数量机械截断。
 
-整个上下文的生产级紧急压缩已记录在 [`W-2026-012`](../specs/work-pool/W-2026-012-study-production-reactive-context-compaction.md)；单独的 Tool Result 压缩与副作用恢复由 [`W-2026-006`](../specs/work-pool/W-2026-006-study-tool-result-compaction-and-recovery.md) 负责。当前章节不展开完整实现。
+整个上下文的生产级紧急压缩已记录在 [`W-2026-024`](../specs/work-pool/W-2026-024-study-production-reactive-context-compaction.md)；单独的 Tool Result 压缩与副作用恢复由 [`W-2026-004`](../specs/work-pool/W-2026-004-study-tool-result-compaction-and-recovery.md) 负责。当前章节不展开完整实现。
 
 ### 4. 429、529 与退避
 
@@ -200,7 +200,7 @@ B 200 但结果不符合任务契约 → 进入结果校验、降级回答或人
 
 ## 八、暂缓的生产级主题
 
-- 生产级 reactive compact 的触发、协议安全切点、摘要状态契约与真实项目对比，见 [`W-2026-012`](../specs/work-pool/W-2026-012-study-production-reactive-context-compaction.md)；
+- 生产级 reactive compact 的触发、协议安全切点、摘要状态契约与真实项目对比，见 [`W-2026-024`](../specs/work-pool/W-2026-024-study-production-reactive-context-compaction.md)；
 - SDK 与应用层重试策略叠加后的总预算；
 - 流式响应中断和部分内容恢复；
 - fallback 模型的能力、Tool Schema 和输出兼容性；

@@ -209,7 +209,7 @@ Hook 的行为不能只靠 `canBeParallel`、`shouldBeBlocked` 两个布尔值�
 4. 权限 Hook 是否只是体验层，真正授权是否仍由服务端和沙箱兜底？
 5. 重试、替换和 Post 处理是否会造成费用、重复副作用或审计缺口？
 
-下一步不需要系统学习整个 LangChain。做一个最小 Middleware 实验，再到真实的小型 Agent 项目中追踪注册点、触发点和返回值如何影响控制流，收益更高。对应任务已放入 [Work Pool](../specs/work-pool/W-2026-001-study-agent-hook-production-practices.md)。
+下一步不需要系统学习整个 LangChain。做一个最小 Middleware 实验，再到真实的小型 Agent 项目中追踪注册点、触发点和返回值如何影响控制流，收益更高。对应任务已放入 [Work Pool](../specs/work-pool/W-2026-023-study-agent-hook-production-practices.md)。
 
 ## 参考资料
 

@@ -364,7 +364,7 @@ advance_skill(
 - DeepSeek 真实运行：`load_skill` → `advance_skill` → 最终总结，成功。
 - 原始 `s07_skill_loading/code.py`：保持独立，未被增强版替换。
 - 待学习：资源索引的版本与缓存失效、Skill 来源信任、脚本执行审批，以及 Subagent 的角色级 Skill allowlist。
-- 生产化延伸已加入 [W-2026-005：生产级 Skill 加载、资源与治理学习](../specs/work-pool/W-2026-005-study-production-skill-loading-and-governance.md)，当前保持 `ready`，不自动启动。
+- 生产化延伸已加入 [W-2026-011：生产级 Skill 加载、资源与治理学习](../specs/work-pool/W-2026-011-study-production-skill-loading-and-governance.md)，当前保持 `ready`，不自动启动。
 
 ## 十三、本轮验收回答与校准
 

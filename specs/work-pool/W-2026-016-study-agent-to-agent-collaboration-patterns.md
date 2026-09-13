@@ -1,4 +1,4 @@
-# W-2026-020：Agent-to-Agent 协作方式与通信拓扑
+# W-2026-016：Agent-to-Agent 协作方式与通信拓扑
 
 - Status: ready
 - Area: Agent Collaboration / Agent-to-Agent Communication / Delegation / Handoff / Inbox / Task Board / Peer Coordination / Eval
@@ -361,7 +361,7 @@ Agent 可以生成计划和参数，但不要让多个 Peer Agent 自行互相�
 
 ## Start Trigger
 
-- 用户明确说“开始 W-2026-020”；
+- 用户明确说“开始 W-2026-016”；
 - 或明确说“开始研究 Agent 之间的协作方式”；
 - 启动时按 [`specs/README.md`](../README.md) 创建对应 Change，并移除本 Work Pool 文件；
 - 进入真实项目调研前，重新核验版本、Commit、许可证、活动状态和当前官方资料。
@@ -377,8 +377,8 @@ Agent 可以生成计划和参数，但不要让多个 Peer Agent 自行互相�
 ## Non-goals
 
 - 不构建通用 Agent 通信协议或消息中间件；
-- 不重复承担 W-2026-004 的全部 Subagent Runtime 调研；
-- 不重复承担 W-2026-015 的全部运行时消息注入治理；
+- 不重复承担 W-2026-015 的全部 Subagent Runtime 调研；
+- 不重复承担 W-2026-007 的全部运行时消息注入治理；
 - 不默认实现多层 Team，只有评测证明协作收益超过协调成本时才考虑。
 
 ## Related
@@ -386,7 +386,7 @@ Agent 可以生成计划和参数，但不要让多个 Peer Agent 自行互相�
 - [`s06 Subagent`](../../s06_subagent/README.md)
 - [`s15 Agent Teams`](../../s15_agent_teams/README.md)
 - [`s15 学习笔记`](../../s15_agent_teams/LEARNING_NOTES.md)
-- [`W-2026-004：生产级 Subagent Runtime`](./W-2026-004-study-production-subagent-runtime.md)
-- [`W-2026-015：Agent 消息注入、插队与运行时事件交付`](./W-2026-015-study-agent-message-injection-steering.md)
-- [`W-2026-018：Agent Team 层级设计与委派拓扑权衡`](./W-2026-018-study-agent-team-hierarchy-and-delegation.md)
-- [`W-2026-019：持久 Teammate 生命周期、Idle Loop 与唤醒`](./W-2026-019-study-persistent-teammate-lifecycle.md)
+- [`W-2026-015：生产级 Subagent Runtime`](./W-2026-015-study-production-subagent-runtime.md)
+- [`W-2026-007：Agent 消息注入、插队与运行时事件交付`](./W-2026-007-study-agent-message-injection-steering.md)
+- [`W-2026-017：Agent Team 层级设计与委派拓扑权衡`](./W-2026-017-study-agent-team-hierarchy-and-delegation.md)
+- [`W-2026-018：持久 Teammate 生命周期、Idle Loop 与唤醒`](./W-2026-018-study-persistent-teammate-lifecycle.md)

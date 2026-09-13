@@ -156,7 +156,7 @@ Agent 继续工作               ↓
 
 - 前 200 个字符可能丢掉输出尾部真正的报错、退出状态和诊断证据。
 - README 中的 CC `pendingToolUseSummary` 是用较小模型生成短进度标签的 side-query，主要服务进度展示；本章 `<task_notification><summary>` 承载后台完成信息。二者都在减少信息体积，但消费者、时机和数据流不同，不能视为同一个机制。
-- 生产级 Bash 结果压缩、恢复引用与副作用安全已经记录在 [`W-2026-006`](../specs/work-pool/W-2026-006-study-tool-result-compaction-and-recovery.md)，当前仍为 `ready`，本章不提前启动。
+- 生产级 Bash 结果压缩、恢复引用与副作用安全已经记录在 [`W-2026-004`](../specs/work-pool/W-2026-004-study-tool-result-compaction-and-recovery.md)，当前仍为 `ready`，本章不提前启动。
 
 ## 教学实现与真实 Runtime 的边界
 

@@ -1,4 +1,4 @@
-# W-2026-009：Codex 项目指令发现与加载机制学习
+# W-2026-010：Codex 项目指令发现与加载机制学习
 
 - Status: ready
 - Area: Agent Harness / Project Instructions / Context Assembly / Security / Provenance
@@ -6,7 +6,7 @@
 - Discovered From: Codex 源码截图解析；重点关注 `AGENTS.md` 如何进入 Coding Agent Context
 - Owner: personal
 - Priority: high
-- Related: [W-2026-005：生产级 Skill 加载、资源与治理学习](./W-2026-005-study-production-skill-loading-and-governance.md)
+- Related: [W-2026-011：生产级 Skill 加载、资源与治理学习](./W-2026-011-study-production-skill-loading-and-governance.md)
 
 ## 原始简版学习点（来自截图）
 
@@ -269,7 +269,7 @@ project_doc_fallback_filenames 中的候选名
 
 - [`AGENTS.md`](../../AGENTS.md)：本仓库的 Agent 自动发现入口与工作约束；作为使用者侧配置样本，不作为 Codex 实现证据。
 - [`specs/README.md`](../README.md)：本仓库 Work Pool / Change / Implementation 的流转规则。
-- [W-2026-005：生产级 Skill 加载、资源与治理学习](./W-2026-005-study-production-skill-loading-and-governance.md)：用于比较“指令/资源被读取”与“工具权限被授予”的边界。
+- [W-2026-011：生产级 Skill 加载、资源与治理学习](./W-2026-011-study-production-skill-loading-and-governance.md)：用于比较“指令/资源被读取”与“工具权限被授予”的边界。
 
 版本、源码路径、字段和产品行为在正式启动时必须重新核对；截图只作为发现线索和阅读导航。
 

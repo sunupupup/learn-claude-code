@@ -1,4 +1,4 @@
-# W-2026-007：生产级副作用 Tool 的分层安全与业务接入学习
+# W-2026-006：生产级副作用 Tool 的分层安全与业务接入学习
 
 - Status: ready
 - Area: Agent Harness / Tool Calling / Authorization / Idempotency / HITL / Durable Execution / Audit
@@ -179,7 +179,7 @@ Tool Result 压缩也属于安全链：如果压缩后丢失“已经执行成�
 - 为有副作用结果保留资源 ID、操作 ID、幂等键、状态、重试策略和原结果引用；
 - Trace 关联 Run、Tool Call、审批与业务操作，但敏感正文最小化；
 - Audit Log 使用不可混淆的 Actor、On-behalf-of User、Decision、Reason 和业务结果；
-- 与 [`W-2026-006`](./W-2026-006-study-tool-result-compaction-and-recovery.md) 联动验证压缩后的恢复安全，不重复维护其压缩算法细节。
+- 与 [`W-2026-004`](./W-2026-004-study-tool-result-compaction-and-recovery.md) 联动验证压缩后的恢复安全，不重复维护其压缩算法细节。
 
 ## Minimal Implementation Exercise
 
