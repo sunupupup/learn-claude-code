@@ -486,6 +486,203 @@ Host 读取 Server 配置
 
 因此，学习和实现真实 MCP 时必须先固定协议版本，再按该版本的 lifecycle 编写 Client、测试和部署说明。本章的 Context7 报文记录明确使用 2025-11-25，所以本节的 initialize 链对那次实测是准确的；它不能直接当作当前所有 MCP Server 的通用连接流程。
 
+### 真实 Streamable HTTP Python 实验（2026-09-13）
+
+为了把教学 Mock 和真实网络调用分开，新增了两个版本：
+
+- [`code_http_mcp.py`](./code_http_mcp.py)：纯 Python 标准库版本，不导入 MCP SDK，专门展示线路上的 JSON-RPC 和 SSE；
+- [`code_http_mcp_sdk.py`](./code_http_mcp_sdk.py)：Python MCP SDK `mcp==2.2.0` 版本，用来和手写协议实现对照。
+
+```powershell
+# 终端一：启动纯标准库 HTTP MCP Server
+.\.venv\Scripts\python.exe .\s19_mcp_plugin\code_http_mcp.py server
+
+# 终端二：创建不依赖 SDK 的原始 MCP Client
+.\.venv\Scripts\python.exe .\s19_mcp_plugin\code_http_mcp.py client --query MCP
+
+# 终端二（需要 .env 中的 MODEL_ID）：运行 MCP 仍为手写协议的 Agent Loop
+.\.venv\Scripts\python.exe .\s19_mcp_plugin\code_http_mcp.py agent
+
+# 如需查看 MCP SDK 封装后的 Agent Loop，对照运行：
+.\.venv\Scripts\python.exe .\s19_mcp_plugin\code_http_mcp_sdk.py agent
+```
+
+原始客户端代码没有把本地 Server 对象传进去，而是用 `urllib` 直接向
+`http://127.0.0.1:8765/mcp` 发送 JSON-RPC：
+
+```text
+RawMCPClient.connect()             # 本地辅助函数，不是 MCP method
+  → POST initialize                # 协议版本、能力、Server 信息
+  ← text/event-stream + session id
+  → POST notifications/initialized # notification，HTTP 202，无 result
+  → POST tools/list                # 获取 Tool definitions
+  ← text/event-stream + tools
+  → POST tools/call                # 传 name + arguments
+  ← text/event-stream + Tool result
+  → DELETE /mcp                    # 结束 session
+```
+
+`agent` 命令在上面的协议链外面再包了一层最小模型循环：
+
+```text
+用户问题
+  → Anthropic 模型返回 tool_use
+  → RawMCPClient 发送 tools/call
+  → Tool result 追加到 history
+  → 模型继续下一轮并输出最终文本
+```
+
+这里的 SDK 只用于调用 Anthropic 模型；MCP 的 Server、Client、JSON-RPC 和 SSE
+仍然是本文件手写的。
+
+这次实验实际验证了：
+
+- `connect()` 只是 Client 自己定义的编排函数，线路上没有 `connect` 这个 MCP method；
+- `initialize` 返回 `protocolVersion`、`capabilities`、`serverInfo` 和 `instructions`，并由 Server 分配 `Mcp-Session-Id`；
+- `notifications/initialized` 没有 `id`，Server 返回 `202 Accepted`，因为 notification 不等待 result；
+- `tools/list` 返回两个 Tool 的名称、描述和 `inputSchema`；
+- `tools/call` 的 `params` 是 `{ "name": "...", "arguments": {...} }`，结果同时包含文本内容和结构化内容；
+- 每个有结果的 POST 都返回一条 `text/event-stream` 的 `event: message`，这就是本实验刻意保留的 HTTP Stream 外壳；
+- 最后用 `DELETE /mcp` 删除进程内 session。
+- `agent` Loop 用 fake model 做了两轮回归：第一轮返回 `tool_use`，真实 MCP 执行后，第二轮收到 Tool result 并输出最终文本；没有调用付费模型。
+
+客户端还提供一个小交互 Loop，可以输入：
+
+```text
+list
+search MCP
+stats
+q
+```
+
+`client` 命令让人直接观察“客户端如何按协议调用工具”；`agent` 命令则保留了
+`code.py` 的模型循环。SDK 版本把 MCP 的同一过程压缩成：
+
+```text
+Client(URL)
+  → Streamable HTTP /mcp
+  → MCP 生命周期由 SDK 处理
+  → tools/list
+  → tools/call(search_code)
+```
+
+这个 Demo 的边界也要明确：工具访问的是进程内固定的只读代码索引，不是生产代码搜索服务；没有实现认证、租户授权、持久化、限流、审计、分布式会话和 SLO。它只证明“独立 HTTP Server + 独立 MCP Client + initialize/tools/list/tools/call”这条真实链路。
+
+### Web MCP Server：同一组 Tools、Resources、Prompts 的两种实现
+
+为了把“SDK 的声明式写法”和“线路上的协议分发”放在同一个例子里，又新增了一个更小的 Web Server。它把一个固定的三页网站作为数据源：
+
+- `search_pages`、`page_stats` 是 Tools；
+- `http://127.0.0.1:8780/pages/index` 是静态 Resource，`http://127.0.0.1:8780/pages/{slug}` 是 Resource template；
+- `summarize_page` 是 Prompt，会生成一条可复用的用户消息。
+
+SDK 版：[`web_mcp_server_sdk.py`](./web_mcp_server_sdk.py)
+
+```powershell
+# 终端一
+.\.venv\Scripts\python.exe .\s19_mcp_plugin\web_mcp_server_sdk.py server
+
+# 终端二
+.\.venv\Scripts\python.exe .\s19_mcp_plugin\web_mcp_server_sdk.py probe
+```
+
+这个版本用 `MCPServer`、`@mcp.tool()`、`@mcp.resource()` 和 `@mcp.prompt()` 声明能力，SDK 内部负责 HTTP、JSON-RPC、session 和 method 分发。实际运行时成功读取了 `tools/list`、调用 `search_pages`、读取 `http://127.0.0.1:8780/pages/mcp`，并获取了 `summarize_page` 的 Prompt 消息。
+
+这里需要区分两个地址：`http://127.0.0.1:8780/mcp` 是 MCP Transport endpoint，Client 在这里发送 `initialize`、`tools/list` 和 `resources/read`；`http://127.0.0.1:8780/pages/mcp` 是 Resource URI，同时由 Server 的普通 HTTP 路由提供 `GET`。MCP 允许 Resource 使用 `web://`、`file://`、`git://` 等自定义 URI，但自定义 URI 只能由 Server 在 `resources/read` 中解释，不能直接交给浏览器请求。本实验改用 HTTP URI，让两条路径都能观察。
+
+纯标准库版：[`web_mcp_server_raw.py`](./web_mcp_server_raw.py)
+
+```powershell
+# 终端一
+.\.venv\Scripts\python.exe .\s19_mcp_plugin\web_mcp_server_raw.py server
+
+# 终端二
+.\.venv\Scripts\python.exe .\s19_mcp_plugin\web_mcp_server_raw.py probe
+```
+
+这个版本不导入 `mcp` SDK，直接用 `ThreadingHTTPServer` 和 `urllib` 实现同一条 Web MCP 链路。实际探测到的线路是：
+
+```text
+POST initialize                  -> HTTP 200 + text/event-stream + Mcp-Session-Id
+POST notifications/initialized  -> HTTP 202
+POST tools/list                 -> 两个 Tool definition
+POST tools/call                 -> search_pages 的 text + structuredContent
+POST resources/list             -> http://127.0.0.1:8781/pages/index
+POST resources/templates/list   -> http://127.0.0.1:8781/pages/{slug}
+POST resources/read             -> http://127.0.0.1:8781/pages/mcp 的 markdown 内容
+POST prompts/list               -> summarize_page 的参数定义
+POST prompts/get                -> 填充参数后的 messages
+DELETE /mcp                     -> HTTP 204，删除 session
+```
+
+这组 method 的关系可以记成：
+
+| MCP 能力 | 发现 | 使用 | 例子 |
+| --- | --- | --- | --- |
+| Tool | `tools/list` | `tools/call` | 搜索页面、统计页面 |
+| Resource | `resources/list` / `resources/templates/list` | `resources/read` | 读取页面 Markdown |
+| Prompt | `prompts/list` | `prompts/get` | 生成页面总结消息 |
+
+因此，SDK 版和手写版的区别主要在“谁替我们写协议适配层”，不是能力本身不同：两者都要让 Host 能发现能力，并且都最终落到这些 MCP method 和相应的 result 结构上。
+
+### Agent 连接独立 HTTP MCP Server：SDK / Raw 两个版本
+
+前面的两个 `web_mcp_server_*.py` 是 Server；它们本身不包含模型 Agent Loop。为了对应 `code.py` 的主流程，又新增了两个独立的 Agent：
+
+- [`agent_http_mcp_sdk.py`](./agent_http_mcp_sdk.py)：MCP Client 使用 Python MCP SDK；
+- [`agent_http_mcp_raw.py`](./agent_http_mcp_raw.py)：MCP Client 使用 `urllib` 手写 JSON-RPC、SSE 和 session；模型调用仍使用 Anthropic SDK。
+
+两者都连接一个已经独立启动的 HTTP MCP Server。默认使用官方参考服务 Everything：
+
+```powershell
+# 终端一：独立 MCP Server，不是 Agent 进程内的对象
+npx -y @modelcontextprotocol/server-everything streamableHttp
+
+# 终端二：先只观察真实能力
+.\.venv\Scripts\python.exe .\s19_mcp_plugin\agent_http_mcp_sdk.py inspect
+.\.venv\Scripts\python.exe .\s19_mcp_plugin\agent_http_mcp_raw.py inspect
+
+# 终端二：启动模型 Agent Loop，需要 .env 中有 MODEL_ID
+.\.venv\Scripts\python.exe .\s19_mcp_plugin\agent_http_mcp_sdk.py agent
+.\.venv\Scripts\python.exe .\s19_mcp_plugin\agent_http_mcp_raw.py agent
+```
+
+Agent 的实际数据流是：
+
+```text
+HTTP MCP Server
+  -> initialize / tools/list
+  -> Host 保存 Tool definitions
+  -> 转成 mcp__everything__{tool} 给模型
+  -> 模型返回 tool_use
+  -> Host 反向映射到 Server 原始 Tool 名称
+  -> SDK Client 或 Raw Client 发送 tools/call
+  -> tool_result 追加到 messages
+  -> 模型继续下一轮并输出最终文本
+```
+
+这次对官方 Everything Server 的真实 HTTP 探测读取到了 13 个 Tools、7 个 Resources 和 4 个 Prompts。两个 Agent 都用 fake model 做了两轮回归：第一轮模型提出 `mcp__everything__echo`，第二轮收到真实 HTTP MCP Tool result 后输出最终文本；没有调用付费模型。
+
+因此，四个文件的职责应这样分开理解：
+
+| 文件 | 进程角色 | MCP 实现方式 | 是否包含模型 Loop |
+| --- | --- | --- | --- |
+| `web_mcp_server_sdk.py` | Server | MCP SDK | 否 |
+| `web_mcp_server_raw.py` | Server | 标准库手写协议 | 否 |
+| `agent_http_mcp_sdk.py` | Agent / Host | MCP SDK Client | 是 |
+| `agent_http_mcp_raw.py` | Agent / Host | 标准库手写 Client | 是 |
+
+这里的 Raw Agent 没有手写 Anthropic 模型 API；“无 SDK”只针对 MCP SDK。这样可以把“模型 Agent Loop”和“MCP 协议实现”分别对照学习。
+
+作为开放参考服务的对照，还实际启动了官方
+[`server-everything`](https://github.com/modelcontextprotocol/servers/tree/main/src/everything)：
+
+```powershell
+npx -y @modelcontextprotocol/server-everything streamableHttp
+```
+
+它在本地 `3001` 端口提供 Streamable HTTP；Python Client 成功读取到 Server instructions、13 个 Tools、4 个 Prompts 和 7 个 Resources。它特别适合验证三类 MCP Primitive 的发现与读取，但官方明确把这些服务定位为参考/教学实现，不能直接当作生产服务。
+
 如果是 Resource：
 
 ~~~text
@@ -552,12 +749,15 @@ Host 或客户端决定读取
 - 本地 stdio、远程 HTTP、npx 启动器和 MCP 协议的区别；
 - initialize 是协商和握手，不等于 TCP 长连接；
 - 真实 Context7 的 initialize、notifications/initialized、tools/list、tools/call 报文形态；
+- 纯标准库 Raw Client/Server 的 initialize、session、SSE response、tools/list、tools/call 和 DELETE 链路；
+- 独立 Web MCP Server 的 SDK 版和纯标准库版；
+- `resources/list`、`resources/templates/list`、`resources/read` 的真实响应；
+- `prompts/list`、`prompts/get` 的真实响应，以及 Prompt 返回 `messages` 的形态；
+- SDK 封装与手写 JSON-RPC 实现的边界；
 - Tools、Resources、Prompts 是三类能力，而不是三个 method。
 
-### 🟡 已建立概念，但尚未完成真实报文练习
+### 🟡 已建立概念，但仍需继续扩展
 
-- Resources 的 resources/list、resources/read 和 URI/blob 细节；
-- Prompts 的 prompts/list、prompts/get 和 messages 细节；
 - Prompt 嵌入 Resource 的完整客户端行为；
 - 动态 listChanged 通知、分页和资源订阅；
 - Figma 的实际 Tools/Resources/Prompts 组合。
@@ -565,7 +765,6 @@ Host 或客户端决定读取
 ### 🔴 尚未完成
 
 - 选择一个真实业务场景；
-- 使用一个确定语言和 SDK 实现 MCP Client/Server；
 - 完成真实只读服务；
 - 为生产目标完成认证、授权、可靠性、可观测性、测试、部署和回滚证据；
 - 证明服务达到约定的生产 SLO 和安全门槛。
@@ -583,7 +782,7 @@ Host 或客户端决定读取
 - 超时、取消、重试、幂等、并发和资源治理；
 - 上下文预算、日志、Trace、审计、测试、发布、回滚和运维。
 
-本章的学习目标已经达到：能够解释 s19 教学 Demo 的发现、组装、调用链，并能用真实 Context7 报文校准 MCP 的基本机制。
+本章的学习目标已经达到：能够解释 s19 教学 Demo 的发现、组装、调用链，能用真实 Context7 报文校准 MCP 的基本机制，并已用独立 Python HTTP Server/Client 验证 Tools、Resources、Prompts 三类能力的真实网络链路。
 
 本章没有达到“已经实现生产级 MCP 服务”的目标；那是 W-2026-014 启动后的工作。
 
