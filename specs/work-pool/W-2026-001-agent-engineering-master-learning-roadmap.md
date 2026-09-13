@@ -20,7 +20,7 @@
 
 ## 共享必修线：LLM Runtime 基础桥接
 
-两套计划都必须完成 [W-2026-002：LLM Runtime 基础](./W-2026-002-study-llm-runtime-foundations.md)，用来补齐 Agent 工程所需的模型心智模型；它不替代 Agent 主线，也不把目标扩张为模型训练工程师。W-2026-002 维护 Token、Prompt、生成和缓存的详细计划，本节只维护总路线中的接入方式和停止线。
+两套计划都必须完成 [W-2026-002：LLM Runtime 基础](../changes/C-2026-002-study-llm-runtime-foundations.md)，用来补齐 Agent 工程所需的模型心智模型；它不替代 Agent 主线，也不把目标扩张为模型训练工程师。W-2026-002 维护 Token、Prompt、生成和缓存的详细计划，本节只维护总路线中的接入方式和停止线。
 
 ### 必须掌握的最小范围
 
@@ -375,7 +375,7 @@ W-2026-002 将这些摘要扩展为 12 个小课题，并补充 Tokenizer、Chat
 
 | 专题 | 使用时机 |
 | --- | --- |
-| [W-002 LLM Runtime 基础](W-2026-002-study-llm-runtime-foundations.md) | 两条路线必修前置：Token、Prompt、生成、Prefill/Decode 和缓存分层 |
+| [W-002 LLM Runtime 基础](../changes/C-2026-002-study-llm-runtime-foundations.md) | 两条路线必修前置：Token、Prompt、生成、Prefill/Decode 和缓存分层 |
 | [W-003 完成验证](W-2026-003-study-task-completion-verification.md) | LLM 基础和中间观测线之后，建立可证明的完成状态 |
 | [W-004 工具结果恢复](W-2026-004-study-tool-result-compaction-and-recovery.md) | W-003 之后，学习结果压缩、恢复和幂等边界 |
 | [W-005 权限与审批](W-2026-005-study-production-agent-permissions-and-approval.md) | 单 Agent 副作用实验的控制面 |

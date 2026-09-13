@@ -1,11 +1,24 @@
-# W-2026-002：LLM Runtime 基础——Token、Prompt、生成与缓存
+# C-2026-002：LLM Runtime 基础——Token、Prompt、生成与缓存
 
-- Status: ready
+- Status: active
 - Area: LLM Runtime / Tokenizer / Inference / Cache / Agent Foundation
 - Discovered From: 用户在 Agent 生产级学习规划中发现 Token 编码、Prompt 处理、Token Cache 与模型生成链路缺少独立主线
 - Owner: personal
 - Priority: high
-- Related: [W-2026-001 总路线](./W-2026-001-agent-engineering-master-learning-roadmap.md)、[W-2026-027 后训练与严格 JSON](./W-2026-027-study-strict-json-output-post-training.md)、[W-2026-004 Tool Result 恢复](./W-2026-004-study-tool-result-compaction-and-recovery.md)、[W-2026-012 Skill 可观测性](./W-2026-012-study-agent-skill-engineering-observability.md)、[W-2026-009 Context 治理](./W-2026-009-study-system-prompt-production-context-governance.md)
+- Related: [W-2026-001 总路线](../work-pool/W-2026-001-agent-engineering-master-learning-roadmap.md)、[W-2026-027 后训练与严格 JSON](../work-pool/W-2026-027-study-strict-json-output-post-training.md)、[W-2026-004 Tool Result 恢复](../work-pool/W-2026-004-study-tool-result-compaction-and-recovery.md)、[W-2026-012 Skill 可观测性](../work-pool/W-2026-012-study-agent-skill-engineering-observability.md)、[W-2026-009 Context 治理](../work-pool/W-2026-009-study-system-prompt-production-context-governance.md)
+
+
+## 本次启动与执行状态
+
+- Origin: W-2026-002；Started: 2026-09-13；用户明确要求执行 PROMPT_4 并开始本任务。
+- 主模式：混合线，按通用理论 → 固定版本输入观察 → 最小生成/缓存实验 → 失败诊断推进。
+- 当前仅启动第 1 小节「字符、词、字节与 Token」，先保留用户判断，再校准，不预填答案。
+- 首轮采用概念观察方案，固定输入为 `ABC`、` ABC`（首字符为空格）、`你好`、`print("hi")`。不使用 Mock Token 数冒充真实 Tokenizer 结果。
+- Tokenizer、模型、Chat Template、推理 Runtime 的具体版本尚未选定；在相关实验运行前通过 Context7 与官方资料核验并固定。当前无运行证据。
+- 学习过程与掌握状态的唯一来源：[LEARNING_NOTES.md](../../learning-notes/work-pool/W-2026-002-study-llm-runtime-foundations/LEARNING_NOTES.md)。下文保留原卡的完整目标、范围与验收约束。
+- 启动只读基线：HEAD `5460c0e23c14887c28e37000a02f9b96d6e0d619`；检查了 s01 调用循环、s08/s10 笔记与相关 Work Pool。specs/current 和 specs/decisions 当前无文件；现有 C/I-2026-001 为已完成的 s07 资源加载，未发现冲突。
+- 用户已有改动：AGENTS.md、requirements.txt、s19_mcp_plugin/LEARNING_NOTES.md；未跟踪的 code_http_mcp.py、code_http_mcp_sdk.py。本任务不改动这些文件。
+- 建档验证：检查迁移后的相对链接与文档 diff；没有运行代码、安装依赖或调用模型。验收尚未开始，不创建完成记录。
 
 ## Objective
 
@@ -187,9 +200,9 @@ t1 t2 t3 t4 t5 第三次请求：可能复用更长前缀，只计算 t5
 - W-2026-012 研究 Trace/Eval；本任务的测量表和失败实验作为其输入；
 - W-2026-014 研究真实 MCP 服务；本任务先解释模型输出 Tool Call 与 Runtime 执行的边界。
 
-## Reason Deferred
+## 启动前背景（历史）
 
-本任务现在登记为必修基础线，但不在建档时自动启动。正式学习前需要确定本轮使用的 Tokenizer/模型或 Mock 方案，并区分纯概念实验、本地运行观察和 Provider 行为核验。
+本任务最初登记为必修基础线；2026-09-13 用户已明确启动。正式学习前需要确定本轮使用的 Tokenizer/模型或 Mock 方案，并区分纯概念实验、本地运行观察和 Provider 行为核验。
 
 ## Start Trigger
 
