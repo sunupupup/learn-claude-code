@@ -236,3 +236,30 @@ GGUF 文件还可能出现 `Q2_K`、`Q3_K_M`、`Q4_K_S`、`Q4_K_M`、`Q5_K_M`、
 量化通过更低精度表示权重或激活来减少存储和显存，并可能在硬件与推理内核支持时提高速度；它同时引入近似误差。最终方案必须结合模型、框架、硬件和目标任务评测，不能从位宽直接推出固定的质量损失。
 
 参考：[Hugging Face Transformers：Quantization overview](https://huggingface.co/docs/transformers/en/quantization/overview)、[llama.cpp：quantize 工具说明](https://github.com/ggml-org/llama.cpp/blob/master/tools/quantize/README.md)。
+
+## 显存与量化：最小算术实验（初始化）
+
+实验模式：手算 → 标准库代码核对，约 30 分钟，按一步一验证推进。
+沿用本篇主笔记；脚本：[memory_estimator.py](experiments/memory-quantization-basic/memory_estimator.py)。
+默认 `--mode weights` 只比较权重；后续 `--mode all` 展示教学元数据和运行显存账本。
+`--params 7000000000` 是可选的 7B 数量级算术估算，不代表具体模型，也不分配对应内存。
+
+### 原始理解（留给用户）
+
+- 假设模型只有 1,024 个权重参数，FP16 每参数 16 bit，4bit 每参数 4 bit。
+- 暂不计辅助数据：FP16 = ____ bytes；4bit = ____ bytes；后者是前者的 ____。
+- 我的计算过程：____。
+
+### 校准（手算与运行后填写）
+
+- 用户运行输出：待执行 / 待贴回。
+- 手算与代码是否一致、需要修正的理解：待讨论。
+- 后续关注：纯权重大小、含量化辅助数据大小、总运行显存是三个不同口径。
+
+### 证据边界
+
+- 本脚本只验证教学假设下的算术；不加载模型，不运行推理，不观测 GPU。
+- scale（缩放因子）、zero-point（零点偏移）和分组描述字节数是自定义示例，不是量化框架规范。
+- 总运行显存的 KV Cache、中间激活、临时工作区及框架与分配器开销使用人为常数，不能用于实际部署预算。
+- 量化可能减少权重存储和显存；硬件与推理内核决定是否能取得加速，速度和质量均需另外实测。
+- 脚本初始化不代表用户已完成实验或掌握概念；保留上方原始理解，后续补充校准。
