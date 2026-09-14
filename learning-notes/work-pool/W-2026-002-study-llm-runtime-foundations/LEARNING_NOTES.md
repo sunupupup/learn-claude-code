@@ -87,6 +87,7 @@
 - [如何部署 DeepSeek](./如何部署-DeepSeek.md)
 - [Transformer 自注意力（预习未完成）](./transformer-self-attention.md)
 - [模型量化基础（预习）](./模型量化（Quantization）基础.md)
+- [为什么常用 Decoder-only：架构演变与推理阶段（概念导读，未验收）](./decoder-only-history.md)
 
 ### 验收
 
