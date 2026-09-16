@@ -1,142 +1,154 @@
-"""四候选教学实验：默认只展示 Greedy，其余阶段按学习进度运行。"""
+"""下一 Token 选择：Greedy 或随机采样；选完后统一检查 EOS。"""
 
-import argparse  # Python 标准库：读取命令行里的 --stage、--seed 等参数。
-import math  # 数学工具：本实验用 exp 计算指数，用 isfinite 检查数值是否合法。
-import random  # 伪随机数工具：按概率抽取候选 Token。
-import sys  # 读取 Python 版本、设置终端输出编码。
+import argparse  # 读取运行命令里的参数，例如 --strategy sample。
+import math  # exp(x) 计算 e 的 x 次方。
+import random  # 按概率抽样，固定种子用于复现。
+import sys  # 设置终端的中文输出编码。
 
-
-# 场景假设：前文是“我喜欢养”，现在要预测紧接着的一个 Token。
-# 真实流程：前文 → Token ID 序列 → 模型计算 → 词表中每个候选的本轮分数（Logits）。
-# 本实验省略前文编码和模型计算，手写下面的分数，模拟“模型已经计算完”的结果。
-# “我喜欢养”只是帮助理解的假设，没有实际传入模型；这些数值不是实测结果。
-# 假设词表只有猫、狗、鱼、EOS 四项：它们竞争同一个“下一个 Token”的位置，
-# 不是接下来四个位置的预测，也不是每个 Token 自带的固定分数。
-# 四项分数对应同一份前文、同一轮预测；真实模型通常一次输出整个词表的分数向量。
-# 前文改变（包括选中一个 Token 并追加到前文）后，真实模型下一轮会重新计算分数。
-# 这里只学习拿到分数之后的选择过程；EOS 循环复用分数也是教学简化。
-# 两个元组按位置一一对应：TOKENS[0] 是“猫”，LOGITS[0] 是它的分数 2.0。
-# 这里的下标 0、1、2、3 只是实验编号，不是真实模型的 Token ID。
+# 假设前文是“我喜欢养”，模型正在预测紧接着的一个 Token。
+# 这里不调用模型：四个分数是手写的，代替模型根据同一前文算出的本轮 Logits。
+# 四个候选竞争同一个位置，不是后续四个位置；真实模型通常给整个词表打分。
+# 元组按位置对应：“猫”的分数是 2.0。下标只是实验编号，不是真实 Token ID。
 TOKENS = ("猫", "狗", "鱼", "<EOS>")
 LOGITS = (2.0, 1.0, 0.0, 0.5)
 
 
-def softmax(logits, temperature=1.0):
-    """接收一组分数，返回同顺序的概率列表；不传温度时默认用 1.0。"""
-    # isfinite 排除无穷大和 NaN（无效数值）；raise 会报错并中止本次调用。
-    if not math.isfinite(temperature) or temperature <= 0:
-        raise ValueError("Softmax 的温度必须是有限正数；0 由选择逻辑单独处理。")
-    # 先减最大值，避免指数溢出；公共平移不改变最终概率。
-    peak = max(logits)
-    # 列表推导式：[计算式 for value in logits] 表示逐个取分数、计算并组成列表。
-    # math.exp(x) 就是 e 的 x 次方，得到正数权重，此时还没有归一化。
-    weights = [math.exp((value - peak) / temperature) for value in logits]
+def greedy(logits):
+    """策略一：直接找最高分的候选，返回它的下标，不抽样。"""
+    best_index = 0
+    for index in range(1, len(logits)):
+        # 只有严格更大才替换，因此并列最高时取第一个。
+        if logits[index] > logits[best_index]:
+            best_index = index
+    return best_index
+
+
+def softmax(scores):
+    """采样流程中的概率转换步骤，不是独立选择策略。"""
+    # 所有分数减去同一个最大值，不改变 Softmax 结果，并避免指数溢出。
+    peak = max(scores)
+    weights = []
+    for score in scores:
+        weights.append(math.exp(score - peak))
     total = sum(weights)
-    # 每个权重除以权重总和，得到总和约为 1 的概率（浮点数可能有微小误差）。
-    return [weight / total for weight in weights]
+    probabilities = []
+    for weight in weights:
+        probabilities.append(weight / total)
+    return probabilities
 
 
-def nucleus(probs, threshold):
-    """Top-p 筛选：返回保留的候选下标，以及它们重新归一化后的概率。"""
-    if not 0 < threshold <= 1:
-        raise ValueError("Top-p 必须在 (0, 1] 内。")
-    kept, cumulative = [], 0.0
-    # kept 是保存下标的空列表；cumulative 是已保留候选的累计概率。
-    # 从高到低保留，包含使累计概率首次达到阈值的那个候选。
-    # range(len(probs)) 产生下标；lambda i: probs[i] 指定按概率排序。
-    # reverse=True 表示降序；排序后的内容仍然是下标，不是概率值。
-    for index in sorted(range(len(probs)), key=lambda i: probs[i], reverse=True):
+def filter_top_p(probabilities, top_p):
+    """筛选步骤：保留累计概率达到阈值的最小前缀，再重新归一化。"""
+    # 下标按对应概率降序排列；lambda 表示用 probabilities[index] 作为排序依据。
+    order = sorted(range(len(probabilities)),
+                   key=lambda index: probabilities[index], reverse=True)
+    kept = []
+    cumulative = 0.0
+    for index in order:
         kept.append(index)
-        cumulative += probs[index]
-        # append 把下标加入列表；+= 累加概率；break 立刻结束当前循环。
-        if cumulative >= threshold:
+        cumulative += probabilities[index]
+        # 包含使累计概率首次达到阈值的候选；p=1 时明确保留全部。
+        if top_p < 1.0 and cumulative >= top_p:
             break
-    return kept, [probs[index] / cumulative for index in kept]
+    weights = []
+    for index in kept:
+        weights.append(probabilities[index] / cumulative)
+    return kept, weights
 
 
-def choose(rng, temperature, top_p):
-    """选出一个候选的下标。rng 是随机数生成器，top_p 是累计概率阈值。"""
-    # 本 Demo 约定 T=0 直接 Greedy，不进入除法或随机采样。
-    if temperature == 0:
-        return max(range(len(LOGITS)), key=lambda i: LOGITS[i])
-    kept, weights = nucleus(softmax(LOGITS, temperature), top_p)
-    # 先算 Softmax，再做 Top-p；两个返回值分别放进 kept 和 weights。
-    # choices 按 weights 抽样，k=1 表示抽一次，返回如 [2] 的列表。
-    # [0] 取出列表中的唯一结果，例如下标 2；不是强制选择第 0 个候选。
+def sample(logits, temperature, top_p, rng):
+    """策略二：温度调节 → Softmax → Top-p → 按概率抽取。"""
+    # 第一步：温度调节分数。此函数只接收正温度，温度 0 在 main 中走 Greedy。
+    scores = []
+    for logit in logits:
+        scores.append(logit / temperature)
+    print("  1. 温度调节后的分数:", scores)
+
+    # 第二步：把调整后的分数转换成概率，此时还没选 Token。
+    probabilities = softmax(scores)
+    print("  2. Softmax 概率（Token 顺序不变）:", probabilities)
+
+    # 第三步：只筛选候选并重新归一化，此时依然还没抽取 Token。
+    kept, weights = filter_top_p(probabilities, top_p)
+    print("  3. Top-p 保留的候选及新概率:")
+    # zip 将下标与对应概率逐项配对。
+    for index, probability in zip(kept, weights):
+        print(f"     {TOKENS[index]}: {probability:.6f}")
+
+    # 第四步：按概率抽一个。choices 返回列表，例如 [2]；[0] 取出唯一结果。
+    # 不是在剩余候选中等概率抽签，也不是固定选概率最高的候选。
+    print("  4. 按上述概率随机抽取")
     return rng.choices(kept, weights=weights, k=1)[0]
 
 
-def show(probs):
-    # zip 将三个序列按位置配对，每轮取出一个 Token、一个分数和一个概率。
-    for token, score, probability in zip(TOKENS, LOGITS, probs):
-        print(f"{token}: logit={score:.1f}, probability={probability:.6f}")
-        # f 字符串把花括号中的变量填进文本；.1f / .6f 表示保留 1 / 6 位小数。
-    print(f"概率和: {sum(probs):.6f}")
-
-
 def main():
-    # main 是本脚本组织执行流程的普通函数，文件末尾会调用它。
-    # stdout 是终端输出；hasattr 检查它是否支持 reconfigure，再设置 UTF-8 显示中文。
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
-    # ArgumentParser 创建“命令行参数解析器”，parser 是我们给这个对象起的变量名。
-    # 它负责把命令中的文字（如 --stage softmax）转换成程序可以读取的设置。
-    # description 是帮助说明；__doc__ 就是本文件最上面的三引号文字。
-    # 执行 python sampling_demo.py --help 可以查看自动生成的使用说明。
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8")
+
+    # ArgumentParser 创建命令行参数解析器；parser 是给这个对象起的名字。
+    # add_argument 声明参数，parse_args 才真正读取命令并将结果放入 args。
+    # choices 是允许的取值，default 是未填写时的值，type 指定数值转换方式。
     parser = argparse.ArgumentParser(description=__doc__)
-    # add_argument 声明程序接受什么参数，此时还没有读取命令行。
-    # --stage 用来选择实验；choices 限定允许值，default 是没有传该参数时的默认值。
-    parser.add_argument("--stage", choices=("greedy", "softmax", "temperature", "top-p", "eos"), default="greedy")
-    # --seed 设置随机种子；type=int 将输入文本转换成整数，不填时使用 7。
-    parser.add_argument("--seed", type=int, default=7)
-    # parse_args 真正读取并检查命令行，将结果保存在 args 对象的属性中。
-    # 例如：python sampling_demo.py --stage softmax --seed 42
-    # 解析后 args.stage == "softmax"，args.seed == 42；无效参数会显示错误。
+    # 这里只列两种真正的选择策略，不再把处理步骤、停止标记混成同级选项。
+    parser.add_argument("--strategy", choices=("greedy", "sample"), default="greedy",
+                        help="greedy 直接选最高分；sample 按概率抽样")
+    parser.add_argument("--temperature", type=float, default=1.0,
+                        help="仅采样使用：越低越集中；0 在本 Demo 中转为 Greedy")
+    parser.add_argument("--top-p", type=float, default=1.0,
+                        help="仅采样使用：累计概率阈值，1 表示不筛掉候选")
+    parser.add_argument("--seed", type=int, default=7, help="采样的随机种子")
+    parser.add_argument("--max-tokens", type=int, default=1,
+                        help="最多选择几次；增大可观察 EOS 停止")
     args = parser.parse_args()
-    # sys.version 包含版本及构建信息；split()[0] 只取第一个空白分隔项，即版本号。
-    print(f"Python: {sys.version.split()[0]}; stage={args.stage}")
-    if args.stage == "greedy":
-        # if / elif / else 根据 stage 只执行一个实验分支。
-        for token, score in zip(TOKENS, LOGITS):
-            print(f"{token}: logit={score:.1f}")
-        # 正温度 Softmax 保持排序，因此可直接找最大 Logit；并列取首个。
-        index = max(range(len(LOGITS)), key=lambda i: LOGITS[i])
-        # max 比较 key 指定的分数，返回对应下标；TOKENS[index] 再用下标找到 Token。
-        print(f"Greedy 选择: {TOKENS[index]}")
-    elif args.stage == "softmax":
-        # 嵌套调用从里面开始：先算 softmax(LOGITS)，再把结果交给 show 打印。
-        show(softmax(LOGITS))
-    elif args.stage == "temperature":
-        for temperature in (0.5, 1.0, 2.0):
-            print(f"\nTemperature={temperature}")
-            show(softmax(LOGITS, temperature))
-        print("Temperature=0 直接选择:", TOKENS[choose(random.Random(args.seed), 0, 1)])
-    elif args.stage == "top-p":
-        probs = softmax(LOGITS)
-        show(probs)
-        kept, weights = nucleus(probs, 0.8)
-        print("Top-p=0.8 保留及重新归一化:", [(TOKENS[i], round(p, 6)) for i, p in zip(kept, weights)])
-        # 每次运行创建独立随机源；同版本、参数及调用顺序下可复现。
-        rng = random.Random(args.seed)
-        # Random(seed) 创建带起始种子的伪随机数生成器；k=10 连续抽十次，可重复选中。
-        print(f"seed={args.seed}; 10 次独立抽样（不是生成循环）:", rng.choices([TOKENS[i] for i in kept], weights=weights, k=10))
+    # 如 --strategy sample --top-p 0.8，解析后 args.strategy 为 'sample'，args.top_p 为 0.8。
+    # 参数名中的短横线会变成属性名中的下划线。
+    if not math.isfinite(args.temperature) or args.temperature < 0:
+        parser.error("temperature 必须是有限的非负数")
+    if not 0 < args.top_p <= 1:
+        parser.error("top-p 必须在 (0, 1] 内")
+    if args.max_tokens < 1:
+        parser.error("max-tokens 必须至少为 1")
+
+    strategy = args.strategy
+    if strategy == "sample" and args.temperature == 0:
+        # 这是运行时约定，不能把 0 代入除法公式。
+        print("temperature=0：改走 Greedy，不进行除法或抽样。")
+        strategy = "greedy"
+    if strategy == "greedy":
+        print("策略：Greedy；temperature、top-p、seed 不参与选择。")
     else:
-        rng = random.Random(args.seed)
-        print(f"seed={args.seed}; T=1; Top-p=1; 最多 30 步")
-        # 为隔离停止机制，每步复用固定分数；真实模型会随上下文重新计算。
-        for step in range(1, 31):
-            # range 包含起点、不包含终点，所以这里的步数是 1 到 30。
-            token = TOKENS[choose(rng, 1.0, 1.0)]
-            print(f"step={step}: {token}")
-            if token == "<EOS>":
-                print("停止原因: EOS；由推理程序结束循环。")
-                break
+        print(f"策略：随机采样；temperature={args.temperature}, top-p={args.top_p}, seed={args.seed}")
+
+    # 同一 Python 版本、种子及调用顺序下可以复现；固定种子不等于 Greedy。
+    # 随机源在循环外创建一次，不要每轮重置种子。
+    rng = random.Random(args.seed)
+    print("候选顺序:", TOKENS)
+    print("原始 Logits:", LOGITS)
+    print("教学简化：每轮复用固定 Logits；真实模型会随新增前文重新计算分数。")
+
+    # range 不包含终点，因此这里是第 1 次至第 max_tokens 次。
+    for step in range(1, args.max_tokens + 1):
+        print(f"\n第 {step} 次选择：")
+        # 两个分支对应两种选择策略；采样内部的步骤按顺序执行。
+        if strategy == "greedy":
+            index = greedy(LOGITS)
         else:
-            # 这是 for 的 else：只有循环自然走完、没有执行 break 时才运行。
-            print("停止原因: 达到步数上限；不代表选中了 EOS。")
+            index = sample(LOGITS, args.temperature, args.top_p, rng)
+
+        token = TOKENS[index]
+        print("选中:", token)
+        # EOS 是两种策略共用的停止检查，不是第三种选择算法。
+        if token == "<EOS>":
+            print("停止原因: EOS")
+            break
+        # 真实生成会把这个 Token ID 追加到前文，交给模型算下一轮 Logits。
+    else:
+        # for 的 else 只在没有 break、次数耗尽时执行。
+        print("停止原因: 达到 max-tokens 上限（不是 EOS）")
 
 
-# 直接运行这个文件时 __name__ 是 "__main__"，于是调用 main 开始实验。
-# 被其他 Python 文件 import 时不自动运行实验，便于单独使用上面的函数。
+# 直接运行此文件才调用 main；import 时不会自动开始实验。
 if __name__ == "__main__":
     main()
