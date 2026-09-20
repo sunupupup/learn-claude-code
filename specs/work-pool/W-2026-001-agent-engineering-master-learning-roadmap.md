@@ -398,7 +398,7 @@ W-2026-002 将这些摘要扩展为 12 个小课题，并补充 Tokenizer、Chat
 | [W-022 Runtime 源码对照](W-2026-022-study-claude-code-codex-agent-runtime-sources.md) | 概念和主项目稳定后固定版本阅读 |
 | [W-023 Hook 生产实践](W-2026-023-study-agent-hook-production-practices.md) | 需要扩展点顺序、短路或异常治理时深入 |
 | [W-024 Reactive Compaction](W-2026-024-study-production-reactive-context-compaction.md) | 出现 Prompt 超限或恢复证据后深入，不与 W-004 重复 |
-| [W-025 RAG/Wiki/Ontology](W-2026-025-study-rag-vs-llm-wiki-vs-ontology.md) | 知识架构专项，保留为 someday |
+| [W-025 RAG/Wiki/Ontology](../changes/C-2026-004-study-rag-vs-llm-wiki-vs-ontology.md) | 知识架构专项，2026-09-20 用户确认学习完成；笔记与现存 Demo 已归档 |
 | [W-026 自进化](W-2026-026-study-agent-self-evolution-harnesses.md) | 冻结 Eval、版本和回滚成熟后选修 |
 | [W-027 后训练与严格 JSON](W-2026-027-study-strict-json-output-post-training.md) | 模型适配方向选修，不阻塞 Agent Runtime 主线 |
 
