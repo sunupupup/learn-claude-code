@@ -152,6 +152,6 @@ source-verified ≠ documented ≠ observed-runtime ≠ production-proven
 - [`s17 学习笔记`](../../s17_autonomous_agents/LEARNING_NOTES.md)
 - [`W-2026-015：生产级 Subagent Runtime`](./W-2026-015-study-production-subagent-runtime.md)
 - [`W-2026-018：持久 Teammate 生命周期、Idle Loop 与唤醒`](./W-2026-018-study-persistent-teammate-lifecycle.md)
-- [`W-2026-016：Agent-to-Agent 协作方式与通信拓扑`](./W-2026-016-study-agent-to-agent-collaboration-patterns.md)
+- [`W-2026-016：Agent-to-Agent 协作方式与通信拓扑`](../changes/C-2026-009-study-agent-to-agent-collaboration-patterns.md)
 - [`W-2026-019：Teammate Registry、存活检测与恢复`](./W-2026-019-study-teammate-registry-and-reuse.md)
 - [`W-2026-020：Lead 团队状态观察方式`](./W-2026-020-study-lead-team-state-observation.md)

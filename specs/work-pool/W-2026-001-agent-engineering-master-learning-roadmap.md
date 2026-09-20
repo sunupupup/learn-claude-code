@@ -389,7 +389,7 @@ W-2026-002 将这些摘要扩展为 12 个小课题，并补充 Tokenizer、Chat
 | [W-013 Memory](../changes/C-2026-005-study-memory-production-practices.md) | 有具体跨会话需求后学习写入、召回、遗忘和隔离 |
 | [W-014 有用的 MCP 服务](W-2026-014-build-useful-mcp-server.md) | 完成 Tool/权限/观测基础后实现一个真实有用的外部服务 |
 | [W-015 Subagent](W-2026-015-study-production-subagent-runtime.md) | 单 Agent 基线稳定后学习有限委派和隔离实验 |
-| [W-016 Agent-to-Agent 协作](W-2026-016-study-agent-to-agent-collaboration-patterns.md) | 先判断是否需要多 Agent，再比较协作拓扑 |
+| [W-016 Agent-to-Agent 协作](../changes/C-2026-009-study-agent-to-agent-collaboration-patterns.md) | 先判断是否需要多 Agent，再比较协作拓扑 |
 | [W-017 Team 层级与委派](W-2026-017-study-agent-team-hierarchy-and-delegation.md) | W-016 之后选择一种受控层级实验 |
 | [W-018 持久 Teammate 生命周期](W-2026-018-study-persistent-teammate-lifecycle.md) | 需要跨轮运行、唤醒和退出时深入 |
 | [W-019 Teammate Registry](W-2026-019-study-teammate-registry-and-reuse.md) | 持久队友的存活检测、复用和死亡恢复 |

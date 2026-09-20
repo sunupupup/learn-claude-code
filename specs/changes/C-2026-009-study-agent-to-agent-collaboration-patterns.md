@@ -1,13 +1,28 @@
-# W-2026-016：Agent-to-Agent 协作方式与通信拓扑
+# C-2026-009：Agent-to-Agent 协作方式与通信拓扑
 
-- Status: ready
+- Status: active
 - Area: Agent Collaboration / Agent-to-Agent Communication / Delegation / Handoff / Inbox / Task Board / Peer Coordination / Eval
 - Difficulty: D2 → D3（从协作模式辨析进入生产级协议、权限和评测边界）
 - Discovered From: s15 学习过程中对 Subagent、Teammate、跨 Lead Turn 驻留、跨 Session 协作以及 Agent 之间通信方式的重新分类
 - Owner: personal
 - Priority: high
 
+
+## 本次启动与范围
+
+- Started: 2026-09-20。
+- Source Task: W-2026-016-study-agent-to-agent-collaboration-patterns。
+- Start Trigger: 用户在 ReAct、Plan-and-Execute 与 s20 控制流讨论后，引用 PROMPT_4 并要求初始化本章学习文档和目录。
+- 学习入口：[总览](../../learning-notes/work-pool/W-2026-016-study-agent-to-agent-collaboration-patterns/我的笔记.md)、[知识图谱](../../learning-notes/work-pool/W-2026-016-study-agent-to-agent-collaboration-patterns/Agent架构与协作知识图谱.md)。
+- 原 Work Pool 已迁入本 Change；原目标、预期产物与七项验收标准全部保留。以下原模式地图作为规划材料保留，后续经学习核验的知识以学习目录为主要来源，不将规划材料自动视为已验证结论。
+- 在原学习顺序前增加入门模块：ReAct、Plan-and-Execute、Skill 的层次，以及 Prompt、计划状态、步骤派发的代码区别。当前只完成初始化，不自动展开后续调研和实验。
+- 必学主线：控制流与协作维度辨析、常见模式选择、Peer/层级/Durable 基本边界、消息权限与验收契约，以及原任务要求的四类场景、固定版本真实项目与 Eval 证据。选学为深层团队和通用基础设施实现，不缩减原标准。
+- 验证：核对本地 s01/s05/s20 控制流、s06/s15 章节基础、一手概念资料；初始化后检查文档链接与差异。无模型实验或生产效果验证，学习状态保持 active。
+- 用户已有改动：W-026 自进化学习及 W-029 幻觉学习相关文档和 C-2026-008；本次不修改它们。未提交、未 push。
+
 ## Objective
+
+2026-09-20 后续进展：用户要求调研 Codex Plan Mode，已完成官方文档与固定 Commit 的窄范围源码核对，证据、调用链和版本局限见[调研笔记](../../learning-notes/work-pool/W-2026-016-study-agent-to-agent-collaboration-patterns/Codex计划模式源码调研.md)。未启动 W-022 的完整跨项目调研，未运行框架或付费实验，原验收仍未完成。
 
 专门研究 Agent 之间如何协作，建立不依赖厂商命名的比较框架。重点区分协作拓扑、生命周期和通信/状态边界，而不是把所有异步线程、后台任务或普通 Workflow 都称为 Agent Team。
 
@@ -355,11 +370,11 @@ Agent 可以生成计划和参数，但不要让多个 Peer Agent 自行互相�
 6. 根据任务的并行性、动态性、用户交互、生命周期和副作用风险选择最小可行拓扑；
 7. 用真实项目代码和 Eval 证据支持协作方式选择，而不是只依据产品名词。
 
-## Why Deferred
+## 启动前背景（历史记录）
 
 当前继续 s15 的基础通信和生命周期学习，不立即展开完整 Agent 协作模式调研。该任务会横跨 s06、s15、s16、s17 以及生产 Runtime、权限、评测和恢复问题，适合作为独立 Work Pool。
 
-## Start Trigger
+## 原任务启动条件（本次已满足）
 
 - 用户明确说“开始 W-2026-016”；
 - 或明确说“开始研究 Agent 之间的协作方式”；
@@ -368,7 +383,7 @@ Agent 可以生成计划和参数，但不要让多个 Peer Agent 自行互相�
 
 ## Boundaries
 
-- 当前只登记学习任务，不安装外部框架、不运行生产项目、不修改 s15 行为逻辑；
+- 本次已启动文档学习；不安装外部框架、不运行生产项目、不修改 s15 行为逻辑；
 - 主要研究 Agent-to-Agent 协作，不把普通 Background Task 或确定性 Workflow 当作 Agent 协作模式；
 - 不假设“跨 Session”天然意味着 Peer-to-Peer；
 - 不把 Agent 数量、层级深度或消息数量本身当作质量证明；
@@ -386,7 +401,7 @@ Agent 可以生成计划和参数，但不要让多个 Peer Agent 自行互相�
 - [`s06 Subagent`](../../s06_subagent/README.md)
 - [`s15 Agent Teams`](../../s15_agent_teams/README.md)
 - [`s15 学习笔记`](../../s15_agent_teams/LEARNING_NOTES.md)
-- [`W-2026-015：生产级 Subagent Runtime`](./W-2026-015-study-production-subagent-runtime.md)
-- [`W-2026-007：Agent 消息注入、插队与运行时事件交付`](./W-2026-007-study-agent-message-injection-steering.md)
-- [`W-2026-017：Agent Team 层级设计与委派拓扑权衡`](./W-2026-017-study-agent-team-hierarchy-and-delegation.md)
-- [`W-2026-018：持久 Teammate 生命周期、Idle Loop 与唤醒`](./W-2026-018-study-persistent-teammate-lifecycle.md)
+- [`W-2026-015：生产级 Subagent Runtime`](../work-pool/W-2026-015-study-production-subagent-runtime.md)
+- [`W-2026-007：Agent 消息注入、插队与运行时事件交付`](../work-pool/W-2026-007-study-agent-message-injection-steering.md)
+- [`W-2026-017：Agent Team 层级设计与委派拓扑权衡`](../work-pool/W-2026-017-study-agent-team-hierarchy-and-delegation.md)
+- [`W-2026-018：持久 Teammate 生命周期、Idle Loop 与唤醒`](../work-pool/W-2026-018-study-persistent-teammate-lifecycle.md)

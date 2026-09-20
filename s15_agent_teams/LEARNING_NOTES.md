@@ -511,7 +511,7 @@ pending_permissions[request_id] = {
 - idle loop、唤醒、ack、重试、崩溃恢复和 Checkpoint：进入 [W-2026-018](../specs/work-pool/W-2026-018-study-persistent-teammate-lifecycle.md)；
 - Python 锁、文件锁、原子消费和共享状态治理：进入 [W-2026-008](../specs/work-pool/W-2026-008-study-python-locks-and-agent-concurrency.md)；
 - 扁平 Team、层级 Team、嵌套委派与权限/预算边界：进入 [W-2026-017](../specs/work-pool/W-2026-017-study-agent-team-hierarchy-and-delegation.md)；
-- Agent-to-Agent 协作模式、Handoff、任务板、Peer 和 Durable Team 的生产比较：进入 [W-2026-016](../specs/work-pool/W-2026-016-study-agent-to-agent-collaboration-patterns.md)；
+- Agent-to-Agent 协作模式、Handoff、任务板、Peer 和 Durable Team 的生产比较：进入 [W-2026-016](../specs/changes/C-2026-009-study-agent-to-agent-collaboration-patterns.md)；
 - 真实 CC 源码的当前版本核验：不在本章中把 README 的版本性描述当作最终证据。
 
 ### 完成判定

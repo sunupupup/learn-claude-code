@@ -119,6 +119,6 @@ Runtime 再次读取并校验 Registry，不信任 Prompt 快照
 - [`s17 学习笔记`](../../s17_autonomous_agents/LEARNING_NOTES.md)
 - [`W-2026-007：Agent 消息注入、插队与运行时事件交付`](./W-2026-007-study-agent-message-injection-steering.md)
 - [`W-2026-018：持久 Teammate 生命周期、Idle Loop 与唤醒`](./W-2026-018-study-persistent-teammate-lifecycle.md)
-- [`W-2026-016：Agent-to-Agent 协作方式与通信拓扑`](./W-2026-016-study-agent-to-agent-collaboration-patterns.md)
+- [`W-2026-016：Agent-to-Agent 协作方式与通信拓扑`](../changes/C-2026-009-study-agent-to-agent-collaboration-patterns.md)
 - [`W-2026-019：Teammate Registry、存活检测与恢复`](./W-2026-019-study-teammate-registry-and-reuse.md)
 - [`W-2026-022：Claude Code / Codex Agent Runtime 源码对照`](./W-2026-022-study-claude-code-codex-agent-runtime-sources.md)
