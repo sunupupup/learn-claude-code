@@ -1,5 +1,7 @@
 # Repository Agent Instructions
 
+任何时候都不要切worktree，这只是一个学习的仓库，直接主分支进行更新
+
 ## Spec 工作流
 
 本仓库使用 [`specs/README.md`](./specs/README.md) 定义的轻量 Spec 工作流。涉及方案、实现或任务整理时，先按该文档判断是否需要创建或更新 Spec。
