@@ -5,7 +5,7 @@
 - Discovered From: 用户在 Agent 生产级学习规划中发现 Token 编码、Prompt 处理、Token Cache 与模型生成链路缺少独立主线
 - Owner: personal
 - Priority: high
-- Related: [W-2026-001 总路线](../work-pool/W-2026-001-agent-engineering-master-learning-roadmap.md)、[W-2026-027 后训练与严格 JSON](../work-pool/W-2026-027-study-strict-json-output-post-training.md)、[W-2026-004 Tool Result 恢复](../work-pool/W-2026-004-study-tool-result-compaction-and-recovery.md)、[W-2026-012 Skill 可观测性](../work-pool/W-2026-012-study-agent-skill-engineering-observability.md)、[W-2026-009 Context 治理](../work-pool/W-2026-009-study-system-prompt-production-context-governance.md)
+- Related: [W-2026-001 总路线](../work-pool/W-2026-001-agent-engineering-master-learning-roadmap.md)、[W-2026-027 后训练与严格 JSON](C-2026-006-study-strict-json-output-post-training.md)、[W-2026-004 Tool Result 恢复](../work-pool/W-2026-004-study-tool-result-compaction-and-recovery.md)、[W-2026-012 Skill 可观测性](../work-pool/W-2026-012-study-agent-skill-engineering-observability.md)、[W-2026-009 Context 治理](../work-pool/W-2026-009-study-system-prompt-production-context-governance.md)
 
 
 ## 本次启动与执行状态
@@ -15,7 +15,7 @@
 - 当前仅启动第 1 小节「字符、词、字节与 Token」，先保留用户判断，再校准，不预填答案。
 - 首轮采用概念观察方案，固定输入为 `ABC`、` ABC`（首字符为空格）、`你好`、`print("hi")`。不使用 Mock Token 数冒充真实 Tokenizer 结果。
 - Tokenizer、模型、Chat Template、推理 Runtime 的具体版本尚未选定；在相关实验运行前通过 Context7 与官方资料核验并固定。当前无运行证据。
-- 学习过程与掌握状态的唯一来源：[LEARNING_NOTES.md](../../learning-notes/work-pool/W-2026-002-study-llm-runtime-foundations/LEARNING_NOTES.md)。下文保留原卡的完整目标、范围与验收约束。
+- 学习过程与掌握状态的唯一来源：[LEARNING_NOTES.md](../../learning-notes/work-pool/W-2026-002-study-llm-runtime-foundations-模型运行基础/LEARNING_NOTES.md)。下文保留原卡的完整目标、范围与验收约束。
 - 启动只读基线：HEAD `5460c0e23c14887c28e37000a02f9b96d6e0d619`；检查了 s01 调用循环、s08/s10 笔记与相关 Work Pool。specs/current 和 specs/decisions 当前无文件；现有 C/I-2026-001 为已完成的 s07 资源加载，未发现冲突。
 - 用户已有改动：AGENTS.md、requirements.txt、s19_mcp_plugin/LEARNING_NOTES.md；未跟踪的 code_http_mcp.py、code_http_mcp_sdk.py。本任务不改动这些文件。
 - 建档验证：检查迁移后的相对链接与文档 diff；没有运行代码、安装依赖或调用模型。验收尚未开始，不创建完成记录。

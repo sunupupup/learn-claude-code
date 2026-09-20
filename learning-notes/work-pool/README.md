@@ -24,7 +24,7 @@
 learning-notes/
 └─ work-pool/
    ├─ README.md
-   └─ W-2026-NNN-readable-slug/
+   └─ W-2026-NNN-readable-slug-关键词/
       ├─ LEARNING_NOTES.md       # 该任务的唯一学习总结与掌握状态
       ├─ source-notes/            # 开源项目、官方文档、论文的证据化阅读记录
       ├─ experiments/             # 最小实验、脚本、输入、运行说明和结果
@@ -32,10 +32,10 @@ learning-notes/
       └─ artifacts/               # 只有确实产生图表、报告等文件时才创建
 ```
 
-目录名沿用 Work Pool 的完整编号和英文 slug，例如：
+目录名沿用 Work Pool 的完整编号和英文 slug，并在末尾添加简短、易辨认的中文或英文关键词（如 `-RAG`、`-Jev`、`-自进化Agent`、`-Memory`）。此规则仅适用于本目录下的学习主题文件夹；Spec 文件名保持原有规范。例如：
 
 ```text
-learning-notes/work-pool/W-2026-002-study-llm-runtime-foundations/
+learning-notes/work-pool/W-2026-002-study-llm-runtime-foundations-模型运行基础/
 ```
 
 当前 `W-2026-001` 到 `W-2026-027` 是 2026-09-13 这版学习路线的顺序快照。以后新增主题仍按 `specs/README.md` 和现有 Prompt 使用下一个未占用编号；学习顺序由总路线 `W-2026-001` 的索引维护，不再为了插入新主题反复重编号。

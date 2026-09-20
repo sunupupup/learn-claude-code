@@ -38,13 +38,13 @@ print("hi")
 在仓库根目录使用 PowerShell：
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install -r ".\learning-notes\work-pool\W-2026-002-study-llm-runtime-foundations\experiments\tokenizer-basic\requirements.txt"
+.\.venv\Scripts\python.exe -m pip install -r ".\learning-notes\work-pool\W-2026-002-study-llm-runtime-foundations-模型运行基础\experiments\tokenizer-basic\requirements.txt"
 ```
 
 ## 运行实验
 
 ```powershell
-.\.venv\Scripts\python.exe ".\learning-notes\work-pool\W-2026-002-study-llm-runtime-foundations\experiments\tokenizer-basic\tokenizer_demo.py"
+.\.venv\Scripts\python.exe ".\learning-notes\work-pool\W-2026-002-study-llm-runtime-foundations-模型运行基础\experiments\tokenizer-basic\tokenizer_demo.py"
 ```
 
 首次运行会从 Hugging Face 下载 Tokenizer 文件，后续通常使用本机缓存。实际 Token 数和 Token ID 以运行输出为准。

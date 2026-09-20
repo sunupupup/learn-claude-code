@@ -6,7 +6,7 @@
 - Discovered From: 图片中的 Chat2DB 项目，以及当前仓库 s01-s09 学习主线
 - Owner: personal
 - Priority: high
-- Related: [`s01-s20`](../../README-zh.md)、[`W-2026-023`](./W-2026-023-study-agent-hook-production-practices.md)、[`W-2026-027`](./W-2026-027-study-strict-json-output-post-training.md)、[`W-2026-011`](./W-2026-011-study-production-skill-loading-and-governance.md)、[`W-2026-004`](./W-2026-004-study-tool-result-compaction-and-recovery.md)、[`W-2026-006`](./W-2026-006-study-side-effect-tool-security.md)、[`W-2026-013`](./W-2026-013-study-memory-production-practices.md)
+- Related: [`s01-s20`](../../README-zh.md)、[`W-2026-023`](./W-2026-023-study-agent-hook-production-practices.md)、[`W-2026-027`](../changes/C-2026-006-study-strict-json-output-post-training.md)、[`W-2026-011`](./W-2026-011-study-production-skill-loading-and-governance.md)、[`W-2026-004`](./W-2026-004-study-tool-result-compaction-and-recovery.md)、[`W-2026-006`](./W-2026-006-study-side-effect-tool-security.md)、[`W-2026-013`](../changes/C-2026-005-study-memory-production-practices.md)
 
 ## Project Identity And Version Boundary
 

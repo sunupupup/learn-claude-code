@@ -1,12 +1,28 @@
-# W-2026-013：Memory 生产实践与生命周期治理学习
+# C-2026-005：从开源实现学习 Memory 接入与生命周期
 
-- Status: ready
+- Status: active
+- Origin: W-2026-013
+- Started: 2026-09-19
+- 启动依据：用户明确说“我们来学习下吧”，要求从 mem0、DSH Memory 开源方案出发，并授权完善或重建学习计划。
+- 学习主记录：[LEARNING_NOTES.md](../../learning-notes/work-pool/W-2026-013-study-memory-production-practices-Memory/LEARNING_NOTES.md)
+
+## 本次启动的范围调整
+
+先读 mem0 OSS 的 Agent 接入示例，再追固定版本的读取、上下文注入、提取、存储与更新调用链；以一个 DSH 插件作窄对照，观察宿主事件如何触发这些能力。采用源码与实验混合线，每轮只推进一个问题。
+
+原卡以下内容保留为生产问题清单，其中“先研究文件型 Memory”的顺序由本次用户要求替代：允许学习 mem0 的向量检索与存储，但不泛读数据库或图谱框架。原卡描述的教学代码缺口不代表外部项目也有相同缺陷。
+
+主项目：https://github.com/mem0ai/mem0 ，其 OSS 引擎与同仓 Platform DSH 插件分层学习。外部窄对照：https://github.com/yan5236/dsh-memory ，关注后台两阶段整理。第二轮已核验关键源码路径；固定版本、具体证据和可选候选统一维护在[调研记录](../../learning-notes/work-pool/W-2026-013-study-memory-production-practices-Memory/source-notes/2026-09-19-memory-research.md)，不代表生产选型结论。
+
+首节只定位谁调用检索、谁组装模型请求、谁触发写入。随后按读取、写入、更新与调度、失败与评测递进。详细路线和来源维护在学习主记录中。
+
+当前完成启动检查、文档调查与固定版本的远程源码阅读；未克隆、未安装、未运行实验。Context7 的资料漂移通过维护者源码交叉核对；学习者掌握程度和运行行为尚未验收。
 - Area: Memory / Context Engineering / Reliability / Eval / Privacy / Security
 - Difficulty: D2 → D3
 - Discovered From: `s09_memory` 的记忆提取、召回、整理和文件替换实现
 - Owner: personal
 - Priority: high
-- Related: [s09 Memory](../../s09_memory/README.md)、[W-2026-004](./W-2026-004-study-tool-result-compaction-and-recovery.md)、[W-2026-006](./W-2026-006-study-side-effect-tool-security.md)
+- Related: [s09 Memory](../../s09_memory/README.md)、[W-2026-004](../work-pool/W-2026-004-study-tool-result-compaction-and-recovery.md)、[W-2026-006](../work-pool/W-2026-006-study-side-effect-tool-security.md)
 
 ## Objective
 

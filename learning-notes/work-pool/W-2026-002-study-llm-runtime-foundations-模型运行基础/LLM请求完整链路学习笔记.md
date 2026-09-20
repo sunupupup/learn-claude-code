@@ -72,7 +72,7 @@
 当前目录：`D:\code\temp\learn-claude-code`。PowerShell 执行命令：
 
 ```powershell
-python .\learning-notes\work-pool\W-2026-002-study-llm-runtime-foundations\experiments\llm-request-pipeline-basic\pipeline_trace_demo.py
+python .\learning-notes\work-pool\W-2026-002-study-llm-runtime-foundations-模型运行基础\experiments\llm-request-pipeline-basic\pipeline_trace_demo.py
 ```
 
 命令说明：只运行 [标准库 Mock Demo](./experiments/llm-request-pipeline-basic/pipeline_trace_demo.py)，无第三方依赖、网络调用或文件写入。

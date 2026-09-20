@@ -5,14 +5,14 @@
 - Origin: W-2026-025
 - Started: 2026-09-19
 - 启动依据：用户明确要求开始 RAG 等相关主题学习。
-- 学习主记录：[LEARNING_NOTES.md](../../learning-notes/work-pool/W-2026-025-study-rag-vs-llm-wiki-vs-ontology/LEARNING_NOTES.md)
-- 原任务观点和候选资料：[历史任务卡](../../learning-notes/work-pool/W-2026-025-study-rag-vs-llm-wiki-vs-ontology/STARTING_CONTEXT.md)，仅作待核验输入。
+- 学习主记录：[LEARNING_NOTES.md](../../learning-notes/work-pool/W-2026-025-study-rag-vs-llm-wiki-vs-ontology-RAG/LEARNING_NOTES.md)
+- 原任务观点和候选资料：[历史任务卡](../../learning-notes/work-pool/W-2026-025-study-rag-vs-llm-wiki-vs-ontology-RAG/STARTING_CONTEXT.md)，仅作待核验输入。
 
 ## 范围与学习方式
 
 采用混合线：D1 基础概念 → D2 对比与小实验 → 按需讨论 D3 生产取舍。一次只推进一个问题，用户复述并确认后再沉淀学习结论。
 
-2026-09-19 用户要求先调研“问题 → 解决办法 → 局限 → 改进”的学习路线，并以官方文档、论文及博客做对比。详细学习路径和阅读清单统一维护在 [LEARNING_PATH.md](../../learning-notes/work-pool/W-2026-025-study-rag-vs-llm-wiki-vs-ontology/LEARNING_PATH.md)。先建立最小 RAG 与评测基础，再比较检索改进、图、Wiki、本体及其他路径，不按名词热度排序。
+2026-09-19 用户要求先调研“问题 → 解决办法 → 局限 → 改进”的学习路线，并以官方文档、论文及博客做对比。详细学习路径和阅读清单统一维护在 [LEARNING_PATH.md](../../learning-notes/work-pool/W-2026-025-study-rag-vs-llm-wiki-vs-ontology-RAG/LEARNING_PATH.md)。先建立最小 RAG 与评测基础，再比较检索改进、图、Wiki、本体及其他路径，不按名词热度排序。
 
 OpenWiki 已核验到高匹配候选 `langchain-ai/openwiki`，与 LLM Wiki 模式分别处理；是否正是用户所指仍待确认。源码实验前再固定版本。
 
@@ -30,11 +30,11 @@ OpenWiki 已核验到高匹配候选 `langchain-ai/openwiki`，与 LLM Wiki 模�
 
 - 收尾记录：[I-2026-002](../implementation/I-2026-002-rag-knowledge-management-learning.md)。以下保留过程记录，不代表所有计划实验已完成或生产效果已验证。
 
-- 2026-09-20 新增 GraphRAG、Agentic RAG 两篇扩展入口及最小 Python 实验，入口见 [RAG.md](../../learning-notes/work-pool/W-2026-025-study-rag-vs-llm-wiki-vs-ontology/RAG.md)。本地图检索、模拟工具循环及边界对照通过；真实模型未调用，未复现微软完整 GraphRAG。
+- 2026-09-20 新增 GraphRAG、Agentic RAG 两篇扩展入口及最小 Python 实验，入口见 [RAG.md](../../learning-notes/work-pool/W-2026-025-study-rag-vs-llm-wiki-vs-ontology-RAG/RAG.md)。本地图检索、模拟工具循环及边界对照通过；真实模型未调用，未复现微软完整 GraphRAG。
 
-- 用户选择“看到哪里学到哪里”，暂不批量展开五篇知识文档；本轮仅新增 [文档解析清洗与切块](../../learning-notes/work-pool/W-2026-025-study-rag-vs-llm-wiki-vs-ontology/文档解析清洗与切块.md)，完成官方资料初步调研，未修改实验代码或验证生产效果。
+- 用户选择“看到哪里学到哪里”，暂不批量展开五篇知识文档；本轮仅新增 [文档解析清洗与切块](../../learning-notes/work-pool/W-2026-025-study-rag-vs-llm-wiki-vs-ontology-RAG/文档解析清洗与切块.md)，完成官方资料初步调研，未修改实验代码或验证生产效果。
 
-- 用户追加要求单独学习数据准备阶段；已新增 [入库模块笔记](../../learning-notes/work-pool/W-2026-025-study-rag-vs-llm-wiki-vs-ontology/RAG数据准备与入库学习笔记.md)与独立 Python 实验，默认仅预览，不改动最小 RAG 主流程。已预览 7 个片段，真实模型与检索质量待验证。
+- 用户追加要求单独学习数据准备阶段；已新增 [入库模块笔记](../../learning-notes/work-pool/W-2026-025-study-rag-vs-llm-wiki-vs-ontology-RAG/RAG数据准备与入库学习笔记.md)与独立 Python 实验，默认仅预览，不改动最小 RAG 主流程。已预览 7 个片段，真实模型与检索质量待验证。
 
 - 不构建生产系统、不安装重量级数据库、不启动付费调用；不扩展成完整 Memory 调研。
 - 已完成启动上下文检查与学习路线资料调研；概念掌握、固定版本源码和运行实验尚未验收。

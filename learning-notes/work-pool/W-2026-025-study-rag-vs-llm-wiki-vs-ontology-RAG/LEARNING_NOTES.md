@@ -32,7 +32,7 @@ OpenWiki 已找到高匹配候选 `langchain-ai/openwiki`，官方定位和证�
 - [RAG 数据准备与入库](RAG数据准备与入库学习笔记.md)：单独展开解析、清洗、切块、来源、向量化与写入；[入库实验](experiments/rag-basic/ingest_demo.py)默认只预览，已用三份资料得到 7 块，用户实操与理解待确认。
 
 - [现有 RAG Demo](../../../projects/rag-agent-demo/README.md)：后续观察检索结果如何返回模型的本地基线；本轮未运行。
-- [W-002 笔记](../W-2026-002-study-llm-runtime-foundations/LEARNING_NOTES.md)：已有 Token、模型与运行时讨论；不能推定已掌握检索用文本向量。
+- [W-002 笔记](../W-2026-002-study-llm-runtime-foundations-模型运行基础/LEARNING_NOTES.md)：已有 Token、模型与运行时讨论；不能推定已掌握检索用文本向量。
 - [W-013 Memory](../../../specs/changes/C-2026-005-study-memory-production-practices.md)：后续连接跨会话保存、更新与召回。
 
 ## 术语速查（保留启动时状态，当前以模块笔记为准）

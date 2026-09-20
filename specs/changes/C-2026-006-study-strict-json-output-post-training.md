@@ -1,6 +1,9 @@
-# W-2026-027：严格 JSON 输出与后训练对照实验
+# C-2026-006：严格 JSON 输出与后训练对照实验
 
-- Status: ready
+- Status: active
+- Started: 2026-09-19；源任务 W-2026-027
+- 当前阶段：基础导读；原卡的实验启动条件尚待逐项核验，不视为已经满足。
+- 学习记录：[W-2026-027 学习笔记](../../learning-notes/work-pool/W-2026-027-study-strict-json-output-post-training-JSON输出训练/LEARNING_NOTES.md)
 - Area: LLM / Structured Output / JSON Schema / SFT / LoRA / Eval
 - Difficulty: D4 入门（以 D2 规模的可复现实验学习模型适配）
 - Discovered From: `s05_todo_write` 的 Tool Input Schema 与 Runtime 校验讨论
@@ -9,7 +12,7 @@
 
 ## Assumptions
 
-1. 本任务当前只进入 Work Pool，不立即下载模型、安装训练环境或启动训练。
+1. 用户已明确启动基础学习；先按初学者节奏导读与复述，模型下载、环境安装和训练待实验准备阶段推进。
 2. 学习目标不是让模型权重承担“绝对严格”的结构保证，而是区分并测量 Prompt、后训练、约束解码和程序校验各自解决的问题。
 3. 不选“古早模型”作为主线。优先选择当前仍受工具链支持、许可证清晰、规模足够小，并且同一家族同时提供 Base 与 Post-trained/Instruct 版本的开放权重模型。
 4. 主实验优先从小型 Instruct 模型开始，通过 LoRA 做窄任务 SFT；同家族 Base 模型作为第二阶段对照，用来学习 instruction tuning，而不是一开始同时承担通用指令跟随和 JSON 输出两项学习任务。
@@ -347,27 +350,27 @@ FFT 是有价值的进阶选修；只有当目标进一步转向 Agent 平台的
 
 ## Relationship to Existing Work
 
-本任务是 [`W-2026-026`](./W-2026-026-study-agent-self-evolution-harnesses.md) 中 E4 Model Evolution 的一个更小、更可控的前置实验：
+本任务是 [`W-2026-026`](../work-pool/W-2026-026-study-agent-self-evolution-harnesses.md) 中 E4 Model Evolution 的一个更小、更可控的前置实验：
 
 - W-2026-027 回答“如何证明一次窄任务后训练真的改变了结构化输出行为”；
 - W-2026-026 再研究训练数据如何从 Agent 轨迹产生、如何经过 Eval Gate 晋级，以及模型与 Harness 如何共同演化。
 
 本任务与 [`s05 TodoWrite 学习笔记`](../../s05_todo_write/LEARNING_NOTES.md) 的关系是：s05 负责理解 Tool Schema 和 Runtime 校验；本任务负责研究模型为什么更可能或被迫遵循该结构。
 
-## Reason Deferred
+## Reason Deferred（启动前历史）
 
 当前主线仍在学习基础 Agent Harness。后训练实验需要额外的模型基础、数据切分、训练环境、GPU 资源、Eval 和推理 Runtime；现在直接开始会打断章节学习，也无法在未知硬件条件下可靠选择模型和精度。
 
 ## Start Trigger
 
-满足以下条件后，由用户明确启动：
+用户已明确启动基础学习；下列原有实验前置条件需在进入训练前逐项核验：
 
 - 完成 `s05_todo_write` 的运行与伪代码验收；
 - 能区分 JSON、JSON Schema、Tool Input Schema、Structured Output 和 Runtime Validation；
 - 提供或检查本机 GPU 型号、显存、内存、磁盘和可接受训练时间；
 - 明确实验使用本机、云 GPU 还是托管 Notebook；
 - 冻结第一版 Eval Set，再准备训练集；
-- 启动时创建 `specs/changes/C-YYYY-NNN-*.md`，并移除本 Work Pool 文件。
+- 已将原 Work Pool 迁移为本 Change，学习任务编号仍保留 W-2026-027。
 
 ## Preferred Order
 

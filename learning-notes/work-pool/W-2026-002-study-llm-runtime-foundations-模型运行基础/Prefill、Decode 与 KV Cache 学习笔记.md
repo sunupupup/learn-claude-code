@@ -44,7 +44,7 @@ C：处理新加入的 O2，利用历史 → 选出 O3
 仓库根目录 PowerShell 命令（先不执行）：
 
 ```powershell
-.\.venv\Scripts\python.exe .\learning-notes\work-pool\W-2026-002-study-llm-runtime-foundations\experiments\prefill-decode-kv-cache-basic\runtime_demo.py timeline
+.\.venv\Scripts\python.exe .\learning-notes\work-pool\W-2026-002-study-llm-runtime-foundations-模型运行基础\experiments\prefill-decode-kv-cache-basic\runtime_demo.py timeline
 ```
 
 预期观察：显示各阶段输入、输出和缓存位置数。实际结果：待执行。

@@ -25,7 +25,7 @@
 ### 必须掌握的最小范围
 
 - **生成基础：**token、词表、logit、softmax、概率、temperature、top-p、停止条件；能解释“模型为什么是在预测下一个 token”，以及采样参数如何改变结果。
-- **训练基础：**交叉熵和 perplexity 的直觉；预训练、SFT、RLHF/DPO 的目标差别；知道指令遵循、幻觉和偏好行为分别可能从哪里产生。这里只做原理导入；严格 JSON、约束解码、LoRA/SFT、Eval 和部署回滚的实操统一进入 [W-2026-027 后训练对照实验](W-2026-027-study-strict-json-output-post-training.md)，不在本路线重复设计。
+- **训练基础：**交叉熵和 perplexity 的直觉；预训练、SFT、RLHF/DPO 的目标差别；知道指令遵循、幻觉和偏好行为分别可能从哪里产生。这里只做原理导入；严格 JSON、约束解码、LoRA/SFT、Eval 和部署回滚的实操统一进入 [W-2026-027 后训练对照实验](../changes/C-2026-006-study-strict-json-output-post-training.md)，不在本路线重复设计。
 - **Transformer：**Embedding、Q/K/V、Self-Attention、残差连接、归一化、FFN、位置编码/ RoPE；不要求先推完整反向传播，但要能用小数字手算一次注意力权重。
 - **推理基础：**输入/输出 Token、上下文窗口、Prefill、Decode、KV Cache、Prompt/Prefix Cache、Context Cache、延迟、吞吐、成本；理解 Tool Calling 和结构化输出本质上仍是模型生成加程序校验与执行。
 - **知识与适配：**Embedding、余弦相似度、切分、检索、重排；能比较 Prompt、RAG、Fine-tuning 的适用边界。
@@ -386,7 +386,7 @@ W-2026-002 将这些摘要扩展为 12 个小课题，并补充 Tokenizer、Chat
 | [W-010 Codex 指令加载](W-2026-010-study-codex-project-instructions-loading.md) | Context 治理后的真实 Harness 源码切片 |
 | [W-011 Skill 加载治理](W-2026-011-study-production-skill-loading-and-governance.md) | 多技能、资源、版本、权限和渐进披露 |
 | [W-012 Skill 与可观测性](W-2026-012-study-agent-skill-engineering-observability.md) | 从中间观测实验开始贯穿，后续做完整 Trace/Eval 对照 |
-| [W-013 Memory](W-2026-013-study-memory-production-practices.md) | 有具体跨会话需求后学习写入、召回、遗忘和隔离 |
+| [W-013 Memory](../changes/C-2026-005-study-memory-production-practices.md) | 有具体跨会话需求后学习写入、召回、遗忘和隔离 |
 | [W-014 有用的 MCP 服务](W-2026-014-build-useful-mcp-server.md) | 完成 Tool/权限/观测基础后实现一个真实有用的外部服务 |
 | [W-015 Subagent](W-2026-015-study-production-subagent-runtime.md) | 单 Agent 基线稳定后学习有限委派和隔离实验 |
 | [W-016 Agent-to-Agent 协作](W-2026-016-study-agent-to-agent-collaboration-patterns.md) | 先判断是否需要多 Agent，再比较协作拓扑 |
@@ -400,7 +400,7 @@ W-2026-002 将这些摘要扩展为 12 个小课题，并补充 Tokenizer、Chat
 | [W-024 Reactive Compaction](W-2026-024-study-production-reactive-context-compaction.md) | 出现 Prompt 超限或恢复证据后深入，不与 W-004 重复 |
 | [W-025 RAG/Wiki/Ontology](../changes/C-2026-004-study-rag-vs-llm-wiki-vs-ontology.md) | 知识架构专项，2026-09-20 用户确认学习完成；笔记与现存 Demo 已归档 |
 | [W-026 自进化](W-2026-026-study-agent-self-evolution-harnesses.md) | 冻结 Eval、版本和回滚成熟后选修 |
-| [W-027 后训练与严格 JSON](W-2026-027-study-strict-json-output-post-training.md) | 模型适配方向选修，不阻塞 Agent Runtime 主线 |
+| [W-027 后训练与严格 JSON](../changes/C-2026-006-study-strict-json-output-post-training.md) | 模型适配方向选修，不阻塞 Agent Runtime 主线 |
 
 两个 W-009 使用完整标题/链接区分。已有需求详情不复制到其他 Spec；章节学习继续记录在对应 LEARNING_NOTES.md。
 

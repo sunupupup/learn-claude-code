@@ -9,7 +9,7 @@
 在原仓库根目录运行：
 
 ```powershell
-python .\learning-notes\work-pool\W-2026-002-study-llm-runtime-foundations\experiments\logits-sampling-basic\sampling_demo.py --strategy greedy
+python .\learning-notes\work-pool\W-2026-002-study-llm-runtime-foundations-模型运行基础\experiments\logits-sampling-basic\sampling_demo.py --strategy greedy
 ```
 
 只有两种选择策略：`--strategy greedy` 直接选最高分；`--strategy sample` 随机采样。旧的 `--stage` 已移除。
@@ -17,7 +17,7 @@ python .\learning-notes\work-pool\W-2026-002-study-llm-runtime-foundations\exper
 采样分支按顺序执行：**温度调节 → Softmax 转概率 → Top-p 筛选并归一化 → 按概率抽取**。每一步都会打印结果。
 
 ```powershell
-python .\learning-notes\work-pool\W-2026-002-study-llm-runtime-foundations\experiments\logits-sampling-basic\sampling_demo.py --strategy sample --temperature 1 --top-p 0.8 --seed 7
+python .\learning-notes\work-pool\W-2026-002-study-llm-runtime-foundations-模型运行基础\experiments\logits-sampling-basic\sampling_demo.py --strategy sample --temperature 1 --top-p 0.8 --seed 7
 ```
 
 改变 `--temperature` 观察分布变化；`--top-p 1` 保留全部候选。温度 0 在本 Demo 中改走 Greedy，不进行除法。Greedy 不使用温度、Top-p 或随机种子。
