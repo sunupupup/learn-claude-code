@@ -114,7 +114,7 @@ README 对真实 Claude Code 文件锁的描述属于版本相关的进一步映
 - [`s14 学习笔记`](../../s14_cron_scheduler/LEARNING_NOTES.md)
 - [`s15 Agent Teams`](../../s15_agent_teams/README.md)
 - [`W-2026-015：生产级 Subagent Runtime`](./W-2026-015-study-production-subagent-runtime.md)
-- [`W-2026-004：Tool Result 压缩、恢复与副作用安全`](./W-2026-004-study-tool-result-compaction-and-recovery.md)
+- [`W-2026-004：Tool Result 压缩、恢复与副作用安全`](../changes/C-2026-012-study-tool-result-compaction-and-recovery.md)
 - [`W-2026-006：副作用 Tool 的分层安全`](./W-2026-006-study-side-effect-tool-security.md)
 - [`W-2026-003：Task Completion Verification`](./W-2026-003-study-task-completion-verification.md)
 - [`W-2026-007：Agent 消息注入、插队与运行时事件交付`](./W-2026-007-study-agent-message-injection-steering.md)

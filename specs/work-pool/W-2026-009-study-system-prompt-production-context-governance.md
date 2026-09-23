@@ -10,7 +10,7 @@
   - [s10 System Prompt](../../s10_system_prompt/README.md)
   - [s10 学习笔记](../../s10_system_prompt/LEARNING_NOTES.md)
   - [W-2026-011：生产级 Skill 加载、资源与治理学习](./W-2026-011-study-production-skill-loading-and-governance.md)
-  - [W-2026-004：Tool Result 压缩、恢复与副作用安全学习](./W-2026-004-study-tool-result-compaction-and-recovery.md)
+  - [W-2026-004：Tool Result 压缩、恢复与副作用安全学习](../changes/C-2026-012-study-tool-result-compaction-and-recovery.md)
   - [W-2026-006：生产级副作用 Tool 的分层安全与业务接入学习](./W-2026-006-study-side-effect-tool-security.md)
   - [W-2026-013：Memory 生产实践与生命周期治理学习](../changes/C-2026-005-study-memory-production-practices.md)
   - [W-2026-010：Codex 项目指令发现与加载机制学习](./W-2026-010-study-codex-project-instructions-loading.md)

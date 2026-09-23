@@ -7,7 +7,7 @@
 - Owner: personal
 - Priority: high
 - Main learning record: [LEARNING_NOTES.md](../../learning-notes/work-pool/W-2026-003-study-task-completion-verification-任务完成验证/LEARNING_NOTES.md)
-- Related: [s12 Task System](../../s12_task_system/)、[s13 Background Tasks](../../s13_background_tasks/)、[s15 Agent Teams](../../s15_agent_teams/)、[s18 Worktree Isolation](../../s18_worktree_isolation/)、[W-2026-004 Tool Result 恢复](../work-pool/W-2026-004-study-tool-result-compaction-and-recovery.md)、[W-2026-006 副作用 Tool 安全](../work-pool/W-2026-006-study-side-effect-tool-security.md)、[W-2026-015 Subagent Runtime](../work-pool/W-2026-015-study-production-subagent-runtime.md)
+- Related: [s12 Task System](../../s12_task_system/)、[s13 Background Tasks](../../s13_background_tasks/)、[s15 Agent Teams](../../s15_agent_teams/)、[s18 Worktree Isolation](../../s18_worktree_isolation/)、[W-2026-004 Tool Result 恢复](../changes/C-2026-012-study-tool-result-compaction-and-recovery.md)、[W-2026-006 副作用 Tool 安全](../work-pool/W-2026-006-study-side-effect-tool-security.md)、[W-2026-015 Subagent Runtime](../work-pool/W-2026-015-study-production-subagent-runtime.md)
 
 ## 本次启动范围
 

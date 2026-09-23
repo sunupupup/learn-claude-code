@@ -293,7 +293,7 @@ W-2026-002 将这些摘要扩展为 12 个小课题，并补充 Tokenizer、Chat
 
 8 周目标是做出一次有证据的上下文取舍；若基线已经够用、候选没有收益，记录“不采用”也算有效实验。语义质量人工评审，确定性条件用程序检查，真实模型的随机结果记录运行次数与波动。
 
-关联专题：[System Prompt 与上下文](W-2026-009-study-system-prompt-production-context-governance.md)、[工具结果压缩与恢复](W-2026-004-study-tool-result-compaction-and-recovery.md)。[Reactive Compaction](W-2026-024-study-production-reactive-context-compaction.md) 只在有超限证据时深入。
+关联专题：[System Prompt 与上下文](W-2026-009-study-system-prompt-production-context-governance.md)、[工具结果压缩与恢复](../changes/C-2026-012-study-tool-result-compaction-and-recovery.md)。[Reactive Compaction](W-2026-024-study-production-reactive-context-compaction.md) 只在有超限证据时深入。
 
 **24 周深入项：**加入模型摘要与确定性选择对照、摘要失真与重取原文、跨会话记忆写入/删除中的一个；至少两轮对照，不把摘要压缩、服务端历史和本地裁剪混为一谈。
 
@@ -377,7 +377,7 @@ W-2026-002 将这些摘要扩展为 12 个小课题，并补充 Tokenizer、Chat
 | --- | --- |
 | [W-002 LLM Runtime 基础](../changes/C-2026-002-study-llm-runtime-foundations.md) | 两条路线必修前置：Token、Prompt、生成、Prefill/Decode 和缓存分层 |
 | [W-003 完成验证](W-2026-003-study-task-completion-verification.md) | LLM 基础和中间观测线之后，建立可证明的完成状态 |
-| [W-004 工具结果恢复](W-2026-004-study-tool-result-compaction-and-recovery.md) | W-003 之后，学习结果压缩、恢复和幂等边界 |
+| [W-004 工具结果恢复](../changes/C-2026-012-study-tool-result-compaction-and-recovery.md) | W-003 之后，学习结果压缩、恢复和幂等边界 |
 | [W-005 权限与审批](W-2026-005-study-production-agent-permissions-and-approval.md) | 单 Agent 副作用实验的控制面 |
 | [W-006 副作用安全](W-2026-006-study-side-effect-tool-security.md) | W-005 之后，接业务服务、未知结果、补偿和审计 |
 | [W-007 消息注入与引导](W-2026-007-study-agent-message-injection-steering.md) | Tool/后台/审批/定时事件进入 Context 时学习 |

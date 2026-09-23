@@ -5,7 +5,7 @@
 - Discovered From: 用户在 Agent 生产级学习规划中发现 Token 编码、Prompt 处理、Token Cache 与模型生成链路缺少独立主线
 - Owner: personal
 - Priority: high
-- Related: [W-2026-001 总路线](../work-pool/W-2026-001-agent-engineering-master-learning-roadmap.md)、[W-2026-027 后训练与严格 JSON](C-2026-006-study-strict-json-output-post-training.md)、[W-2026-004 Tool Result 恢复](../work-pool/W-2026-004-study-tool-result-compaction-and-recovery.md)、[W-2026-012 Skill 可观测性](../work-pool/W-2026-012-study-agent-skill-engineering-observability.md)、[W-2026-009 Context 治理](../work-pool/W-2026-009-study-system-prompt-production-context-governance.md)
+- Related: [W-2026-001 总路线](../work-pool/W-2026-001-agent-engineering-master-learning-roadmap.md)、[W-2026-027 后训练与严格 JSON](C-2026-006-study-strict-json-output-post-training.md)、[W-2026-004 Tool Result 恢复](../changes/C-2026-012-study-tool-result-compaction-and-recovery.md)、[W-2026-012 Skill 可观测性](../work-pool/W-2026-012-study-agent-skill-engineering-observability.md)、[W-2026-009 Context 治理](../work-pool/W-2026-009-study-system-prompt-production-context-governance.md)
 
 
 ## 本次启动与执行状态

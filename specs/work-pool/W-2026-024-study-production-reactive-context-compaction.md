@@ -12,7 +12,7 @@
   - [s08 压缩方式对比](../../s08_context_compact/压缩方式对比.md)
   - [s11 Error Recovery](../../s11_error_recovery/README.md)
   - [s11 学习笔记](../../s11_error_recovery/LEARNING_NOTES.md)
-  - [W-2026-004：Tool Result 压缩、恢复与副作用安全](./W-2026-004-study-tool-result-compaction-and-recovery.md)
+  - [W-2026-004：Tool Result 压缩、恢复与副作用安全](../changes/C-2026-012-study-tool-result-compaction-and-recovery.md)
   - [W-2026-009：System Prompt 生产级上下文治理、权限与缓存](./W-2026-009-study-system-prompt-production-context-governance.md)
 
 ## Objective

@@ -136,7 +136,7 @@ Result Contract → Domain Validation → Root Integration → Final Verificatio
 - [`s15 Agent Teams`](../../s15_agent_teams/README.md)
 - [`s15 学习笔记`](../../s15_agent_teams/LEARNING_NOTES.md)
 - [`W-2026-015：生产级 Subagent Runtime`](./W-2026-015-study-production-subagent-runtime.md)
-- [`W-2026-004：Tool Result 压缩、恢复与副作用安全`](./W-2026-004-study-tool-result-compaction-and-recovery.md)
+- [`W-2026-004：Tool Result 压缩、恢复与副作用安全`](../changes/C-2026-012-study-tool-result-compaction-and-recovery.md)
 - [`W-2026-003：Task Completion Verification`](./W-2026-003-study-task-completion-verification.md)
 - [`W-2026-007：Agent 消息注入、插队与运行时事件交付`](./W-2026-007-study-agent-message-injection-steering.md)
 - [`W-2026-008：Python 锁与 Agent 并发状态治理`](./W-2026-008-study-python-locks-and-agent-concurrency.md)

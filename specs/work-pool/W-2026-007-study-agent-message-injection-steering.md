@@ -13,7 +13,7 @@
   - [s13 Background Tasks](../../s13_background_tasks/README.md)
   - [s14 Cron Scheduler](../../s14_cron_scheduler/README.md)
   - [W-2026-015：生产级 Subagent Runtime](./W-2026-015-study-production-subagent-runtime.md)
-  - [W-2026-004：Tool Result 压缩、恢复与副作用安全](./W-2026-004-study-tool-result-compaction-and-recovery.md)
+  - [W-2026-004：Tool Result 压缩、恢复与副作用安全](../changes/C-2026-012-study-tool-result-compaction-and-recovery.md)
   - [W-2026-006：副作用 Tool 的分层安全](./W-2026-006-study-side-effect-tool-security.md)
   - [W-2026-009：System Prompt 与上下文治理](./W-2026-009-study-system-prompt-production-context-governance.md)
   - [W-2026-024：Reactive Context Compaction](./W-2026-024-study-production-reactive-context-compaction.md)

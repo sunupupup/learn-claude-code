@@ -1,6 +1,23 @@
-# W-2026-004：Tool Result 压缩、恢复与副作用安全学习
+# C-2026-012：Tool Result 压缩与恢复——RTK 学习
 
-- Status: ready
+- Status: active
+- Started: 2026-09-23
+- Source Task: W-2026-004-study-tool-result-compaction-and-recovery
+- Start Trigger: 用户在工具调研后选定 RTK，并明确表示“就学这个”。
+- 学习入口：[RTK 学习笔记](../../learning-notes/work-pool/W-2026-004-study-tool-result-compaction-and-recovery-RTK/LEARNING_NOTES.md)
+
+## 当前执行范围
+
+仅启动原任务的 RTK 专项，从 D1 数据流理解开始，逐步进入过滤器源码与输出恢复实验。TRS、通用框架对照、业务写操作故障实验等保留为暂缓范围，不因任务迁移自动执行。首次学习先核对文档、建立概念；正式源码阅读前固定 Commit。当前不安装全局 Hook、不修改教学代码。
+
+当前第一步：区分执行前命令改写、执行后输出过滤，以及完整输出回取。后续验收关注失败信息、退出码、原文引用与实际输出体积，不以项目宣传的压缩率替代实验。
+
+以下保留原任务的完整背景和远期验收要求；其中“当前不启动”的描述是迁移前历史状态，当前范围以上文为准。学习结论只维护在学习入口中。
+
+## 原任务背景与远期范围（迁移保留）
+### 原 W-2026-004：Tool Result 压缩、恢复与副作用安全学习
+
+- 原状态: ready（已迁入当前 Change）
 - Area: Context Engineering / Tool Calling / Reliability / Idempotency / Eval
 - Difficulty: D2 → D3
 - Discovered From: `s08_context_compact` 的 `micro_compact`、工具结果落盘与副作用讨论；`s13_background_tasks` 使用 `output[:200]` 生成后台通知摘要时，用户进一步确认 Bash 命令结果压缩是值得单独验证的生产级问题

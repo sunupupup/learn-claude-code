@@ -22,7 +22,7 @@
 - Discovered From: `s09_memory` 的记忆提取、召回、整理和文件替换实现
 - Owner: personal
 - Priority: high
-- Related: [s09 Memory](../../s09_memory/README.md)、[W-2026-004](../work-pool/W-2026-004-study-tool-result-compaction-and-recovery.md)、[W-2026-006](../work-pool/W-2026-006-study-side-effect-tool-security.md)
+- Related: [s09 Memory](../../s09_memory/README.md)、[W-2026-004](../changes/C-2026-012-study-tool-result-compaction-and-recovery.md)、[W-2026-006](../work-pool/W-2026-006-study-side-effect-tool-security.md)
 
 ## Objective
 
