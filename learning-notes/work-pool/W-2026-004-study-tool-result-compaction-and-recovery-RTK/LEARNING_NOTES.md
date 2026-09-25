@@ -2,6 +2,8 @@
 
 ## 任务范围与状态
 
+- 2026-09-25 已临时安装 RTK 0.50.0，完成 git log / pnpm list 对比并卸载；完整原始输出、测量口径及发现见 [result_pnpm_list.md](result_pnpm_list.md)。下文“尚未实验”等表述是此前源码学习阶段的历史状态。
+
 - 开始日期：2026-09-23；当前为 D1 概念入门，后续按理解进度读源码与做实验。
 - 任务：[C-2026-012](../../../specs/changes/C-2026-012-study-tool-result-compaction-and-recovery.md)。本轮仅学习 RTK，其他候选与完整业务恢复课题暂缓。
 - 已固定只读源码样本：v0.49.0，Commit `b1c0dc00649c50fbe8930f849c800d4d6ca12091`（master 查询返回的版本）。尚未安装或运行 RTK；静态阅读不代表本机行为已验证。
