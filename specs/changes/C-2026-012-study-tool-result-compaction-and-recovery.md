@@ -8,6 +8,8 @@
 
 ## 当前执行范围
 
+2026-09-25：用户明确要求临时安装 RTK，对比 git log 和 pnpm list 后卸载。已完成只读实验并清理便携程序和临时数据，未启用 Hook。实测结果以 [result_pnpm_list.md](../../learning-notes/work-pool/W-2026-004-study-tool-result-compaction-and-recovery-RTK/result_pnpm_list.md) 为准；完整课题仍为 active。
+
 仅启动原任务的 RTK 专项，从 D1 数据流理解开始，逐步进入过滤器源码与输出恢复实验。TRS、通用框架对照、业务写操作故障实验等保留为暂缓范围，不因任务迁移自动执行。首次学习先核对文档、建立概念；正式源码阅读前固定 Commit。当前不安装全局 Hook、不修改教学代码。
 
 当前第一步：区分执行前命令改写、执行后输出过滤，以及完整输出回取。后续验收关注失败信息、退出码、原文引用与实际输出体积，不以项目宣传的压缩率替代实验。
