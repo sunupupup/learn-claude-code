@@ -1,4 +1,13 @@
-# Codex CLI
+# 我的笔记
+
+学习内容：项目指令怎么进入上下文、工具和 MCP schema 怎么组装、Skills 与 Memory 何时加载，以及这些内容怎样影响每轮请求的前缀
+
+## Codex 里面的 System Prompt
+
+
+
+
+# AI生成的笔记 Codex CLI
 
 > 调研快照：2026-09-26。基于公开仓库初读；正式源码学习时固定 release/commit，并追到实际模型请求。
 
