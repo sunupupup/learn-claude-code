@@ -383,6 +383,7 @@ W-2026-002 将这些摘要扩展为 12 个小课题，并补充 Tokenizer、Chat
 | [W-007 消息注入与引导](W-2026-007-study-agent-message-injection-steering.md) | Tool/后台/审批/定时事件进入 Context 时学习 |
 | [W-008 并发状态治理](W-2026-008-study-python-locks-and-agent-concurrency.md) | W-007 之后，补认领、队列、共享状态和恢复竞态 |
 | [W-009 System Prompt 治理](W-2026-009-study-system-prompt-production-context-governance.md) | Context、租户、Prompt 版本和缓存失效 |
+| [W-032 Context 组织与缓存命中](../changes/C-2026-013-study-agent-context-and-prompt-cache.md) | 进行中：Context 编排、Provider Prompt Cache 和命中/失效观察 |
 | [W-010 Codex 指令加载](W-2026-010-study-codex-project-instructions-loading.md) | Context 治理后的真实 Harness 源码切片 |
 | [W-011 Skill 加载治理](W-2026-011-study-production-skill-loading-and-governance.md) | 多技能、资源、版本、权限和渐进披露 |
 | [W-012 Skill 与可观测性](W-2026-012-study-agent-skill-engineering-observability.md) | 从中间观测实验开始贯穿，后续做完整 Trace/Eval 对照 |

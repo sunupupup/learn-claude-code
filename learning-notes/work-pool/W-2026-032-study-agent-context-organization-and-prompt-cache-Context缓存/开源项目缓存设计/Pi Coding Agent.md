@@ -1,57 +1,5 @@
-# Pi Coding Agent
 
-> 调研快照：2026-09-26。基于 Pi 官方文档与公开源码初读；正式源码学习时固定 release/commit。
-
-## System prompt 与 tools
-
-- `packages/coding-agent/src/core/system-prompt.ts` 的 builder 组装基础规则、用户补充指令、项目 context files、Skill 信息、工作目录和扩展提供的 section。
-- `SYSTEM.md` 可替换默认 Prompt，`APPEND_SYSTEM.md` 可追加内容；工作区规则和扩展可按发现结果改变 Prompt。
-- Prompt 里可能有精简工具目录或工具使用指导；实际 callable tool schema 经独立的 tool/provider 路径提供。两者需要分别追踪。
-- Prompt sections 可更新；扩展也可以通过生命周期事件调整 Prompt。消息历史由 session 活动分支恢复。
-
-## 静态与动态
-
-
-| 内容                                  | 相对生命周期      | 变化与缓存观察点                               |
-| ----------------------------------- | ----------- | -------------------------------------- |
-| 默认 Prompt                           | 版本周期        | 稳定主体；升级会改变请求前缀。                        |
-| context files、`SYSTEM.md`、Extension | 项目/会话配置     | 文件、目录或扩展状态改变时检查 Prompt sections 是否更新。  |
-| tool schema                         | 当前工具集       | Extension 或工具选择变化可改变独立 schema。         |
-| Skill 列表                            | Agent 启动/重载 | 启动时发现后将名称、描述和路径加入 system prompt。       |
-| messages 与读取出的 Skill 正文             | 每轮/按需加载     | transcript 追加会延长历史；Skill 正文在被读取后进入上下文。 |
-
-
-
-
-## Skills 与 Memory 对缓存的影响
-
-- **Skill**：Pi 官方文档说明启动时扫描 Skill 目录，只把名称、描述、路径列入 system prompt；完整 `SKILL.md` 由模型按需读取。这种“常驻短目录 + 按需全文”避免所有 Skill 正文每轮都成为常驻 Prompt。修改目录/描述可能改变 system prompt；读取正文则通常是激活后的新增上下文。
-
-- **Memory**：Pi 核心允许通过 Extension 扩展；Pi 官方 Package 目录中的 `pi-memory` 是独立扩展示例，并非 Pi 核心默认 Memory。它可将 Memory 以受限快照注入 system prompt，也支持每轮检索配置。必须区分核心行为与扩展行为。
-
-- **缓存观察点**：每轮变化的 Memory 快照若放在历史之前，会使其后的历史前缀从变化位置起不匹配；稳定快照、按需检索，或把新结果追加到对话，影响范围不同。缓存优化不能以牺牲记忆新鲜度为代价。
-
-- **工具关联**：Skill 自身是指令/资源；Extension 可以注册工具。Skill 列表更新与 callable tool schema 更新是两条可能相关但不相同的路径。
-
-
-
-## 本轮结论
-
-Pi 的 Skill 设计展示了如何让目录信息常驻、详细步骤按需加载；Memory 的具体策略由所用 Extension 决定。适合追问“哪些动态内容在启动时冻结，哪些在每轮重读”。
-
-## 官方资料与源码入口
-
-- [Pi system prompt builder](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/system-prompt.ts)
-- [Pi 如何构造模型请求](https://pi.dev/docs/latest/how-pi-works)
-- [Pi Skills 文档](https://pi.dev/docs/latest/skills)
-- [Pi](https://pi.dev/packages/pi-memory) `pi-memory` [扩展示例](https://pi.dev/packages/pi-memory)
-- [Pi 缓存预热设置](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/settings.md)
-
-
-
-## 待继续核验
-
-固定 commit 后追 Skill 清单何时刷新、Skill read 结果怎样进入 messages、Memory 扩展各模式的注入事件，以及扩展改工具时 tool schema 是否同步更新。
+# 我的笔记
 
 # Pi 里面的 System Prompt
 
@@ -586,3 +534,61 @@ Compact 之后，模型 看不到 被压掉的那一大段：
 			'- If someone says "remember this," write it immediately.',
 
 所以这时候会主动调用起 memory_write 工具
+
+
+
+# AI 自动生成的笔记
+
+# Pi Coding Agent
+
+> 调研快照：2026-09-26。基于 Pi 官方文档与公开源码初读；正式源码学习时固定 release/commit。
+
+## System prompt 与 tools
+
+- `packages/coding-agent/src/core/system-prompt.ts` 的 builder 组装基础规则、用户补充指令、项目 context files、Skill 信息、工作目录和扩展提供的 section。
+- `SYSTEM.md` 可替换默认 Prompt，`APPEND_SYSTEM.md` 可追加内容；工作区规则和扩展可按发现结果改变 Prompt。
+- Prompt 里可能有精简工具目录或工具使用指导；实际 callable tool schema 经独立的 tool/provider 路径提供。两者需要分别追踪。
+- Prompt sections 可更新；扩展也可以通过生命周期事件调整 Prompt。消息历史由 session 活动分支恢复。
+
+## 静态与动态
+
+
+| 内容                                  | 相对生命周期      | 变化与缓存观察点                               |
+| ----------------------------------- | ----------- | -------------------------------------- |
+| 默认 Prompt                           | 版本周期        | 稳定主体；升级会改变请求前缀。                        |
+| context files、`SYSTEM.md`、Extension | 项目/会话配置     | 文件、目录或扩展状态改变时检查 Prompt sections 是否更新。  |
+| tool schema                         | 当前工具集       | Extension 或工具选择变化可改变独立 schema。         |
+| Skill 列表                            | Agent 启动/重载 | 启动时发现后将名称、描述和路径加入 system prompt。       |
+| messages 与读取出的 Skill 正文             | 每轮/按需加载     | transcript 追加会延长历史；Skill 正文在被读取后进入上下文。 |
+
+
+
+
+## Skills 与 Memory 对缓存的影响
+
+- **Skill**：Pi 官方文档说明启动时扫描 Skill 目录，只把名称、描述、路径列入 system prompt；完整 `SKILL.md` 由模型按需读取。这种“常驻短目录 + 按需全文”避免所有 Skill 正文每轮都成为常驻 Prompt。修改目录/描述可能改变 system prompt；读取正文则通常是激活后的新增上下文。
+
+- **Memory**：Pi 核心允许通过 Extension 扩展；Pi 官方 Package 目录中的 `pi-memory` 是独立扩展示例，并非 Pi 核心默认 Memory。它可将 Memory 以受限快照注入 system prompt，也支持每轮检索配置。必须区分核心行为与扩展行为。
+
+- **缓存观察点**：每轮变化的 Memory 快照若放在历史之前，会使其后的历史前缀从变化位置起不匹配；稳定快照、按需检索，或把新结果追加到对话，影响范围不同。缓存优化不能以牺牲记忆新鲜度为代价。
+
+- **工具关联**：Skill 自身是指令/资源；Extension 可以注册工具。Skill 列表更新与 callable tool schema 更新是两条可能相关但不相同的路径。
+
+
+
+## 本轮结论
+
+Pi 的 Skill 设计展示了如何让目录信息常驻、详细步骤按需加载；Memory 的具体策略由所用 Extension 决定。适合追问“哪些动态内容在启动时冻结，哪些在每轮重读”。
+
+## 官方资料与源码入口
+
+- [Pi system prompt builder](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/system-prompt.ts)
+- [Pi 如何构造模型请求](https://pi.dev/docs/latest/how-pi-works)
+- [Pi Skills 文档](https://pi.dev/docs/latest/skills)
+- [Pi](https://pi.dev/packages/pi-memory) `pi-memory` [扩展示例](https://pi.dev/packages/pi-memory)
+- [Pi 缓存预热设置](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/settings.md)
+
+
+## 待继续核验
+
+固定 commit 后追 Skill 清单何时刷新、Skill read 结果怎样进入 messages、Memory 扩展各模式的注入事件，以及扩展改工具时 tool schema 是否同步更新。
