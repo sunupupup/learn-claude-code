@@ -636,6 +636,6 @@ registered → fired → queued → injected → model response
 
 - [`W-2026-007`](../specs/work-pool/W-2026-007-study-agent-message-injection-steering.md)：消息注入、插队、安全边界、可靠交付与 Eval，`ready / medium`；本章学习过程中新增，尚未启动。
 - [`W-2026-003`](../specs/work-pool/W-2026-003-study-task-completion-verification.md)：区分模型声称完成、状态完成与证据验证。
-- [`W-2026-024`](../specs/work-pool/W-2026-024-study-production-reactive-context-compaction.md)：压缩和恢复时保持消息协议与 Tool 配对。
+- [`W-2026-024`](../specs/changes/C-2026-014-study-production-reactive-context-compaction.md)：压缩和恢复时保持消息协议与 Tool 配对。
 - [`W-2026-009`](../specs/work-pool/W-2026-009-study-system-prompt-production-context-governance.md)：每次模型调用的上下文来源、权限和版本治理。
 - [`W-2026-006`](../specs/work-pool/W-2026-006-study-side-effect-tool-security.md)：定时或插队消息驱动副作用 Tool 时的权限、幂等和审批。

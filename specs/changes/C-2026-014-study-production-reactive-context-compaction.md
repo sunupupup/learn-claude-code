@@ -1,6 +1,9 @@
-# W-2026-024：生产级 Reactive Context Compaction 学习
+# C-2026-014：生产级 Reactive Context Compaction 学习
 
-- Status: ready
+- Status: active
+- Started: 2026-09-26
+- Source Task: W-2026-024-study-production-reactive-context-compaction
+- Start Trigger: 用户明确要求启动，并要求参照 W-2026-032 为相同开源项目建立上下文压缩设计调研入口。
 - Area: Context Engineering / Error Recovery / Durable Execution / Tool Calling / Eval
 - Difficulty: D2 → D3
 - Discovered From: `s11_error_recovery` 学习过程；用户发现教学版 `reactive_compact()` 直接保留最后五条消息可能破坏 Tool 配对，并明确提出调研生产级项目的紧急压缩实现
@@ -12,8 +15,8 @@
   - [s08 压缩方式对比](../../s08_context_compact/压缩方式对比.md)
   - [s11 Error Recovery](../../s11_error_recovery/README.md)
   - [s11 学习笔记](../../s11_error_recovery/LEARNING_NOTES.md)
-  - [W-2026-004：Tool Result 压缩、恢复与副作用安全](../changes/C-2026-012-study-tool-result-compaction-and-recovery.md)
-  - [W-2026-009：System Prompt 生产级上下文治理、权限与缓存](./W-2026-009-study-system-prompt-production-context-governance.md)
+  - [W-2026-004：Tool Result 压缩、恢复与副作用安全](./C-2026-012-study-tool-result-compaction-and-recovery.md)
+  - [W-2026-009：System Prompt 生产级上下文治理、权限与缓存](../work-pool/W-2026-009-study-system-prompt-production-context-governance.md)
 
 ## Objective
 
@@ -31,6 +34,13 @@
   → 在一次性恢复预算内重试
   → 验证结果，或升级为明确失败/人工接管
 ```
+
+## 本次执行范围
+
+- 学习入口：[W-2026-024 学习笔记](../../learning-notes/work-pool/W-2026-024-study-production-reactive-context-compaction/LEARNING_NOTES.md)。已初始化知识图谱、名词清单，以及与 W-2026-032 相同的六个项目调研页。
+- 六个项目先做候选初筛；只有确认与消息压缩、上下文裁剪或超限恢复相关后，才选一个主样本和两个对照样本固定版本深读。
+- 源码浅克隆放在仓库外的 `source-reading/`；本仓库只保存学习笔记、证据和最小实验。
+- Tool Result 压缩策略细节仍由 [C-2026-012](./C-2026-012-study-tool-result-compaction-and-recovery.md) 维护，本 Change 只记录跨消息/整个活动上下文恢复所需的交界信息。
 
 ## Problem Statement
 
@@ -97,16 +107,11 @@ Reactive compact 不是一种独立的内容格式，而是一条由真实超限
 
 ### Track E：真实项目调用链
 
-启动任务时固定版本、Commit、许可证和文档状态，并从以下候选中选择一个主样本、两个对照样本：
+初步筛查项目沿用 [W-2026-032 的同一组开源项目](../../learning-notes/work-pool/W-2026-032-study-agent-context-organization-and-prompt-cache-Context缓存/开源项目缓存设计/那些子项目.md)：Codex CLI、Pi Coding Agent、Hermes Agent、OpenClaw、CodeWhale、OpenHands SDK。六个项目均已建立调研入口并找到官方压缩资料或源码定位点，但未确认完整调用链；Pi 按用户要求必看，OpenClaw 为主样本候选，OpenHands SDK 为深读对照；Codex CLI、Hermes Agent 与 CodeWhale 保留为目标明确的补充候选。这不代表每个项目都实现了 API 错误后的 reactive compaction。
 
-1. **LangChain / LangGraph**：追踪 Summarization Middleware、消息裁剪、Tool 消息安全处理、Checkpoint 和恢复路径；
-2. **Pydantic AI**：追踪 message history processor、Tool Call/Return 配对约束和历史处理器的失败行为；
-3. **OpenHands Software Agent SDK**：追踪 condenser、事件历史、View、压缩触发与任务状态保留；
-4. **Claude Code 教程引用的实现**：在源码可获得且版本可固定时，核对 reactive compact、context collapse、暂存提交和重试状态；无法获得可核验证据时只记录教程主张，不把它当作事实基线；
-5. **一个具备 Durable Execution 的 Agent Runtime**：观察 Checkpoint 后压缩、暂停、恢复与重放的版本语义。
+完成初筛后，从中选择一个主样本和两个对照样本做固定版本源码深读。若六个项目均无足够证据，再记录筛选理由并提出补充候选，不把缓存设计笔记里的项目描述当成压缩行为证据。启动源码深读时固定版本、Commit、许可证和文档状态。
 
-每个项目沿同一条调用链记录：
-
+每个入选项目沿同一条调用链记录：
 ```text
 超限检测
   → 触发器
@@ -169,10 +174,10 @@ Reactive compact 不是一种独立的内容格式，而是一条由真实超限
 
 ## Start Trigger
 
-- 用户明确说“开始 W-2026-024”或同等意思；
+- 用户于 2026-09-26 明确要求启动 W-2026-024；
 - 已完成 `s11_error_recovery` 基础验收；
 - 启动时重新核验候选项目的官方文档、版本、Commit 和许可证；
-- 按 `specs/README.md` 创建对应的 `specs/changes/C-*.md`，并移除本 Work Pool 文件。
+- 已按 `specs/README.md` 迁移到本 Change；学习目录初始化与项目调研按下方范围推进。
 
 ## Boundaries
 

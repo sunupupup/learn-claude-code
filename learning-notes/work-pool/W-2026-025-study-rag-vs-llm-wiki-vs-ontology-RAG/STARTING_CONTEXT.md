@@ -246,5 +246,5 @@ RAG       = 知识的 "搜索引擎"（在大规模未编译数据中找到相�
 
 - [`W-2026-013：Memory 生产实践`](../../../specs/changes/C-2026-005-study-memory-production-practices.md)
 - [`W-2026-004：Tool Result 压缩与恢复`](../../../specs/changes/C-2026-012-study-tool-result-compaction-and-recovery.md)
-- [`W-2026-024：Reactive Context Compaction`](../../../specs/work-pool/W-2026-024-study-production-reactive-context-compaction.md)
+- [`W-2026-024：Reactive Context Compaction`](../../../specs/changes/C-2026-014-study-production-reactive-context-compaction.md)
 - [`W-2026-012：Skill 工程化与可观测性`](../../../specs/work-pool/W-2026-012-study-agent-skill-engineering-observability.md)
