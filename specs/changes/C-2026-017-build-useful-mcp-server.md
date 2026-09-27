@@ -1,10 +1,12 @@
-# W-2026-014：实现一个真实有用的 MCP 服务
+# C-2026-017：实现一个真实有用的 MCP 服务
 
-- Status: ready
+- Status: active
 - Area: MCP / Agent Harness / Tool Integration
 - Discovered From: s19 开章讨论及注释复盘；用户认为 MCP 是必要的重要内容，希望后续做一个真实有用的 MCP 服务，并补齐协议能力与 SDK 实践。
 - Owner: 用户（学习与决策） / AI（指导与协作）
 - Priority: high
+- Source Work Pool: W-2026-014（已迁入本 Change）
+- Learning Notes: ../../learning-notes/work-pool/W-2026-014-build-useful-mcp-server-MCP服务/LEARNING_NOTES.md
 
 ## Objective
 
@@ -12,9 +14,41 @@
 
 “生产级”必须落实为具体使用环境、负载、权限、可靠性目标和维护责任。以下维度都必须评估；按场景决定实现深度，不能默默省略。判定不适用的维度要记录理由、残余风险和重新评估的触发条件。
 
-## Why Deferred / Start Trigger
+## Start Trigger / 启动范围
 
-当前先学习 s19，一次处理一个概念；此条目不自动启动实现。用户明确说“开始 W-2026-014”或“开始做真实 MCP 服务”时，按 [Spec 规范](../README.md) 创建 Change 并移除本 Work Pool 文件。建议启动前能复述 s19 的发现、组装、调用链。
+用户已明确授权正式启动 W-2026-014。本 Change 先完成任务导航、协议与开源项目资料核验，再一次推进一个小问题；初始化完成不代表协议学习、服务实现或生产验收已完成。原 Work Pool 卡已迁入本 Change。
+
+## 启动基线（2026-09-26）
+
+- 学习模式：混合线；先建立 Host/Client/Server/模型/业务服务边界，再按协议规范、SDK 源码与契约工具逐步观察真实 Server。是否运行服务和实验留待用户选择具体场景后决定。
+- 必学主线：角色边界；固定协议版本与版本协商；JSON-RPC 生命周期及 Tools/Resources/Prompts；stdio 与 Streamable HTTP；工具 Schema / 错误契约；身份、授权和业务 API 边界；最小真实只读服务；需求矩阵中适用的生产验收。
+- 选学分支：多轮请求、订阅通知、长任务、异步恢复、多租户 OAuth、高可用/多实例；按目标场景决定深入程度，不因此扩展首轮授课。
+- 证据区分：`documented`（官方规范/项目文档）、`source-verified`（固定提交源码）、`observed-runtime`（真实执行观察）、`production-proven`（对约定生产目标完成运行验收）。本轮只有官方资料核验，没有源码克隆、服务运行或生产验证。
+- 协议状态：任务卡提到的 2026-07-28 版本已在官方规范仓库核验。它移除协议级 `initialize` / `notifications/initialized` 握手和 Streamable HTTP `Mcp-Session-Id` 会话，新增必须支持的 `server/discover`；请求级 `_meta` 携带协议版本/客户端能力。版本还以 `subscriptions/listen` 取代旧 HTTP GET 事件流及 `resources/subscribe` / `resources/unsubscribe`，以多轮请求/响应替代服务端中途反向请求，并移除 `ping`、`logging/setLevel`、`notifications/roots/list_changed`；Roots、Sampling、Logging 被弃用。后续仍须按选定 SDK 固定版本和运行行为复核；协议无状态不代表业务执行没有状态。
+- 当前边界：业务领域、客户端、语言、SDK、部署位置、传输和认证仍未选择。当前首轮不实现完整服务，不安装依赖、不启动服务、不调用付费模型、不执行真实外部写入，不克隆所有候选项目。
+- 源码阅读范围：先用 s19 教学代码和学习笔记作为教学基线；正式进入某项目源码学习时再固定版本/提交、许可证和入口，并按需浅克隆到仓库外 `source-reading/`。
+
+### 生产维度启动预评估
+
+业务场景、客户端、部署模式尚未选择，故此处不伪造“适用/不适用”的最终判断。下表先标出应由哪一层负责，以及后续选择场景后的验收入口；各项当前均为**待场景化**，证据尚未产生。协议或 SDK 不自动提供表中保证。
+
+| 维度 | 初步适用性 | 主要责任层/实现位置 | 场景确定后的验收方法 | 当前证据与遗留风险 |
+|---|---|---|---|---|
+| 真实需求与服务目标 | 必须评估 | 用户/业务 Owner 定义目标；Host、Server、下游业务共同落地 | 选实际任务，量化延迟、错误、成本、恢复目标和验收用例 | 未选业务、负载和数据敏感度；无 SLO 基线 |
+| 协议与客户端兼容 | 必须评估 | Host 的 Client、Server SDK 和所选 Transport | 固定协议/SDK 版本；契约测试、目标客户端接入和版本矩阵 | 已核验 2026-07-28 官方规范文档；无 SDK 固定版本或互操作运行证据 |
+| 工具契约与演进 | 必须评估 | Server Schema/业务适配器，Host 兼容处理 | 非法/缺失参数、未知 Tool、结果 Schema 错误、旧客户端测试 | 未设计工具或版本策略；调用与业务失败分类未确定 |
+| 身份认证与凭据 | 随本地/远程、单用户/多用户部署判定 | Host 身份、Gateway 入站认证、Server 到下游凭据存储/轮换 | 缺失、伪造、过期、错误受众/Scope、撤销和日志脱敏 | 传输和凭据形态未选；不得把 MCP 连接当成身份认证 |
+| 授权与租户隔离 | 必须评估；多租户深度待定 | 下游业务服务最终对象权限；Host/Gateway 可做前置过滤 | 跨用户/租户/资源拒绝，权限变更和缓存隔离验证 | 当前没有业务身份或资源模型；发现列表过滤不能代替执行授权 |
+| 信任边界与攻击面 | 必须评估 | Host 策略、Server 输入校验、下游限制、传输入口 | 依场景测提示注入、路径/命令/SSRF、Origin/Host 和不可信结果 | 无威胁模型和部署入口；产品说明不等于攻击测试 |
+| 副作用与幂等 | 读取服务仍需判断；若写操作则必须落实 | Tool Adapter + 业务服务持久意图、幂等和对账 | 重复请求、响应丢失、参数冲突、进程重启和部分成功注入 | 默认首步只读；是否写入未知；无幂等凭证或实验 |
+| 超时、重试与取消 | 必须评估 | Client、Gateway、Server、下游各自设 deadline 并传播取消 | 慢/断连下游、取消、重连；验证是否仍有后台副作用 | 未选请求预算和写/读策略；超时结果可能未知 |
+| 并发与资源治理 | 必须评估，按规模定实现 | Server 并发池、下游连接池、平台配额/背压 | 并发一致性、过载拒绝、速率和资源泄漏观察 | 无负载规模与容量指标；状态是否跨实例共享未定 |
+| 上下文与数据量 | 必须评估 | Host 做工具选择、分页/截断/缓存；Server 控制结果大小 | 大工具集/大结果下测 Token、截断提示、分页和恢复引用 | 工具集未定；MCP 统一接入不自动减少上下文 |
+| 进程、连接与部署 | 必须评估 | stdio 子进程或 HTTP 入口及部署平台 | 启停、异常退出、滚动更新、路由、优雅关闭/恢复演练 | Transport 和平台未选；stdio stdout 污染、HTTP 网络入口风险待分析 |
+| 可观测性与审计 | 必须评估 | Host Run、MCP request、Gateway、Server、下游统一关联 | 从失败 Trace 还原身份/决策/业务结果；检查脱敏与保留 | 无 Trace/Audit 样例；跨边界关联、敏感数据保留未定义 |
+| 测试与效果评估 | 必须评估 | 契约/集成/E2E/安全/性能/Eval 分层 | 冻结样例与阈值，区分协议、部署和真实任务成功 | 未选目标 Host 和任务；Inspector 不能替代 conformance 或权限测试 |
+| 供应链与发布治理 | 必须评估 | 构建流水线、依赖/镜像/凭据和发布流程 | 版本/SBOM/许可证复核、来源校验、升级/禁用/回滚演练 | 尚无依赖/制品；候选项目许可证和协议兼容需按提交复核 |
+| 运维与持续维护 | 必须评估 | 服务 Owner 与部署平台 | Runbook、告警、恢复/备份/删除演练和责任人核对 | 尚未选是否自托管或运行方式；无维护责任与恢复指标 |
 
 ## 后续基础协议学习清单
 
@@ -108,9 +142,9 @@
 
 - [s19 MCP 教程](../../s19_mcp_plugin/README.md)
 - [s19 教学代码](../../s19_mcp_plugin/code.py)
-- [W-2026-001 学习路线](./W-2026-001-agent-engineering-master-learning-roadmap.md)
-- [W-2026-011 Skill 加载与治理](./W-2026-011-study-production-skill-loading-and-governance.md)：比较资源接入与 Skill 加载边界。
-- [W-2026-006 副作用工具安全](./W-2026-006-study-side-effect-tool-security.md)：包含写操作时参考。
-- [W-2026-012 工程化与可观测性](./W-2026-012-study-agent-skill-engineering-observability.md)：复用跨层 Trace、治理与 Eval 的学习问题。
-- [W-2026-005 权限与审批治理](./W-2026-005-study-production-agent-permissions-and-approval.md)：对照身份、授权、审批与执行边界。
-- [W-2026-021 Chat2DB 实践](./W-2026-021-study-chat2db-production-agent-db.md)：已有系统 MCP 接入对照，不等于本任务的服务实现。
+- [W-2026-001 学习路线](../work-pool/W-2026-001-agent-engineering-master-learning-roadmap.md)
+- [W-2026-011 Skill 加载与治理](../work-pool/W-2026-011-study-production-skill-loading-and-governance.md)：比较资源接入与 Skill 加载边界。
+- [C-2026-016 副作用工具安全](./C-2026-016-study-side-effect-tool-security.md)：包含写操作时参考。
+- [W-2026-012 工程化与可观测性](../work-pool/W-2026-012-study-agent-skill-engineering-observability.md)：复用跨层 Trace、治理与 Eval 的学习问题。
+- [C-2026-015 权限与审批治理](./C-2026-015-study-production-agent-permissions-and-approval.md)：对照身份、授权、审批与执行边界。
+- [W-2026-021 Chat2DB 实践](../work-pool/W-2026-021-study-chat2db-production-agent-db.md)：已有系统 MCP 接入对照，不等于本任务的服务实现。
