@@ -39,7 +39,9 @@ Context 来源与更新频率
 
 ## 学习建议与项目选择
 
-1. 按两组各比较两个项目：Codex CLI + Pi（coding agents）；Hermes Agent + OpenClaw（个人助手）。CodeWhale 与 OpenHands SDK 分别作为窄范围案例。每个项目独立维护一个 Markdown 调研页；总表只作索引。每页记录 system prompt / tools 放在哪里、有哪些内容、哪些静态/动态、何时重建，以及 Skill / Memory 从发现、快照或按需加载到进入模型请求的路径和缓存影响。
+用户完成 Codex CLI 的首轮源码浏览后反馈 Rust CLI 调用链难度过高，决定先暂停深入追读，转到 Python 项目 Nanobot 建立更易读的对照；Codex 现有笔记保留，之后有需要再回来。
+
+1. 项目学习保留 coding agent 与个人助手两类对照。Pi 继续作为 coding agent 主读；Codex CLI 已完成首轮导航，但深入源码暂缓；个人助手先从 Nanobot 入手，再视难度决定 Hermes Agent 和 OpenClaw 的顺序。每个项目独立维护一个 Markdown 调研页；总表只作索引。每页记录 system prompt / tools 放在哪里、有哪些内容、哪些静态/动态、何时重建，以及 Skill / Memory 从发现、快照或按需加载到进入模型请求的路径和缓存影响。
 2. 用 CodeWhale 对照显式 stable-prefix / volatile-boundary 设计；用 OpenHands SDK 对照静态 system prompt、动态 Context 与 ToolDefinition 的结构分离。
 3. 从项目源码继续追模型请求边界：Prompt builder → 工具注册/发现 → tool schema 生成 → Provider request adapter。不同项目标记为 `documented` / `source-verified` / `observed-runtime`，不把源码推论混成运行事实。
 4. 用 DeepSeek、Anthropic 与 OpenAI 官方文档校准缓存前缀/指标差异。先明确指标口径，再决定是否需要真实调用；未获用户明确要求前，不使用付费 API。
@@ -50,6 +52,7 @@ Context 来源与更新频率
 | --- | --- | --- |
 | Codex CLI | Coding Agent 主读之一 | Base instructions、AGENTS.md、内建/MCP tools、tool specs 与请求构造 |
 | Pi Coding Agent | Coding Agent 主读之一 | Prompt section builder、SYSTEM/APPEND_SYSTEM、工具清单与 schema、Skills/Extensions、cache warming |
+| Nanobot | 个人助手入门对照 | `AgentLoop → ContextBuilder → AgentRunner`、bootstrap files、Skills/Memory、工具 schema 稳定排序；先只追单轮请求主链路 |
 | Hermes Agent | 个人助手主读之一 | Prompt tiers、会话内缓存 Prompt、memory/skills/context snapshot 与临时 overlays |
 | OpenClaw | 个人助手主读之一 | 每次 run 的 Prompt 组装、tool list、Skills metadata/on-demand body、memory tools 与 workspace files |
 | CodeWhale（原 DeepSeek-TUI） | 缓存设计专题 | stable prefix、volatile boundary、Prompt/tools 分界和 cache telemetry |
