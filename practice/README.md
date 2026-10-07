@@ -24,4 +24,4 @@
 
 | 项目 | 学习目标 | 当前状态 |
 |---|---|---|
-| [订单客服 Agent](./order-support-agent/README.md) | 从订单查询逐步扩展到售后交互、退款确认、恢复与可靠执行 | 目录与说明初始化，尚无可运行代码 |
+| [订单客服 Agent](./order-support-agent/README.md) | 从订单查询逐步扩展到售后交互、退款确认、恢复与可靠执行 | [阶段 2：网页与售后交互](./order-support-agent/docs/02-business-flow.md) |

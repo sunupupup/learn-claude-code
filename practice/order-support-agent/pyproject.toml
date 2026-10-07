@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "order-support-agent"
+version = "0.1.0"
+description = "渐进式订单客服 Agent 学习项目"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+order-support-agent = "order_support_agent.main:main"
+
+[tool.setuptools.packages.find]
+include = ["order_support_agent*"]
