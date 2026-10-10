@@ -7,3 +7,4 @@
 ## 论文索引
 
 - [001-Meta-Harness 自进化Harness](<001-Meta-Harness 自进化Harness/笔记.md>)：基于历史源码、成绩和执行轨迹，自动搜索固定模型外围的 Harness 实现。
+- [002-RRSI](002-RRSI/笔记.md)：约束 Harness 修改的提出与筛选，减少递归自我改进中的过拟合。
