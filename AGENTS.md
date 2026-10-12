@@ -53,7 +53,7 @@
 
 ## Learned User Preferences
 
-- 讨论中确认的关键理解、术语校准与架构发现，应沉淀到对应章节的 README、`LEARNING_NOTES.md` 或 `LEARNING_NOTES.draft.md`，而非仅留在聊天中。
+- 普通学习讨论默认只在聊天中讲解，不自动把关键理解、术语校准、源码与结论写入 Markdown 或更新索引；仅在用户明确要求记录时，按指定范围写入。
 - Git 提交按逻辑范围拆分（例如章节学习笔记与 Work Pool 文档分开 commit）；仅在用户明确要求时 push。
 
 ## Learned Workspace Facts
@@ -61,4 +61,5 @@
 - Work Pool 引用的第三方源码按需浅克隆到本仓库外的独立目录（如 `source-reading/`）；勿用 git submodule，也不在 `learn-claude-code` 内存放外部项目源码。
 - 章节正式学习前的前置疑问与讨论可先写入 `LEARNING_NOTES.draft.md`，完成章节后按 `PROMPT_3_COMPLETE_LEARNING_NOTES.md` 合并进正式笔记。
 - `learn-claude-code` 只保留 spec、Work Pool、教学代码与学习笔记；外部项目阅读笔记链接回 Work Pool，不把第三方仓库纳入版本管理。
-- Work Pool 正式学习过程统一记录在 `learning-notes/work-pool/W-YYYY-NNN-readable-name/`；其中 `LEARNING_NOTES.md` 保存总结，源码阅读、实验和验收证据按需放入子目录；章节过程仍保留在对应 `sXX/LEARNING_NOTES.md`。
+- Work Pool 正式学习过程记录在 `learning-notes/work-pool/W-YYYY-NNN-readable-name/`；其中 `LEARNING_NOTES.md` 保存总结、路线和进度，通用知识、任务实验与验收证据按需放入子目录；章节过程仍保留在对应 `sXX/LEARNING_NOTES.md`。
+- 具体开源项目的模块实现学习集中在 `开源项目学习/<项目名>/<中文模块名>.md`，使用 [Prompt 7](./PROMPT_7_OPEN_SOURCE_PROJECT_LEARNING.md) 初始化入口与索引；前置正文只做简短初始化，后续不自动追加内容或更新进度。用户主要阅读并自行维护“我的笔记”，该区域默认只读，用户明确授权时才按指定范围编辑。Work Pool 引用这些主要来源；旧专题默认保留，不自动迁移。
