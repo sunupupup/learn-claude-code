@@ -8,6 +8,7 @@
 - 知识地图：[Agent 可观测与轨迹评测知识图谱](./Agent可观测与轨迹评测知识图谱.md)
 - 专业术语：[名词清单](./名词清单.md)——按知识块索引核心术语并提供简短解释
 - 项目案例：[可观测与 PIR 评测](./可观测.md)——记录四个学习问题、项目文档中的质量门禁现状及证据边界；SDK 使用情况仍待查代码确认
+- 业务改进闭环：[观测什么数据、观测之后怎么改进](./观测什么数据、观测之后怎么改进.md)——按“项目接入 → 数据采集/去向 → 分析 → 反馈沉淀 → 定向改进 → 回归/灰度验证”学习全链路
 - 关联本地基础：[`s01 Agent Loop`](../../../s01_agent_loop/LEARNING_NOTES.md)、[`s02 Tool Use`](../../../s02_tool_use/LEARNING_NOTES.md)、[`s03 Permission`](../../../s03_permission/LEARNING_NOTES.md)、[`s04 Hooks`](../../../s04_hooks/LEARNING_NOTES.md)、[`s06 Subagent`](../../../s06_subagent/LEARNING_NOTES.md)、[`s11 Error Recovery`](../../../s11_error_recovery/LEARNING_NOTES.md)
 - 现有小样本：[`TraceCollector`](../../../projects/rag-agent-demo/rag_agent_demo/tracing.py)、[`Eval 说明`](../../../projects/rag-agent-demo/evals/README.md)
 
@@ -46,9 +47,11 @@
 |---|---|---|
 | Trace / Span / Event 入门与 Agent 执行链映射 | 🔴 待验证 | 计划作为第一模块，尚未验收 |
 | Log / Metric / State / Audit / Policy 的边界 | 🔴 待验证 | 计划模块 |
+| 项目 instrumentation 接入、数据分流和存储边界 | 🔴 待验证 | [业务改进闭环专题](./观测什么数据、观测之后怎么改进.md)；尚未对照 PIR 实际配置/运行链路 |
 | OTLP、Collector 与语义约定 | 🔴 待验证 | 计划模块；开始时核对当前官方版本 |
 | 轨迹回归、确定性安全断言与失败恢复 | 🔴 待验证 | 计划模块 |
 | 数据最小化、采样和观测失效策略 | 🔴 待验证 | 计划模块 |
+| 观测数据到产品/工程改进的闭环 | 🔴 待验证 | [专题笔记](./观测什么数据、观测之后怎么改进.md)；尚未使用真实 PIR Trace 完成案例分析 |
 
 ## 术语速查
 
@@ -67,4 +70,5 @@
 - 核心词汇是否能映射到熟悉的 Agent Loop，还需要用户复述后判断。
 - 生产 Trace 中如何关联并行和异步 Subagent、重试与真实副作用，是后续主线问题。
 - PIR 的 `popipo-quality` 文档展示了共享质量门禁基础；真实模型轨迹评测仍需结合 runner、源码和运行报告核实。
-- 下一步只推进：用一个简单成功链和一个权限拒绝链识别哪些是 Span、哪些是 Event，为什么。
+- “观测什么、之后改什么”已扩展为从接入项目到数据去向、分析、反馈回流和验证的完整闭环；具体指标目标仍需结合业务成功定义、真实 Trace 与下游状态确定，尚未在 PIR 案例上实测。
+- 下一步先拿一条 Run 识别 Trace/Span/Event、数据从哪里产生并送到哪里；然后再选一条失败 Run，练习从异常信号下钻到根因和回归用例。
