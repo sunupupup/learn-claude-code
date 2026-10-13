@@ -1,0 +1,277 @@
+{
+  "result": "PASS",
+  "cases": [
+    {
+      "case": "success",
+      "equal": true,
+      "progressEvents": 3,
+      "messages": 4,
+      "state": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "调用 demo_steps，fail=false，然后用中文一句话总结结果。"
+          },
+          {
+            "role": "assistant",
+            "content": "我将执行三步模拟检查。",
+            "tool_calls": [
+              {
+                "id": "call_23e95e4483be481f95c1d2eaf214d4ed",
+                "type": "function",
+                "function": {
+                  "name": "demo_steps",
+                  "arguments": "{\"fail\": false}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_23e95e4483be481f95c1d2eaf214d4ed",
+            "content": "3/3 模拟检查通过"
+          },
+          {
+            "role": "assistant",
+            "content": "最终结果：3/3 模拟检查通过"
+          }
+        ],
+        "tools": {
+          "call_23e95e4483be481f95c1d2eaf214d4ed": {
+            "name": "demo_steps",
+            "arguments": {
+              "fail": false
+            },
+            "status": "succeeded",
+            "output": "3/3 模拟检查通过",
+            "isError": false
+          }
+        },
+        "status": "completed"
+      }
+    },
+    {
+      "case": "failure",
+      "equal": true,
+      "progressEvents": 3,
+      "messages": 4,
+      "state": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "调用 demo_steps，fail=true，然后用中文一句话总结结果。"
+          },
+          {
+            "role": "assistant",
+            "content": "我将执行三步模拟检查。",
+            "tool_calls": [
+              {
+                "id": "call_a9a1a798908c4f688779b9e1b4d97de7",
+                "type": "function",
+                "function": {
+                  "name": "demo_steps",
+                  "arguments": "{\"fail\": true}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_a9a1a798908c4f688779b9e1b4d97de7",
+            "content": "模拟测试失败：用例 3 未通过"
+          },
+          {
+            "role": "assistant",
+            "content": "最终结果：模拟测试失败：用例 3 未通过"
+          }
+        ],
+        "tools": {
+          "call_a9a1a798908c4f688779b9e1b4d97de7": {
+            "name": "demo_steps",
+            "arguments": {
+              "fail": true
+            },
+            "status": "failed",
+            "output": "模拟测试失败：用例 3 未通过",
+            "isError": true
+          }
+        },
+        "status": "failed"
+      }
+    },
+    {
+      "case": "interrupt",
+      "equal": true,
+      "exitCode": 71,
+      "state": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "调用 demo_steps，fail=false，然后用中文一句话总结结果。"
+          },
+          {
+            "role": "assistant",
+            "content": "我将执行三步模拟检查。",
+            "tool_calls": [
+              {
+                "id": "call_d3953bf86c4e44bf9e1d24d157cb37a5",
+                "type": "function",
+                "function": {
+                  "name": "demo_steps",
+                  "arguments": "{\"fail\": false}"
+                }
+              }
+            ]
+          }
+        ],
+        "tools": {
+          "call_d3953bf86c4e44bf9e1d24d157cb37a5": {
+            "name": "demo_steps",
+            "arguments": {
+              "fail": false
+            },
+            "status": "interrupted",
+            "output": null,
+            "isError": null
+          }
+        },
+        "status": "interrupted"
+      }
+    },
+    {
+      "case": "persist-before-send",
+      "expectedMismatch": true,
+      "exitCode": 72,
+      "live": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "调用 demo_steps，fail=false，然后用中文一句话总结结果。"
+          },
+          {
+            "role": "assistant",
+            "content": "我将执行三步模拟检查。",
+            "tool_calls": [
+              {
+                "id": "call_10daba1c2bd44788ad1224f83b101890",
+                "type": "function",
+                "function": {
+                  "name": "demo_steps",
+                  "arguments": "{\"fail\": false}"
+                }
+              }
+            ]
+          }
+        ],
+        "tools": {
+          "call_10daba1c2bd44788ad1224f83b101890": {
+            "name": "demo_steps",
+            "arguments": {
+              "fail": false
+            },
+            "status": "interrupted",
+            "output": null,
+            "isError": null
+          }
+        },
+        "status": "interrupted"
+      },
+      "recovered": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "调用 demo_steps，fail=false，然后用中文一句话总结结果。"
+          },
+          {
+            "role": "assistant",
+            "content": "我将执行三步模拟检查。",
+            "tool_calls": [
+              {
+                "id": "call_10daba1c2bd44788ad1224f83b101890",
+                "type": "function",
+                "function": {
+                  "name": "demo_steps",
+                  "arguments": "{\"fail\": false}"
+                }
+              }
+            ]
+          }
+        ],
+        "tools": {
+          "call_10daba1c2bd44788ad1224f83b101890": {
+            "name": "demo_steps",
+            "arguments": {
+              "fail": false
+            },
+            "status": "succeeded",
+            "output": "3/3 模拟检查通过",
+            "isError": false
+          }
+        },
+        "status": "interrupted"
+      }
+    },
+    {
+      "case": "partial-tail",
+      "warning": "忽略未完成尾行；会话只读，不能继续任务",
+      "status": "interrupted"
+    },
+    {
+      "case": "duplicate-start",
+      "rejected": true
+    },
+    {
+      "case": "exclusive-writer",
+      "rejected": true,
+      "ownerLockPreserved": true
+    },
+    {
+      "case": "deepseek-flash",
+      "equal": true,
+      "state": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "调用 demo_steps，fail=false，然后用中文一句话总结结果。"
+          },
+          {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+              {
+                "id": "call_00_p0gamQgJyD3ghmlLTfgw8093",
+                "type": "function",
+                "function": {
+                  "name": "demo_steps",
+                  "arguments": "{\"fail\": false}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_00_p0gamQgJyD3ghmlLTfgw8093",
+            "content": "3/3 模拟检查通过"
+          },
+          {
+            "role": "assistant",
+            "content": "demo_steps 在 fail=false 的情况下全部 3 项模拟检查均通过。"
+          }
+        ],
+        "tools": {
+          "call_00_p0gamQgJyD3ghmlLTfgw8093": {
+            "name": "demo_steps",
+            "arguments": {
+              "fail": false
+            },
+            "status": "succeeded",
+            "output": "3/3 模拟检查通过",
+            "isError": false
+          }
+        },
+        "status": "completed"
+      },
+      "modelDeltas": 19
+    }
+  ]
+}
