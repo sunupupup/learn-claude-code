@@ -8,7 +8,7 @@
 
 | 项目 | 简介与特色 | 已加入的学习模块 |
 | --- | --- | --- |
-| [Pi Coding Agent](<Pi Coding Agent/README.md>) | 可扩展的终端编程 Agent；会话使用 JSONL 条目树保存，可观察分支历史与模型上下文的分离。 | [会话管理](<Pi Coding Agent/会话管理模块.md>)、[上下文压缩策略](<Pi Coding Agent/上下文压缩策略模块.md>)、[工具管理](<Pi Coding Agent/工具管理模块.md>) |
+| [Pi Coding Agent](<Pi Coding Agent/README.md>) | 可扩展的终端编程 Agent；会话使用 JSONL 条目树保存，可观察分支历史与模型上下文的分离。 | [会话管理](<Pi Coding Agent/会话管理模块.md>)、[上下文压缩策略](<Pi Coding Agent/上下文压缩策略模块.md>)、[工具管理](<Pi Coding Agent/工具管理模块.md>)、[运行生命周期管理](<Pi Coding Agent/运行生命周期管理模块.md>) |
 
 ## 模块索引
 
@@ -17,6 +17,7 @@
 | 会话管理 | 会话持久化、重启恢复、模型上下文重建与上下文压缩；先学“重启后如何接着聊”。 | [Pi Coding Agent](<Pi Coding Agent/会话管理模块.md>)：学习中；固定版本源码初读，未运行验证。 |
 | 上下文压缩策略 | 从“100 条消息触发自动压缩”研究触发条件、保留预算、切分点与摘要生成。 | [Pi Coding Agent](<Pi Coding Agent/上下文压缩策略模块.md>)：学习中；默认策略与切分依据已静态核验，未运行验证。 |
 | 工具管理 | 注册与启用、描述与参数、调用执行、权限、结果、错误和观测。 | [Pi Coding Agent](<Pi Coding Agent/工具管理模块.md>)：学习中；工具机制地图已静态梳理，未运行验证；后续逐项深入。 |
+| 运行生命周期管理 | 启动、执行状态、中断与取消、完成与失败收尾；先学流式调用时的取消。 | [Pi Coding Agent](<Pi Coding Agent/运行生命周期管理模块.md>)：已初始化；部分取消路径已静态核验，未运行验证。 |
 
 ## 旧专题入口
 
