@@ -377,6 +377,7 @@ W-2026-002 将这些摘要扩展为 12 个小课题，并补充 Tokenizer、Chat
 | --- | --- |
 | [W-002 LLM Runtime 基础](../changes/C-2026-002-study-llm-runtime-foundations.md) | 两条路线必修前置：Token、Prompt、生成、Prefill/Decode 和缓存分层 |
 | [W-003 完成验证](W-2026-003-study-task-completion-verification.md) | LLM 基础和中间观测线之后，建立可证明的完成状态 |
+| [W-036 AI 长任务工程](W-2026-036-study-long-running-agent-tasks-and-goals.md) | 先串联目标、规划、可信进度、跨轮继续、恢复与完成证据；复用 W-003/Memory/Compaction。Typed Evals 留作评测候选，Codex Goal 实现仅索引并暂缓 |
 | [W-004 工具结果恢复](../changes/C-2026-012-study-tool-result-compaction-and-recovery.md) | W-003 之后，学习结果压缩、恢复和幂等边界 |
 | [W-005 权限与审批](W-2026-005-study-production-agent-permissions-and-approval.md) | 单 Agent 副作用实验的控制面 |
 | [W-006 副作用安全](W-2026-006-study-side-effect-tool-security.md) | W-005 之后，接业务服务、未知结果、补偿和审计 |
