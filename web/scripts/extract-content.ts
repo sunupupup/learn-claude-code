@@ -11,8 +11,8 @@ import { VERSION_META, VERSION_ORDER, LEARNING_PATH } from "../src/lib/constants
 
 const WEB_DIR = path.resolve(__dirname, "..");
 const REPO_ROOT = path.resolve(WEB_DIR, "..");
-const LEGACY_AGENTS_DIR = path.join(REPO_ROOT, "agents");
-const LEGACY_DOCS_DIR = path.join(REPO_ROOT, "docs");
+// 新版课程只从 agents/ 下的章节目录读取，不再回退到旧版 12 章。
+const COURSE_DIR = path.join(REPO_ROOT, "agents");
 const OUT_DIR = path.join(WEB_DIR, "src", "data", "generated");
 const PUBLIC_DIR = path.join(WEB_DIR, "public");
 const COURSE_ASSETS_DIR = path.join(PUBLIC_DIR, "course-assets");
@@ -31,17 +31,9 @@ function dirToVersionId(dirName: string): string | null {
   return match ? match[1] : null;
 }
 
-function filenameToVersionId(filename: string): string | null {
-  const base = path.basename(filename, ".py");
-  if (base === "s_full" || base === "__init__") return null;
-
-  const match = base.match(/^(s\d+[a-c]?)_/);
-  return match ? match[1] : null;
-}
-
-function listRootChapters(): ChapterSource[] {
+function listCourseChapters(): ChapterSource[] {
   return fs
-    .readdirSync(REPO_ROOT, { withFileTypes: true })
+    .readdirSync(COURSE_DIR, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .filter((name) => /^s\d{2}_/.test(name))
@@ -49,7 +41,7 @@ function listRootChapters(): ChapterSource[] {
     .map((dirName) => {
       const id = dirToVersionId(dirName);
       if (!id) return null;
-      const dirPath = path.join(REPO_ROOT, dirName);
+      const dirPath = path.join(COURSE_DIR, dirName);
       const codePath = path.join(dirPath, "code.py");
       if (!fs.existsSync(codePath)) return null;
       return { id, dirName, dirPath, codePath };
@@ -125,17 +117,6 @@ function countLoc(lines: string[]): number {
   }).length;
 }
 
-function detectLocale(relPath: string): Locale {
-  if (relPath.startsWith("zh/") || relPath.startsWith("zh\\")) return "zh";
-  if (relPath.startsWith("ja/") || relPath.startsWith("ja\\")) return "ja";
-  return "en";
-}
-
-function extractDocVersion(filename: string): string | null {
-  const match = filename.match(/^(s\d+[a-c]?)-/);
-  return match ? match[1] : null;
-}
-
 function titleFromMarkdown(content: string, fallback: string): string {
   const titleMatch = content.match(/^#\s+(.+)$/m);
   return titleMatch ? titleMatch[1] : fallback;
@@ -206,7 +187,7 @@ function rewriteChapterMarkdown(
   return next;
 }
 
-function buildRootVersions(chapters: ChapterSource[]): AgentVersion[] {
+function buildCourseVersions(chapters: ChapterSource[]): AgentVersion[] {
   return chapters.map((chapter) => {
     const source = fs.readFileSync(chapter.codePath, "utf-8");
     const lines = source.split("\n");
@@ -214,7 +195,7 @@ function buildRootVersions(chapters: ChapterSource[]): AgentVersion[] {
 
     return {
       id: chapter.id,
-      filename: `${chapter.dirName}/code.py`,
+      filename: `agents/${chapter.dirName}/code.py`,
       title: meta?.title ?? chapter.id,
       subtitle: meta?.subtitle ?? "",
       loc: countLoc(lines),
@@ -231,46 +212,7 @@ function buildRootVersions(chapters: ChapterSource[]): AgentVersion[] {
   });
 }
 
-function buildLegacyVersions(): AgentVersion[] {
-  if (!fs.existsSync(LEGACY_AGENTS_DIR)) return [];
-
-  const agentFiles = fs
-    .readdirSync(LEGACY_AGENTS_DIR)
-    .filter((filename) => filename.startsWith("s") && filename.endsWith(".py"));
-
-  const versions = agentFiles
-    .map((filename) => {
-      const id = filenameToVersionId(filename);
-      if (!id) return null;
-
-      const filePath = path.join(LEGACY_AGENTS_DIR, filename);
-      const source = fs.readFileSync(filePath, "utf-8");
-      const lines = source.split("\n");
-      const meta = VERSION_META[id];
-
-      return {
-        id,
-        filename,
-        title: meta?.title ?? id,
-        subtitle: meta?.subtitle ?? "",
-        loc: countLoc(lines),
-        tools: extractTools(source),
-        newTools: [] as string[],
-        coreAddition: meta?.coreAddition ?? "",
-        keyInsight: meta?.keyInsight ?? "",
-        classes: extractClasses(lines),
-        functions: extractFunctions(lines),
-        layer: meta?.layer ?? "tools",
-        source,
-        images: [] as ChapterImage[],
-      };
-    })
-    .filter((version): version is AgentVersion => version !== null);
-
-  return versions;
-}
-
-function buildRootDocs(chapters: ChapterSource[]): DocContent[] {
+function buildCourseDocs(chapters: ChapterSource[]): DocContent[] {
   const docs: DocContent[] = [];
   const locales: Locale[] = ["en", "zh", "ja"];
 
@@ -285,35 +227,6 @@ function buildRootDocs(chapters: ChapterSource[]): DocContent[] {
       docs.push({
         version: chapter.id,
         locale,
-        title: titleFromMarkdown(content, filename),
-        content,
-      });
-    }
-  }
-
-  return docs;
-}
-
-function buildLegacyDocs(): DocContent[] {
-  const docs: DocContent[] = [];
-  if (!fs.existsSync(LEGACY_DOCS_DIR)) return docs;
-
-  const localeDirs: Locale[] = ["en", "zh", "ja"];
-  for (const locale of localeDirs) {
-    const localeDir = path.join(LEGACY_DOCS_DIR, locale);
-    if (!fs.existsSync(localeDir)) continue;
-
-    const docFiles = fs.readdirSync(localeDir).filter((f) => f.endsWith(".md"));
-    for (const filename of docFiles) {
-      const version = extractDocVersion(filename);
-      if (!version) continue;
-
-      const relPath = path.join(locale, filename);
-      const filePath = path.join(LEGACY_DOCS_DIR, relPath);
-      const content = fs.readFileSync(filePath, "utf-8");
-      docs.push({
-        version,
-        locale: detectLocale(relPath),
         title: titleFromMarkdown(content, filename),
         content,
       });
@@ -373,21 +286,18 @@ function main() {
   console.log("Extracting course content...");
   console.log(`  Repo root: ${REPO_ROOT}`);
 
-  cleanCourseAssets();
-
-  const rootChapters = listRootChapters();
-  const useRootTrack = rootChapters.length > 0;
-
-  console.log(
-    useRootTrack
-      ? `  Source: root chapter folders (${rootChapters.length})`
-      : "  Source: legacy agents/docs folders"
+  // 先确认课程完整，再清理生成图片，避免错误路径把现有数据覆盖成空课程。
+  const chapters = listCourseChapters();
+  const expectedIds = Array.from({ length: 20 }, (_, index) =>
+    `s${String(index + 1).padStart(2, "0")}`
   );
-
-  const versions = useRootTrack
-    ? buildRootVersions(rootChapters)
-    : buildLegacyVersions();
-  const docs = useRootTrack ? buildRootDocs(rootChapters) : buildLegacyDocs();
+  if (chapters.length !== 20 || chapters.some((chapter, index) => chapter.id !== expectedIds[index])) {
+    throw new Error("Expected exactly s01-s20 chapter folders with code.py under agents/");
+  }
+  cleanCourseAssets();
+  console.log(`  Source: agents/ chapter folders (${chapters.length})`);
+  const versions = buildCourseVersions(chapters);
+  const docs = buildCourseDocs(chapters);
 
   sortVersions(versions);
   computeNewTools(versions);

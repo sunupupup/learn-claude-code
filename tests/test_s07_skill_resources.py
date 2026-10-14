@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-MODULE_PATH = ROOT / "s07_skill_loading" / "code_skill_enhance.py"
+MODULE_PATH = ROOT / "agents" / "s07_skill_loading" / "code_skill_enhance.py"
 spec = importlib.util.spec_from_file_location("s07_skill_enhance", MODULE_PATH)
 module = importlib.util.module_from_spec(spec)
 assert spec.loader is not None

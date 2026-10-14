@@ -2,6 +2,15 @@
 
 任何时候都不要切worktree，这只是一个学习的仓库，直接主分支进行更新
 
+## 课程目录与历史引用
+
+- 新版 20 章课程统一位于 `agents/s01_*` 至 `agents/s20_*`，入口为 [`agents/README.md`](./agents/README.md)。旧版 `agents/*.py` 与 `docs/en`、`docs/zh`、`docs/ja` 教材已移除。
+- `docs/agent-engineering/` 与 `docs/plans/` 是工程方法笔记和历史设计文档，属于非旧版教材内容，继续保留。
+- 历史文档中的根目录章节路径和旧版路径允许暂时保留。遇到失效引用时，先查找新版实际位置，仅修正当前任务涉及的引用，不自动批量修改笔记或索引。
+- 旧根目录 `sXX_主题/` 对应 `agents/sXX_主题/`；旧版 12 章编号与新版编号存在错位，禁止仅凭编号替换。对应关系见课程入口。
+- 教学代码仍从仓库根目录执行，例如 `python agents/s01_agent_loop/code.py`；移动脚本不代表改变运行工作目录，根目录的 `.env`、`skills/` 和运行状态目录继续按原方式使用。
+- `mini-swe-agent` 子模块已移除；不自动重新克隆或恢复。
+
 ## Spec 工作流
 
 本仓库使用 [`specs/README.md`](./specs/README.md) 定义的轻量 Spec 工作流。涉及方案、实现或任务整理时，先按该文档判断是否需要创建或更新 Spec。
@@ -61,5 +70,5 @@
 - Work Pool 引用的第三方源码按需浅克隆到本仓库外的独立目录（如 `source-reading/`）；勿用 git submodule，也不在 `learn-claude-code` 内存放外部项目源码。
 - 章节正式学习前的前置疑问与讨论可先写入 `LEARNING_NOTES.draft.md`，完成章节后按 `PROMPT_3_COMPLETE_LEARNING_NOTES.md` 合并进正式笔记。
 - `learn-claude-code` 只保留 spec、Work Pool、教学代码与学习笔记；外部项目阅读笔记链接回 Work Pool，不把第三方仓库纳入版本管理。
-- Work Pool 正式学习过程记录在 `learning-notes/work-pool/W-YYYY-NNN-readable-name/`；其中 `LEARNING_NOTES.md` 保存总结、路线和进度，通用知识、任务实验与验收证据按需放入子目录；章节过程仍保留在对应 `sXX/LEARNING_NOTES.md`。
+- Work Pool 正式学习过程记录在 `learning-notes/work-pool/W-YYYY-NNN-readable-name/`；其中 `LEARNING_NOTES.md` 保存总结、路线和进度，通用知识、任务实验与验收证据按需放入子目录；章节过程仍保留在对应 `agents/sXX_主题/LEARNING_NOTES.md`。
 - 具体开源项目的模块实现学习集中在 `开源项目学习/<项目名>/<中文模块名>.md`，使用 [Prompt 7](./PROMPT_7_OPEN_SOURCE_PROJECT_LEARNING.md) 初始化入口与索引；前置正文只做简短初始化，后续不自动追加内容或更新进度。用户主要阅读并自行维护“我的笔记”，该区域默认只读，用户明确授权时才按指定范围编辑。Work Pool 引用这些主要来源；旧专题默认保留，不自动迁移。

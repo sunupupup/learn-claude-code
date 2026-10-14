@@ -235,32 +235,7 @@ def agent_loop(messages):
 
 ## バージョン状況
 
-このリポジトリには現在、2 つのチュートリアルトラックが共存している：
-
-- **現行トラック：ルート直下の `s01-s20`**
-  ルート直下の `s01_*` から `s20_*` までが新しい正規版であり、現在推奨する読書経路。各セッションには中国語原文、英語/日本語訳、実行可能な `code.py`、必要に応じた図が含まれる。
-- **旧版移行トラック：`docs/`、`agents/`、現在の `web/`**
-  これらは旧 12 セッション版を保持している。既存読者、旧リンク、Web プラットフォームのために移行期間中は一時的に残している。
-
-新しく読む場合は、ルート直下の `s01_agent_loop/` から `s20_comprehensive/` までを読む。旧リンクや現在の Web アプリから入った場合は、旧 12 セッション版を読んでいる可能性が高い。旧版と現行版のセッション番号は常に一致しないため、番号を混同しないこと。
-
-### 旧版から現行版への対応
-
-| 旧 12 セッション版 | 現行 20 セッション版 | トピック |
-|---|---|---|
-| 旧 s01 | 現行 s01 | Agent Loop |
-| 旧 s02 | 現行 s02 | Tool Use |
-| 旧 s03 | 現行 s05 | TodoWrite |
-| 旧 s04 | 現行 s06 | Subagent |
-| 旧 s05 | 現行 s07 | Skill Loading |
-| 旧 s06 | 現行 s08 | Context Compact |
-| 旧 s07 | 現行 s12 | Task System |
-| 旧 s08 | 現行 s13 | Background Tasks |
-| 旧 s09 | 現行 s15 | Agent Teams |
-| 旧 s10 | 現行 s16 | Team Protocols |
-| 旧 s11 | 現行 s17 | Autonomous Agents |
-| 旧 s12 | 現行 s18 | Worktree Isolation |
-| 現行版のみ | s03、s04、s09、s10、s11、s14、s19、s20 | Permission、Hooks、Memory、System Prompt、Error Recovery、Cron、MCP、Comprehensive Agent |
+現行の 20 セッションは `agents/s01_*` から `agents/s20_*` にまとめられています。[コース目次](./agents/README.md)から読み始めてください。旧 12 セッションのコードと翻訳教材は削除済みです。過去のリンクは必要に応じて修正します。旧版と現行版の番号対応はコース目次を参照してください。
 
 ## スコープ (重要)
 
@@ -285,22 +260,14 @@ cd learn-claude-code
 pip install -r requirements.txt
 cp .env.example .env   # .env を編集して ANTHROPIC_API_KEY を入力
 
-python s01_agent_loop/code.py        # ここから開始 — 1ループ + bash
-python s08_context_compact/code.py    # コンテキスト圧縮（複雑章）
-python s20_comprehensive/code.py      # 終点: 全メカニズムを 1 つのループへ
-```
-
-### 旧 12 セッション移行版
-
-```sh
-python agents/s01_agent_loop.py
-python agents/s12_worktree_task_isolation.py
-python agents/s_full.py
+python agents/s01_agent_loop/code.py        # ここから開始 — 1ループ + bash
+python agents/s08_context_compact/code.py    # コンテキスト圧縮（複雑章）
+python agents/s20_comprehensive/code.py      # 終点: 全メカニズムを 1 つのループへ
 ```
 
 ### Web プラットフォーム
 
-現在の Web プラットフォームはまだ `docs/` の旧 12 セッション版を表示する。現行 20 セッション版はルート直下の `s01-s20` を読む。
+Web アプリは `agents/` 配下の現行 20 セッションから教材、コード、画像を生成します。
 
 ```sh
 cd web && npm install && npm run dev   # http://localhost:3000
@@ -357,45 +324,44 @@ flowchart TD
 
 | セッション | トピック | キーコンセプト |
 |---|---|---|
-| [s01](./s01_agent_loop/) | Agent Loop | `messages` / `while True` / `stop_reason` |
-| [s02](./s02_tool_use/) | Tool Use | `TOOL_HANDLERS` / dispatch map / 並行性 |
-| [s03](./s03_permission/) | Permission | `PermissionRule` / 承認パイプライン |
-| [s04](./s04_hooks/) | Hooks | `PreToolUse` / `PostToolUse` / 拡張ポイント |
-| [s05](./s05_todo_write/) | TodoWrite | `TodoItem` / 計画してから実行 |
-| [s06](./s06_subagent/) | Subagent | `fresh messages[]` / コンテキスト分離 |
-| [s07](./s07_skill_loading/) | Skill Loading | `SkillManifest` / オンデマンド注入 |
-| [s08](./s08_context_compact/) | Context Compact | snip / micro / budget / auto 4層圧縮 |
-| [s09](./s09_memory/) | Memory | selection / extraction / consolidation |
-| [s10](./s10_system_prompt/) | System Prompt | ランタイム組立 / セクション連結 |
-| [s11](./s11_error_recovery/) | Error Recovery | token 拡張 / fallback モデル / リトライ戦略 |
-| [s12](./s12_task_system/) | Task System | `TaskRecord` / `blockedBy` / ディスク永続化 |
-| [s13](./s13_background_tasks/) | Background Tasks | スレッド実行 / 通知キュー |
-| [s14](./s14_cron_scheduler/) | Cron Scheduler | 永続スケジューリング / セッション限定トリガー |
-| [s15](./s15_agent_teams/) | Agent Teams | `MessageBus` / 受信箱 / 権限バブリング |
-| [s16](./s16_team_protocols/) | Team Protocols | シャットダウンハンドシェイク / プラン承認 |
-| [s17](./s17_autonomous_agents/) | Autonomous Agents | アイドルサイクル / 自動クレーム |
-| [s18](./s18_worktree_isolation/) | Worktree Isolation | `WorktreeRecord` / タスク-ディレクトリ紐付け |
-| [s19](./s19_mcp_plugin/) | MCP Plugin | マルチトランスポート / チャネルルーティング / ツールプール組み立て |
-| [s20](./s20_comprehensive/) | Comprehensive Agent | すべての仕組みを 1 つのループへ |
+| [s01](./agents/s01_agent_loop/) | Agent Loop | `messages` / `while True` / `stop_reason` |
+| [s02](./agents/s02_tool_use/) | Tool Use | `TOOL_HANDLERS` / dispatch map / 並行性 |
+| [s03](./agents/s03_permission/) | Permission | `PermissionRule` / 承認パイプライン |
+| [s04](./agents/s04_hooks/) | Hooks | `PreToolUse` / `PostToolUse` / 拡張ポイント |
+| [s05](./agents/s05_todo_write/) | TodoWrite | `TodoItem` / 計画してから実行 |
+| [s06](./agents/s06_subagent/) | Subagent | `fresh messages[]` / コンテキスト分離 |
+| [s07](./agents/s07_skill_loading/) | Skill Loading | `SkillManifest` / オンデマンド注入 |
+| [s08](./agents/s08_context_compact/) | Context Compact | snip / micro / budget / auto 4層圧縮 |
+| [s09](./agents/s09_memory/) | Memory | selection / extraction / consolidation |
+| [s10](./agents/s10_system_prompt/) | System Prompt | ランタイム組立 / セクション連結 |
+| [s11](./agents/s11_error_recovery/) | Error Recovery | token 拡張 / fallback モデル / リトライ戦略 |
+| [s12](./agents/s12_task_system/) | Task System | `TaskRecord` / `blockedBy` / ディスク永続化 |
+| [s13](./agents/s13_background_tasks/) | Background Tasks | スレッド実行 / 通知キュー |
+| [s14](./agents/s14_cron_scheduler/) | Cron Scheduler | 永続スケジューリング / セッション限定トリガー |
+| [s15](./agents/s15_agent_teams/) | Agent Teams | `MessageBus` / 受信箱 / 権限バブリング |
+| [s16](./agents/s16_team_protocols/) | Team Protocols | シャットダウンハンドシェイク / プラン承認 |
+| [s17](./agents/s17_autonomous_agents/) | Autonomous Agents | アイドルサイクル / 自動クレーム |
+| [s18](./agents/s18_worktree_isolation/) | Worktree Isolation | `WorktreeRecord` / タスク-ディレクトリ紐付け |
+| [s19](./agents/s19_mcp_plugin/) | MCP Plugin | マルチトランスポート / チャネルルーティング / ツールプール組み立て |
+| [s20](./agents/s20_comprehensive/) | Comprehensive Agent | すべての仕組みを 1 つのループへ |
 
 ## プロジェクト構成
 
-```
+```text
 learn-claude-code/
-  s01_agent_loop/          # セッションごとに1フォルダ
-    README.md              #   中国語ソース（完全なナラティブ）
-    README.en.md           #   英語訳
-    README.ja.md           #   日本語訳
-    code.py                #   単体実行可能なコード
-    images/                #   SVG ダイアグラム
-  s02_tool_use/
-  ...
-  s19_mcp_plugin/
-  s20_comprehensive/       # 終点セッション
-  agents/                  # 旧 12 セッションの実行可能コピー + s_full.py
-  skills/                  # s07 で使用するスキルファイル
-  docs/                    # 旧 12 セッション文書、移行期間中は保持
-  web/                     # 現在は docs/ の旧版内容を生成・表示
+  agents/                  # 現行 20 セッション
+    README.md              # コース目次と旧番号の対応
+    s01_agent_loop/
+      README.md            # 中国語教材
+      README.en.md         # 英語訳
+      README.ja.md         # 日本語訳
+      code.py              # 実行可能なコード
+      images/              # 図
+    ...
+    s20_comprehensive/
+  skills/                  # 共通 Skill リソース
+  docs/                    # 工程ノートと過去の設計文書のみ
+  web/                     # agents/ の現行教材を生成
   tests/
 ```
 

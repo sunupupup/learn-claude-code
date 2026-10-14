@@ -17,7 +17,7 @@ choose an arbitrary path outside an indexed Skill resource.
 
 Run from the repository root:
 
-    .venv\\Scripts\\python.exe s07_skill_loading\\code_skill_enhance.py
+    .venv\\Scripts\\python.exe agents\\s07_skill_loading\\code_skill_enhance.py
 """
 
 import ast
@@ -46,7 +46,8 @@ if os.getenv("ANTHROPIC_BASE_URL"):
     os.environ.pop("ANTHROPIC_AUTH_TOKEN", None)
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+# 章节位于 agents/s07_*，向上两层才是仓库根目录；共享 skills/ 仍在根目录。
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 WORKDIR = PROJECT_ROOT
 SKILLS_DIR = PROJECT_ROOT / "skills"
 MODEL = os.environ["MODEL_ID"]

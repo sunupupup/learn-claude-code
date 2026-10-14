@@ -235,32 +235,7 @@ def agent_loop(messages):
 
 ## 版本说明
 
-本仓库现在同时保留两条教程线：
-
-- **新版主线：根目录 `s01-s20`**
-  根目录下的 `s01_*` 到 `s20_*` 是新的主版本，也是当前推荐阅读路径。每章包含完整叙事 README、英文/日文译本、可运行的 `code.py`，以及必要的图示。
-- **旧版过渡：`docs/`、`agents/`、当前 `web/`**
-  这些仍保留旧 12 章体系，暂时用于已有读者、旧链接和 Web 平台过渡。
-
-新读者请从根目录 `s01_agent_loop/` 读到 `s20_comprehensive/`。如果你是从旧链接或当前 Web 平台进入，大概率看到的是旧 12 章版本。旧版章节号和新版不完全一致，不要混用章节号。
-
-### 旧版到新版的对应关系
-
-| 旧 12 章版本 | 新 20 章版本 | 主题 |
-|---|---|---|
-| 旧 s01 | 新 s01 | Agent Loop |
-| 旧 s02 | 新 s02 | Tool Use |
-| 旧 s03 | 新 s05 | TodoWrite |
-| 旧 s04 | 新 s06 | Subagent |
-| 旧 s05 | 新 s07 | Skill Loading |
-| 旧 s06 | 新 s08 | Context Compact |
-| 旧 s07 | 新 s12 | Task System |
-| 旧 s08 | 新 s13 | Background Tasks |
-| 旧 s09 | 新 s15 | Agent Teams |
-| 旧 s10 | 新 s16 | Team Protocols |
-| 旧 s11 | 新 s17 | Autonomous Agents |
-| 旧 s12 | 新 s18 | Worktree Isolation |
-| 新版新增 | s03、s04、s09、s10、s11、s14、s19、s20 | Permission、Hooks、Memory、System Prompt、Error Recovery、Cron、MCP、Comprehensive Agent |
+新版 20 章统一位于 `agents/s01_*` 至 `agents/s20_*`，从[课程入口](./agents/README.md)开始阅读。旧版 12 章代码和三语教材已移除。历史文档中的旧链接遇到时再修正；旧版与新版章节编号存在错位，对应关系见课程入口。
 
 ## 范围说明 (重要)
 
@@ -285,22 +260,14 @@ cd learn-claude-code
 pip install -r requirements.txt
 cp .env.example .env   # 编辑 .env 填入你的 ANTHROPIC_API_KEY
 
-python s01_agent_loop/code.py        # 起点 — 一个循环 + bash
-python s08_context_compact/code.py    # 上下文压缩（复杂章）
-python s20_comprehensive/code.py      # 终点章: 全部机制归到一个循环
-```
-
-### 旧版 12 章过渡线
-
-```sh
-python agents/s01_agent_loop.py
-python agents/s12_worktree_task_isolation.py
-python agents/s_full.py
+python agents/s01_agent_loop/code.py        # 起点 — 一个循环 + bash
+python agents/s08_context_compact/code.py    # 上下文压缩（复杂章）
+python agents/s20_comprehensive/code.py      # 终点章: 全部机制归到一个循环
 ```
 
 ### Web 平台
 
-当前 Web 平台仍读取 `docs/` 中的旧 12 章内容。新版 20 章请直接阅读根目录 `s01-s20`。
+Web 平台从 `agents/` 下的新版 20 章目录生成代码、教材和图片数据。
 
 ```sh
 cd web && npm install && npm run dev   # http://localhost:3000
@@ -358,45 +325,44 @@ flowchart TD
 
 | 章节 | 主题 | 关键概念 |
 |---|---|---|
-| [s01](./s01_agent_loop/) | Agent Loop | `messages` / `while True` / `stop_reason` |
-| [s02](./s02_tool_use/) | Tool Use | `TOOL_HANDLERS` / dispatch map / 并发 |
-| [s03](./s03_permission/) | Permission | `PermissionRule` / 审批管线 |
-| [s04](./s04_hooks/) | Hooks | `PreToolUse` / `PostToolUse` / 扩展点 |
-| [s05](./s05_todo_write/) | TodoWrite | `TodoItem` / 先计划后执行 |
-| [s06](./s06_subagent/) | Subagent | `fresh messages[]` / 上下文隔离 |
-| [s07](./s07_skill_loading/) | Skill Loading | `SkillManifest` / 按需注入 |
-| [s08](./s08_context_compact/) | Context Compact | snip / micro / budget / auto 四层压缩 |
-| [s09](./s09_memory/) | Memory | selection / extraction / consolidation |
-| [s10](./s10_system_prompt/) | System Prompt | 运行时组装 / 分段拼接 |
-| [s11](./s11_error_recovery/) | Error Recovery | token 升级 / fallback 模型 / 重试策略 |
-| [s12](./s12_task_system/) | Task System | `TaskRecord` / `blockedBy` / 磁盘持久化 |
-| [s13](./s13_background_tasks/) | Background Tasks | 线程执行 / 通知队列 |
-| [s14](./s14_cron_scheduler/) | Cron Scheduler | 持久化调度 / 会话级触发 |
-| [s15](./s15_agent_teams/) | Agent Teams | `MessageBus` / 收件箱 / 权限冒泡 |
-| [s16](./s16_team_protocols/) | Team Protocols | 关机握手 / 计划审批 |
-| [s17](./s17_autonomous_agents/) | Autonomous Agents | 空闲循环 / 自动认领 |
-| [s18](./s18_worktree_isolation/) | Worktree Isolation | `WorktreeRecord` / 任务-目录绑定 |
-| [s19](./s19_mcp_plugin/) | MCP Plugin | 多传输 / 通道路由 / 工具池组装 |
-| [s20](./s20_comprehensive/) | Comprehensive Agent | 全部机制归到一个循环 |
+| [s01](./agents/s01_agent_loop/) | Agent Loop | `messages` / `while True` / `stop_reason` |
+| [s02](./agents/s02_tool_use/) | Tool Use | `TOOL_HANDLERS` / dispatch map / 并发 |
+| [s03](./agents/s03_permission/) | Permission | `PermissionRule` / 审批管线 |
+| [s04](./agents/s04_hooks/) | Hooks | `PreToolUse` / `PostToolUse` / 扩展点 |
+| [s05](./agents/s05_todo_write/) | TodoWrite | `TodoItem` / 先计划后执行 |
+| [s06](./agents/s06_subagent/) | Subagent | `fresh messages[]` / 上下文隔离 |
+| [s07](./agents/s07_skill_loading/) | Skill Loading | `SkillManifest` / 按需注入 |
+| [s08](./agents/s08_context_compact/) | Context Compact | snip / micro / budget / auto 四层压缩 |
+| [s09](./agents/s09_memory/) | Memory | selection / extraction / consolidation |
+| [s10](./agents/s10_system_prompt/) | System Prompt | 运行时组装 / 分段拼接 |
+| [s11](./agents/s11_error_recovery/) | Error Recovery | token 升级 / fallback 模型 / 重试策略 |
+| [s12](./agents/s12_task_system/) | Task System | `TaskRecord` / `blockedBy` / 磁盘持久化 |
+| [s13](./agents/s13_background_tasks/) | Background Tasks | 线程执行 / 通知队列 |
+| [s14](./agents/s14_cron_scheduler/) | Cron Scheduler | 持久化调度 / 会话级触发 |
+| [s15](./agents/s15_agent_teams/) | Agent Teams | `MessageBus` / 收件箱 / 权限冒泡 |
+| [s16](./agents/s16_team_protocols/) | Team Protocols | 关机握手 / 计划审批 |
+| [s17](./agents/s17_autonomous_agents/) | Autonomous Agents | 空闲循环 / 自动认领 |
+| [s18](./agents/s18_worktree_isolation/) | Worktree Isolation | `WorktreeRecord` / 任务-目录绑定 |
+| [s19](./agents/s19_mcp_plugin/) | MCP Plugin | 多传输 / 通道路由 / 工具池组装 |
+| [s20](./agents/s20_comprehensive/) | Comprehensive Agent | 全部机制归到一个循环 |
 
 ## 项目结构
 
-```
+```text
 learn-claude-code/
-  s01_agent_loop/          # 每章一个文件夹
-    README.md              #   中文源文档（完整叙事）
-    README.en.md           #   英文译本
-    README.ja.md           #   日文译本
-    code.py                #   独立可运行代码
-    images/                #   SVG 流程图
-  s02_tool_use/
-  ...
-  s19_mcp_plugin/
-  s20_comprehensive/       # 终点章
-  agents/                  # 旧 12 章可运行副本 + s_full.py
-  skills/                  # s07 使用的 skill 文件
-  docs/                    # 旧 12 章文档，过渡期保留
-  web/                     # 当前仍基于 docs/ 旧版内容生成
+  agents/                  # 新版 20 章课程
+    README.md              # 课程入口与旧版编号映射
+    s01_agent_loop/
+      README.md            # 中文教材
+      README.en.md         # 英文译本
+      README.ja.md         # 日文译本
+      code.py              # 独立可运行代码
+      images/              # 图示
+    ...
+    s20_comprehensive/
+  skills/                  # 课程共用的 Skill 资源
+  docs/                    # 仅保留工程方法与历史设计文档
+  web/                     # 从 agents/ 生成新版课程
   tests/
 ```
 

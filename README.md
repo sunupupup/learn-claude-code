@@ -165,34 +165,7 @@ The loop is constant. Tools, knowledge, and permissions change. Agent = Model (L
 
 ## Version Status
 
-This repository currently contains two tutorial tracks:
-
-- **Current track: root-level `s01-s20`**
-  The root-level `s01_*` ... `s20_*` folders are the new canonical version. Each chapter contains a full narrative README, translations, runnable `code.py`, and diagrams where needed.
-- **Legacy transition track: `docs/`, `agents/`, and the current `web/` app**
-  These still preserve the older 12-lesson version. They are kept temporarily for existing readers, old links, and the web platform while the new 20-lesson track settles.
-
-If you are starting now, read the root-level `s01_agent_loop/` through `s20_comprehensive/` chapters. If you are following an older link or using the current web app, you are likely reading the legacy 12-lesson track. The legacy and current chapter numbers do not always match, so avoid mixing chapter numbers across tracks.
-
-### Legacy-to-Current Mapping
-
-| Legacy 12-lesson track | Current 20-lesson track | Topic |
-|---|---|---|
-| old s01 | new s01 | Agent Loop |
-| old s02 | new s02 | Tool Use |
-| old s03 | new s05 | TodoWrite |
-| old s04 | new s06 | Subagent |
-| old s05 | new s07 | Skill Loading |
-| old s06 | new s08 | Context Compact |
-| old s07 | new s12 | Task System |
-| old s08 | new s13 | Background Tasks |
-| old s09 | new s15 | Agent Teams |
-| old s10 | new s16 | Team Protocols |
-| old s11 | new s17 | Autonomous Agents |
-| old s12 | new s18 | Worktree Isolation |
-| new only | s03, s04, s09, s10, s11, s14, s19, s20 | Permission, Hooks, Memory, System Prompt, Error Recovery, Cron, MCP, Comprehensive Agent |
-
----
+The current 20-lesson course lives in `agents/s01_*` through `agents/s20_*`. Start at [the course index](./agents/README.md). The legacy 12-lesson code and translated textbooks have been removed. Historical links are repaired as encountered; legacy chapter numbers do not always match the current course.
 
 ## Scope
 
@@ -307,26 +280,26 @@ flowchart TD
 
 | Chapter | Topic | Key Concepts |
 |---|---|---|
-| [s01](./s01_agent_loop/) | Agent Loop | `messages` / `while True` / `stop_reason` |
-| [s02](./s02_tool_use/) | Tool Use | `TOOL_HANDLERS` / dispatch map / concurrency |
-| [s03](./s03_permission/) | Permission System | `PermissionRule` / approval pipeline |
-| [s04](./s04_hooks/) | Hook System | `PreToolUse` / `PostToolUse` / extension points |
-| [s05](./s05_todo_write/) | TodoWrite | `TodoItem` / plan-then-execute |
-| [s06](./s06_subagent/) | Subagent | `fresh messages[]` / context isolation |
-| [s07](./s07_skill_loading/) | Skill Loading | `SkillManifest` / on-demand injection |
-| [s08](./s08_context_compact/) | Context Compact | snipCompact / microCompact / toolResultBudget / autoCompact |
-| [s09](./s09_memory/) | Memory System | selection / extraction / consolidation |
-| [s10](./s10_system_prompt/) | System Prompt | runtime assembly / section concatenation |
-| [s11](./s11_error_recovery/) | Error Recovery | token escalation / fallback model / retry strategies |
-| [s12](./s12_task_system/) | Task System | `TaskRecord` / `blockedBy` / disk persistence |
-| [s13](./s13_background_tasks/) | Background Tasks | threaded execution / notification queue |
-| [s14](./s14_cron_scheduler/) | Cron Scheduler | durable scheduling / session-scoped triggers |
-| [s15](./s15_agent_teams/) | Agent Teams | `MessageBus` / inbox / permission bubbling |
-| [s16](./s16_team_protocols/) | Team Protocols | shutdown handshake / plan approval |
-| [s17](./s17_autonomous_agents/) | Autonomous Agents | idle cycle / auto-claim / self-organization |
-| [s18](./s18_worktree_isolation/) | Worktree Isolation | `WorktreeRecord` / task-directory binding |
-| [s19](./s19_mcp_plugin/) | MCP Plugin | multi-transport / channel routing / tool pool assembly |
-| [s20](./s20_comprehensive/) | Comprehensive Agent | all mechanisms around one loop |
+| [s01](./agents/s01_agent_loop/) | Agent Loop | `messages` / `while True` / `stop_reason` |
+| [s02](./agents/s02_tool_use/) | Tool Use | `TOOL_HANDLERS` / dispatch map / concurrency |
+| [s03](./agents/s03_permission/) | Permission System | `PermissionRule` / approval pipeline |
+| [s04](./agents/s04_hooks/) | Hook System | `PreToolUse` / `PostToolUse` / extension points |
+| [s05](./agents/s05_todo_write/) | TodoWrite | `TodoItem` / plan-then-execute |
+| [s06](./agents/s06_subagent/) | Subagent | `fresh messages[]` / context isolation |
+| [s07](./agents/s07_skill_loading/) | Skill Loading | `SkillManifest` / on-demand injection |
+| [s08](./agents/s08_context_compact/) | Context Compact | snipCompact / microCompact / toolResultBudget / autoCompact |
+| [s09](./agents/s09_memory/) | Memory System | selection / extraction / consolidation |
+| [s10](./agents/s10_system_prompt/) | System Prompt | runtime assembly / section concatenation |
+| [s11](./agents/s11_error_recovery/) | Error Recovery | token escalation / fallback model / retry strategies |
+| [s12](./agents/s12_task_system/) | Task System | `TaskRecord` / `blockedBy` / disk persistence |
+| [s13](./agents/s13_background_tasks/) | Background Tasks | threaded execution / notification queue |
+| [s14](./agents/s14_cron_scheduler/) | Cron Scheduler | durable scheduling / session-scoped triggers |
+| [s15](./agents/s15_agent_teams/) | Agent Teams | `MessageBus` / inbox / permission bubbling |
+| [s16](./agents/s16_team_protocols/) | Team Protocols | shutdown handshake / plan approval |
+| [s17](./agents/s17_autonomous_agents/) | Autonomous Agents | idle cycle / auto-claim / self-organization |
+| [s18](./agents/s18_worktree_isolation/) | Worktree Isolation | `WorktreeRecord` / task-directory binding |
+| [s19](./agents/s19_mcp_plugin/) | MCP Plugin | multi-transport / channel routing / tool pool assembly |
+| [s20](./agents/s20_comprehensive/) | Comprehensive Agent | all mechanisms around one loop |
 
 ---
 
@@ -335,7 +308,7 @@ flowchart TD
 Each chapter is a folder. Open one and you will find:
 
 ```
-s08_context_compact/
+agents/s08_context_compact/
   README.md              # full narrative with inline code
   README.en.md           # English translation
   README.ja.md           # Japanese translation
@@ -359,22 +332,14 @@ cd learn-claude-code
 pip install -r requirements.txt
 cp .env.example .env   # configure ANTHROPIC_API_KEY
 
-python s01_agent_loop/code.py        # Start here -- one loop + bash
-python s08_context_compact/code.py   # Context compaction (complex)
-python s20_comprehensive/code.py     # Endpoint: all mechanisms in one loop
-```
-
-### Legacy 12-Lesson Track
-
-```sh
-python agents/s01_agent_loop.py
-python agents/s12_worktree_task_isolation.py
-python agents/s_full.py
+python agents/s01_agent_loop/code.py        # Start here -- one loop + bash
+python agents/s08_context_compact/code.py   # Context compaction (complex)
+python agents/s20_comprehensive/code.py     # Endpoint: all mechanisms in one loop
 ```
 
 ### Web Platform
 
-The current web app still renders the legacy `docs/` s01-s12 track. Use the root-level folders for the new s01-s20 track.
+The Web app generates its course content from the 20 chapter folders under `agents/`.
 
 ```sh
 cd web && npm install && npm run dev   # http://localhost:3000
@@ -384,22 +349,21 @@ cd web && npm install && npm run dev   # http://localhost:3000
 
 ## Project Structure
 
-```
+```text
 learn-claude-code/
-  s01_agent_loop/          # one folder per chapter
-    README.md              #   Chinese source (complete narrative)
-    README.en.md           #   English translation
-    README.ja.md           #   Japanese translation
-    code.py                #   standalone runnable code
-    images/                #   SVG diagrams
-  s02_tool_use/
-  ...
-  s19_mcp_plugin/
-  s20_comprehensive/       # endpoint chapter
-  agents/                  # legacy 12 runnable copies + s_full.py
-  skills/                  # skill files used by s07
-  docs/                    # legacy 12-lesson docs, kept during transition
-  web/                     # currently renders the legacy docs/ track
+  agents/                  # current 20-lesson course
+    README.md              # course index and historical mapping
+    s01_agent_loop/
+      README.md            # Chinese source
+      README.en.md         # English translation
+      README.ja.md         # Japanese translation
+      code.py              # standalone runnable code
+      images/              # diagrams
+    ...
+    s20_comprehensive/
+  skills/                  # shared skills used by the course
+  docs/                    # engineering notes and historical plans only
+  web/                     # generates the current agents/ course
   tests/
 ```
 
