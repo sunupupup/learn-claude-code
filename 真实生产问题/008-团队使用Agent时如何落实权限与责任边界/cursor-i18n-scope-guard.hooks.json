@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": "node \"D:/code/third-party-labs/agent/learn-claude-code/真实生产问题/008-团队使用Agent时如何落实权限与责任边界/cursor-i18n-scope-guard.cjs\"",
+        "timeout": 5,
+        "failClosed": true
+      }
+    ]
+  }
+}
