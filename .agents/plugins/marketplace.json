@@ -1,0 +1,12 @@
+{
+  "name": "agent-practice",
+  "interface": {"displayName": "Agent 实战插件"},
+  "plugins": [
+    {
+      "name": "codex-user-bridge",
+      "source": {"source": "local", "path": "./practice/codex-user-bridge"},
+      "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
+      "category": "Productivity"
+    }
+  ]
+}
