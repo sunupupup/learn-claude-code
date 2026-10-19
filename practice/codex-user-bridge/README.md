@@ -1,5 +1,7 @@
 # Codex User Bridge
 
+主要源码已迁入独立公开仓库：[sunupupup/codex-user-bridge](https://github.com/sunupupup/codex-user-bridge)。当前目录保留 0.2.0 初始实战快照；后续开发与安装说明以独立仓库为准。
+
 Codex 本地用户通信插件：遇到需要用户决定的问题时，发送后立即返回，继续独立工作，再主动查询回答。
 
 **当前为本地模拟渠道原型。** `127.0.0.1:5555` 服务每隔几秒生成默认模拟回复，不连接 Telegram、飞书，不代表真实用户授权。
