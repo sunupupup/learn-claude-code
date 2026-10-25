@@ -27,3 +27,4 @@
 | [Codex 本地用户通信插件](https://github.com/sunupupup/codex-user-bridge) | 用渠道适配器、MCP 工具与本地服务完成异步问题和主动查询闭环 | 已独立公开维护；[本地初始实战快照](./codex-user-bridge/README.md) |
 | [订单客服 Agent](./order-support-agent/README.md) | 从订单查询逐步扩展到售后交互、退款确认、恢复与可靠执行 | [阶段 2：网页与售后交互](./order-support-agent/docs/02-business-flow.md) |
 | [Agent 取消与业务补偿](./agent-cancellation-demo/README.md) | 在基本模型—工具循环中学习取消意图、Hook 补偿、持久化恢复与幂等重试 | 默认真实 DeepSeek，7 个场景已通过真实模型与离线验证 |
+| [Rerank 排序反转](./rerank-demo/README.md) | 对比真实中文向量检索与交叉编码器重排，观察候选顺序反转及召回边界 | 本地模型与 Qdrant；运行记录见项目验收文档 |
