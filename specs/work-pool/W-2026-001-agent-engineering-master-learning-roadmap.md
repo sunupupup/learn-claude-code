@@ -377,7 +377,7 @@ W-2026-002 将这些摘要扩展为 12 个小课题，并补充 Tokenizer、Chat
 | --- | --- |
 | [W-002 LLM Runtime 基础](../changes/C-2026-002-study-llm-runtime-foundations.md) | 两条路线必修前置：Token、Prompt、生成、Prefill/Decode 和缓存分层 |
 | [W-003 完成验证](W-2026-003-study-task-completion-verification.md) | LLM 基础和中间观测线之后，建立可证明的完成状态 |
-| [W-036 AI 长任务工程](W-2026-036-study-long-running-agent-tasks-and-goals.md) | 先串联目标、规划、可信进度、跨轮继续、恢复与完成证据；复用 W-003/Memory/Compaction。Typed Evals 留作评测候选，Codex Goal 实现仅索引并暂缓 |
+| [W-036 AI 长任务工程](../changes/C-2026-026-study-long-running-agent-tasks-and-goals.md) | 已启动：先串联目标、规划、可信进度、跨轮继续、恢复与完成证据；复用 W-003/Memory/Compaction。Typed Evals 留作评测候选，Codex Goal 实现仅索引并暂缓 |
 | [W-004 工具结果恢复](../changes/C-2026-012-study-tool-result-compaction-and-recovery.md) | W-003 之后，学习结果压缩、恢复和幂等边界 |
 | [W-005 权限与审批](W-2026-005-study-production-agent-permissions-and-approval.md) | 单 Agent 副作用实验的控制面 |
 | [W-006 副作用安全](W-2026-006-study-side-effect-tool-security.md) | W-005 之后，接业务服务、未知结果、补偿和审计 |
@@ -388,6 +388,7 @@ W-2026-002 将这些摘要扩展为 12 个小课题，并补充 Tokenizer、Chat
 | [W-010 Codex 指令加载](W-2026-010-study-codex-project-instructions-loading.md) | Context 治理后的真实 Harness 源码切片 |
 | [W-011 Skill 加载治理](W-2026-011-study-production-skill-loading-and-governance.md) | 多技能、资源、版本、权限和渐进披露 |
 | [W-012 Skill 与可观测性](W-2026-012-study-agent-skill-engineering-observability.md) | 从中间观测实验开始贯穿，后续做完整 Trace/Eval 对照 |
+| [W-031 Agent 可观测与轨迹回归](../changes/C-2026-011-study-agent-observability-and-trajectory-evals.md) | 进行中：跨 Model / Tool / Workspace / Subagent 的 OTLP 轨迹与安全断言；复用 W-012 的通用观测结论，不重复 Skill 生命周期 |
 | [W-013 Memory](../changes/C-2026-005-study-memory-production-practices.md) | 有具体跨会话需求后学习写入、召回、遗忘和隔离 |
 | [W-014 有用的 MCP 服务](W-2026-014-build-useful-mcp-server.md) | 完成 Tool/权限/观测基础后实现一个真实有用的外部服务 |
 | [W-015 Subagent](W-2026-015-study-production-subagent-runtime.md) | 单 Agent 基线稳定后学习有限委派和隔离实验 |
@@ -403,6 +404,7 @@ W-2026-002 将这些摘要扩展为 12 个小课题，并补充 Tokenizer、Chat
 | [W-025 RAG/Wiki/Ontology](../changes/C-2026-004-study-rag-vs-llm-wiki-vs-ontology.md) | 知识架构专项，2026-09-20 用户确认学习完成；笔记与现存 Demo 已归档 |
 | [W-026 自进化](W-2026-026-study-agent-self-evolution-harnesses.md) | 冻结 Eval、版本和回滚成熟后选修 |
 | [W-027 后训练与严格 JSON](../changes/C-2026-006-study-strict-json-output-post-training.md) | 模型适配方向选修，不阻塞 Agent Runtime 主线 |
+| [W-028 对话型 Agent 应用能力（AstrBot 样本）](W-2026-028-study-conversational-agent-application-capabilities.md) | 研究 AI 伙伴、智能客服、自动化助手的用户价值、能力组合与评估；AstrBot 作为实现样本 |
 
 两个 W-009 使用完整标题/链接区分。已有需求详情不复制到其他 Spec；章节学习继续记录在对应 LEARNING_NOTES.md。
 
