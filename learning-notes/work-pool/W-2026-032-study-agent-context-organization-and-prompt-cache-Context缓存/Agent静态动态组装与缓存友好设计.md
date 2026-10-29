@@ -1,5 +1,35 @@
 # Agent 的静态/动态组装与缓存友好设计
 
+## 补充：什么时候重新构建顶层 System Prompt（2026-10-03）
+
+### 校准：首先讨论前缀失效代价，而非构建函数频率
+
+先前以框架动态钩子概括具体 Agent 默认行为，样本层次不一致，不足以说明缓存友好的产品策略。核心是：system 位于历史之前，修改 system 的靠前内容，会使经过该变化位置的旧历史前缀不能直接复用；损失可能远大于修改的几个 token。Anthropic 明确采用 tools → system → messages 的缓存层次。system 前部仍相同的部分是否能命中，取决于已有缓存条目、断点与其他命中条件，不能承诺自动命中。
+
+- 🟢 Hermes 官方文档明确：Memory/User 使用快照，会话中写盘不立即改变已构建的 system；新会话或显式失效/压缩重建路径再刷新。当前公开 conversation_loop.py 的恢复路径优先复用数据库中与 runtime 匹配的原始 prompt；能力面变化则有显式重建分支。这是为了保住整段会话前缀，而非仅节省本地拼接时间。
+- 🟢 Pi 本地副本 agent-session.ts：资源 reload、工具集合调整等会重建 prompt options；普通运行通过 _preparePromptAndToolLoadout 对 system sections 做 diff，无变化不生成更新消息。before_agent_start 显式返回 forceSystemPrompt 时，投影路径会替换请求头的 system。结构化增量 system 如何发给各 Provider 还须查 adapter，不能仅凭内部追加消息宣称缓存保住。
+- 🟢 Nanobot 本地副本采用更直接的重新组装路径，build_system_prompt 读取 bootstrap、Memory 与 Skills。因此外部内容发生变化时，后续构建可能改变顶层前缀；“每轮构建但文本相同”只解释稳定输入情形，不能掩盖动态输入造成的缓存风险。
+
+工程判断：保护长会话缓存时，应优先冻结顶层指令及其依赖的会话快照；普通新增信息追加到后面的消息；规则/能力确须改变时明确刷新，并接受受影响前缀需要重新计算。压缩改变历史，不代表所有项目都必须同时改 system；新会话需要初始化，也不意味着相同基础前缀必然缓存未命中。
+
+证据：[Anthropic 缓存层次与失效](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache)、[Hermes Memory snapshots](https://hermes-agent.nousresearch.com/docs/developer-guide/prompt-assembly#memory-snapshots)、[Hermes 恢复/重建源码](https://github.com/NousResearch/hermes-agent/blob/main/agent/conversation_loop.py)。Pi 本地入口为 `../source-reading/pi/packages/coding-agent/src/core/agent-session.ts` 的 `_rebuildSystemPrompt`、`_preparePromptAndToolLoadout`、`_installAgentForcedPromptProjection`、`reload`。本次未做 Provider 命中实验。
+
+这里的 System Prompt 指应用发送给模型的顶层指令，不包含服务商未公开的内部指令。必须分别观察：构建函数是否执行、生成文本是否变化、Provider 缓存是否命中。
+
+| 样本与证据类型 | 构建/复用时机 | 边界 |
+| --- | --- | --- |
+| 🟢 本地 Nanobot 学习副本，源码核验 | 正常 transcript 路径在 runner 初始化时调用 builder；普通工具循环追加 assistant/tool 消息；应用侧历史摘要压缩成功后再次调用 builder | 一轮用户任务可包含多次模型调用，不能把二者混称“每轮”；不推及所有同名仓库或版本 |
+| 🟢 LangChain 官方文档，dynamic_prompt 机制 | 动态提示词中间件在模型调用前生成 system message | 是启用该机制后的行为；静态 system_prompt 不因此必须重新生成 |
+| 🟢 Pydantic AI 官方文档 | 传入 message_history 时，system_prompt 可复用历史；dynamic instructions 会重新求值，只采用当前 Agent 的 instructions | system_prompt 与 instructions 的历史复用语义不同；本次不据此断言所有版本的工具循环内求值频率 |
+
+Nanobot 本地源码入口（相对仓库根目录）：`../source-reading/nanobot/nanobot/agent/runner.py` 的 `_initial_transcript_and_compaction` 路径（可搜索 `ContextCompactionState.from_transcript`），`context_governance.py` 的 `from_transcript`、`_summary_transcript`，以及 `context.py` 的 `build_transcript` → `build_system_prompt`。普通工具结果在 runner 中追加到 messages。摘要重建是已确认的应用侧压缩路径，不等于所有 Provider 原生压缩都会重建 system。
+
+一般可按三类检查触发点：初始化/恢复会话；开始新任务或每次模型请求的构建钩子；配置刷新、角色/模式切换或摘要替换等显式事件。规则文件、Memory、Skills、工作区变化属于“构建输入可能变化”，是否立即生效仍取决于读取与刷新策略。普通用户消息、工具结果、检索结果可以追加到消息历史，不必改写顶层 system。工具 schema 变化也不自动等于 system 文本变化。
+
+与缓存主线的联系：重新执行 builder 但得到相同文本，并不单独构成前缀缓存失效的证据；实际命中还须检查最终请求序列与 Provider usage。源码/文档观察不能代替命中实验。
+
+官方资料：[LangChain dynamic_prompt](https://reference.langchain.com/python/langchain/agents/middleware/types/dynamic_prompt)、[LangChain 自定义中间件](https://docs.langchain.com/oss/python/langchain/middleware/custom)、[Pydantic AI instructions](https://pydantic.dev/docs/ai/core-concepts/agent/#instructions)。本节通过 Context7 与官方网页核对框架文档。
+
 > 研究快照：2026-09-25。以下按各项目当前公开 `main` 源码/文档初读；分支会变动，正式源码学习时应固定 release 与 commit。本笔记区分“源码明确实现”“文档说明”与“工程推论”，不把设计意图当成缓存命中率实测。
 
 逐项目的独立记录与 Skills/Memory 缓存观察项见[开源项目子项目索引](开源项目缓存设计/那些子项目.md)；本文保留跨项目比较与通用缓存设计提炼。

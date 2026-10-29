@@ -1,6 +1,10 @@
-# W-2026-036：AI 长任务工程（规划、进度、持续执行、恢复与完成证据）
+# C-2026-026：AI 长任务工程学习
 
-- Status: ready
+- Status: active
+- Origin: W-2026-036
+- Started: 2026-10-17
+- 启动依据：用户明确说“我们开始这个学习”；沿用已确认的通用主线，Codex Goal 实现继续暂缓。
+- 学习主记录：[LEARNING_NOTES.md](../../learning-notes/work-pool/W-2026-036-study-long-running-agent-tasks-and-goals/LEARNING_NOTES.md)
 - Area: Agent / Harness / Planning / Task State / Continuation / Recovery / Verification
 - Difficulty: D2 → D3
 - Created: 2026-10-15
@@ -15,7 +19,7 @@
 
 **这是长任务的端到端学习主线。** 已有完成验证、记忆、压缩、调度和权限专题提供局部机制，本任务学习它们如何共同支撑持续执行，不复制各专题的完整教程。完整指覆盖常见问题链路；低频分布式难题作为选学，不以穷尽所有情况为完成条件。
 
-**当前学习安排（2026-10-15）：先逐块学习下面第 1–7 块通用知识，再按需要做最小实验；Codex Goal 的具体实现仅保留独立入口，暂缓，不阻塞本主线完成。Typed Evals 先作为执行检查的候选资料留存，不自动启动项目学习。**
+**当前学习安排（2026-10-17）：已正式启动，先逐块学习下面第 1–7 块通用知识，再按需要做最小实验；Codex Goal 的具体实现仅保留独立入口，暂缓，不阻塞本主线完成。Typed Evals 先作为执行检查的候选资料留存，不自动启动项目学习。**
 
 ## 用户原始问题
 
@@ -132,7 +136,7 @@
 
 ## Expected Output
 
-正式启动后逐步产生，当前只登记范围：
+以下产出随学习逐步形成；本次仅建立总览、知识图谱与名词清单，不预写完整教程或实现 Demo：
 
 - 学习总览、`长任务工程知识图谱.md`、按知识块组织的`名词清单.md`，以及逐块形成的中文模块笔记。
 - 目标、计划、任务、执行尝试、证据与产物的关系图；一张带未知结果和停止原因的状态图。
@@ -161,16 +165,16 @@
 
 | 已有入口 | 如何接续，避免重复 |
 | --- | --- |
-| [s12 Task System](../../s12_task_system/README.md) | 从任务图与文件状态出发，检查“标记完成”与实际完成的距离 |
-| [s13 Background Tasks](../../s13_background_tasks/README.md)、[s14 Cron Scheduler](../../s14_cron_scheduler/README.md) | 工具长时间运行、结果通知与定时触发的教学基础 |
+| [s12 Task System](../../agents/s12_task_system/README.md) | 从任务图与文件状态出发，检查“标记完成”与实际完成的距离 |
+| [s13 Background Tasks](../../agents/s13_background_tasks/README.md)、[s14 Cron Scheduler](../../agents/s14_cron_scheduler/README.md) | 工具长时间运行、结果通知与定时触发的教学基础 |
 | [C-003 完成验证](../changes/C-2026-003-study-task-completion-verification.md) | 复用任务契约、证据与验证器；本任务关注跨步骤累计与最终验收 |
 | [C-005 Memory](../changes/C-2026-005-study-memory-production-practices.md) | 区分长期用户记忆与本任务执行进度 |
 | [C-014 上下文压缩](../changes/C-2026-014-study-production-reactive-context-compaction.md)、[C-013 Context 组织](../changes/C-2026-013-study-agent-context-and-prompt-cache.md) | 压缩与重建如何保留目标和恢复线索 |
 | C-015 权限审批、C-016 副作用安全（文档尚未同步远端，先保留编号） | 暂停审批、取消、重试与未知结果的交界；专题同步后补链接 |
 | C-011 可观测与评测（文档尚未同步远端，先保留编号） | 复用轨迹采集；本任务判断进度和完成证据；专题同步后补链接 |
-| [W-007 消息注入](W-2026-007-study-agent-message-injection-steering.md)、[W-008 并发治理](W-2026-008-study-python-locks-and-agent-concurrency.md) | 外部事件进入下一轮，重复唤醒与状态写入的边界 |
-| [W-022 Runtime 源码](W-2026-022-study-claude-code-codex-agent-runtime-sources.md)、[W-018 持久队友](W-2026-018-study-persistent-teammate-lifecycle.md) | 单任务生命周期与队友生命周期的区别；多 Agent 作为后续组合 |
-| [W-001 总路线](W-2026-001-agent-engineering-master-learning-roadmap.md) | 单 Agent 基础后引入主线，按需接续专题 |
+| [W-007 消息注入](../work-pool/W-2026-007-study-agent-message-injection-steering.md)、[W-008 并发治理](../work-pool/W-2026-008-study-python-locks-and-agent-concurrency.md) | 外部事件进入下一轮，重复唤醒与状态写入的边界 |
+| [W-022 Runtime 源码](../work-pool/W-2026-022-study-claude-code-codex-agent-runtime-sources.md)、[W-018 持久队友](../work-pool/W-2026-018-study-persistent-teammate-lifecycle.md) | 单任务生命周期与队友生命周期的区别；多 Agent 作为后续组合 |
+| [W-001 总路线](../work-pool/W-2026-001-agent-engineering-master-learning-roadmap.md) | 单 Agent 基础后引入主线，按需接续专题 |
 
 ## Sources And Verification Status
 
@@ -180,15 +184,15 @@
 
 ## Boundaries
 
-- 当前仅新增待学模块与总路线入口，不视为正式启动，不创建 Change、知识图谱、实验或完整答案。
+- 当前已正式启动并建立学习入口；未运行实验、修改教学代码或选择外部源码主样本。
 - 正式学习遵循 [Prompt 4](../../PROMPT_4_WORK_POOL_LEARN.md)：地图负责广度，每轮只展开一个小问题；保留用户理解与验证状态。
 - 项目实现笔记按 [Prompt 7](../../PROMPT_7_OPEN_SOURCE_PROJECT_LEARNING.md) 集中到[开源项目学习](../../开源项目学习/README.md)；通用知识与本任务实验留在当前 Work Pool 学习目录。未选定项目时不为候选建空笔记。
 - 外部源码放仓库外，不切换 worktree、不使用 submodule；不修改用户“我的笔记”或已有未提交内容。
 - 不自动安装框架、调用付费模型、执行真实业务写入、提交或 push。
 - 不把长期运行等同于高质量，不把持久目标等同于可恢复执行，不把提示词要求等同于强制程序校验。
 
-## Start Trigger
+## 启动记录与第一小步
 
-用户明确说“开始 W-2026-036”“开始长任务模块”或同等意思后，按 [Spec 规范](../README.md) 创建对应 Change 并移除原卡；学习过程在 `learning-notes/work-pool/W-2026-036-study-long-running-agent-tasks-and-goals/` 逐步建立。
+2026-10-17 用户明确启动，按 [Spec 规范](../README.md) 将原 W-036 任务卡迁入本 Change；原卡不再单独维护。工作区已有其他主题的暂存、未暂存和未跟踪改动，均视为用户已有改动，不覆盖或混入本任务。
 
 第一小步：用“整理 20 份资料”的例子回答 **“AI 说办成了，最少要拿出哪些证据才能允许完成？”** 先建立成功标准，再追踪进度、继续与恢复，不立即跳进全部源码。

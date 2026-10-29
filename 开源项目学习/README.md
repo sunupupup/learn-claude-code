@@ -8,18 +8,28 @@
 
 | 项目 | 简介与特色 | 已加入的学习模块 |
 | --- | --- | --- |
+| [JitMem（第三方复现）](JitMem/README.md) | 通过模型 API 复现任务到来后检索原始轨迹、整理临时指导的流程；用于观察记忆与 Harness 的衔接，不包含论文强化学习训练。 | [记忆检索与任务指导](JitMem/记忆检索与任务指导.md) |
+| [OpenFilm](OpenFilm/README.md) | 用网页表达影片，配合本地 Studio 编辑器与命令行工具，让已有编程 Agent 制作和修改视频。 | [视频需求到成片预览](OpenFilm/视频需求到成片预览.md) |
+| [OpenDesign](OpenDesign/README.md) | 人与 AI Agent 协作的设计工作台；本地 CLI 路径复用已有编程 Agent，组织设计指令并展示生成文件。 | [设计需求到产物预览](OpenDesign/设计需求到产物预览.md) |
 | [Jev（TypeSafe）](Jev/README.md) | 基于公开 API 文档学习的决策模型；输入状态与有类型的问题，返回结构化判断。本目录也收录此非开源模型学习对象，不表示模型源码公开。 | [最小API调用](Jev/最小API调用.md)、[新记忆是否覆盖旧记忆](Jev/1.新记忆是否覆盖旧记忆.md)、[工具有权限但是否符合用户意图](Jev/2.工具有权限但是否符合用户意图.md)、[结论是否有足够证据](Jev/3.结论是否有足够证据.md)、[相似问题是否可以复用缓存](Jev/4.相似问题是否可以复用缓存.md)、[HTTP200是否代表任务完成](Jev/5.HTTP200是否代表任务完成.md)、[超时后是否应该重试](Jev/6.超时后是否应该重试.md)、[有限上下文应该保留哪些证据](Jev/7.有限上下文应该保留哪些证据.md)、[任务移交是否遗漏约束](Jev/8.任务移交是否遗漏约束.md)、[相似Issue是否真是同一个问题](Jev/9.相似Issue是否真是同一个问题.md)、[换种问法后判断是否稳定](Jev/10.换种问法后判断是否稳定.md)、[Skill推荐与适配评分](Jev/11.Skill推荐与适配评分.md) |
 | [Context Mode](<Context Mode/README.md>) | 通过 MCP 工具与 Hook（生命周期回调）减少工具原文进入上下文，并记录会话事件以辅助恢复；用于观察上下文工程。 | [大输出留存与检索](<Context Mode/大输出留存与检索.md>)、[代码处理数据与工具路由](<Context Mode/代码处理数据与工具路由.md>)、[事件记录与会话恢复](<Context Mode/事件记录与会话恢复.md>)、[沙盒与执行隔离](<Context Mode/沙盒与执行隔离.md>)、[索引更新与来源替换](<Context Mode/索引更新与来源替换.md>)、[提示去重与不可用降级](<Context Mode/提示去重与不可用降级.md>)、[MCP与插件接入](<Context Mode/MCP与插件接入.md>) |
 | [Chatwoot](Chatwoot/README.md) | 可自部署的多渠道客服平台，提供共享收件箱、在线聊天与 Captain AI 客服；用于学习客服业务与 Agent 执行机制的衔接。 | [客服消息进入Agent](Chatwoot/客服消息进入Agent.md)、[Agent循环与对话状态](Chatwoot/Agent循环与对话状态.md)、[Scenario与多Agent协作](Chatwoot/Scenario与多Agent协作.md)、[Agent上下文组织](Chatwoot/Agent上下文组织.md)、[工具管理与执行](Chatwoot/工具管理与执行.md)、[转人工与会话归属](Chatwoot/转人工与会话归属.md)、[Agent记忆分层](Chatwoot/Agent记忆分层.md)、[Agent评估闭环](Chatwoot/Agent评估闭环.md)、[客服Agent生产架构](Chatwoot/客服Agent生产架构.md) |
 | [Onyx](Onyx/README.md) | 企业知识搜索与 AI 问答平台；官方说明通过连接器同步内容、元数据与权限，并建立混合检索索引，可作为企业知识库实现的学习起点。 | [企业知识 Agent 整体链路](Onyx/企业知识Agent整体链路.md)、[企业数据接入与同步](Onyx/企业数据接入与同步.md)、[文档处理与索引准备](Onyx/文档处理与索引准备.md)、[混合检索与初召回](Onyx/混合检索与初召回.md)、[候选证据筛选与重排](Onyx/候选证据筛选与重排.md)、[知识检索权限隔离](Onyx/知识检索权限隔离.md)、[Agent 循环与对话状态](Onyx/Agent循环与对话状态.md)、[工具管理与 MCP 接入](Onyx/工具管理与MCP接入.md) |
 | [Codex](Codex/README.md) | OpenAI 的编程 Agent；公开 CLI 与 app-server 源码可用于观察会话协议和执行支撑机制，桌面端行为须另行核验。 | [输入预测（Composer Prediction）](Codex/输入预测模块.md)、[Goal 实现深入解析](Codex/goal实现深入解析.md)、[沙箱](Codex/沙箱.md) |
-| [Pi Coding Agent](<Pi Coding Agent/README.md>) | 可扩展的终端编程 Agent；会话使用 JSONL 条目树保存，可观察分支历史与模型上下文的分离。 | [会话管理](<Pi Coding Agent/会话管理模块.md>)、[上下文压缩策略](<Pi Coding Agent/上下文压缩策略模块.md>)、[工具管理](<Pi Coding Agent/工具管理模块.md>)、[运行生命周期管理](<Pi Coding Agent/运行生命周期管理模块.md>) |
+| [Pi Coding Agent](<Pi Coding Agent/README.md>) | 可扩展的终端编程 Agent；会话使用 JSONL 条目树保存，可观察分支历史与模型上下文的分离。 | [会话管理](<Pi Coding Agent/会话管理模块.md>)、[上下文压缩策略](<Pi Coding Agent/上下文压缩策略模块.md>)、[工具管理](<Pi Coding Agent/工具管理模块.md>)、[运行生命周期管理](<Pi Coding Agent/运行生命周期管理模块.md>)、[pi-memory](<Pi Coding Agent/pi-memory.md>)、[pi-qmd](<Pi Coding Agent/pi-qmd.md>) |
 | [New API](<New API/README.md>) | 可自部署的 AI 网关；重点观察多协议转换、模型适配及不兼容字段处理。 | [协议转换与模型适配](<New API/协议转换与模型适配.md>)、[消息角色与指令转换](<New API/消息角色与指令转换.md>)、[工具调用与结构化输出适配](<New API/工具调用与结构化输出适配.md>)、[流式事件转换](<New API/流式事件转换.md>)、[不兼容字段与转换损耗](<New API/不兼容字段与转换损耗.md>)、[缓存与增量能力适配](<New API/缓存与增量能力适配.md>)、[渠道路由与故障重试](<New API/渠道路由与故障重试.md>)、[用量统计与计费](<New API/用量统计与计费.md>)、[鉴权与日志隔离](<New API/鉴权与日志隔离.md>) |
 
 ## 模块索引
 
+Pi 记忆扩展入口：[pi-memory：基础文件读写与注入](<Pi Coding Agent/pi-memory.md>)；[pi-qmd：记忆检索](<Pi Coding Agent/pi-qmd.md>)。两者复用 Pi 项目目录，前者是社区插件，后者实际研究独立检索引擎 tobi/qmd。
+
 | 模块 | 学习问题与范围 | 项目入口与进度 |
 | --- | --- | --- |
+| 记忆检索与任务指导 | 历史轨迹如何检索、按当前任务整理，并进入执行模型请求；关联轨迹收集、判定与入库边界。与单独的记忆检索主题相比，重点是整理与注入的衔接。 | [JitMem（第三方复现）](JitMem/记忆检索与任务指导.md)：已初始化；固定版本关键源码已静态初读，运行待验证。 |
+| 记忆文件读写与注入 | 谁决定保存记忆、文件如何读写、何时进入模型上下文；先不展开语义检索。 | [Pi / pi-memory](<Pi Coding Agent/pi-memory.md>)：已初始化；版本与许可证已核对，调用链与运行待验证。 |
+| 记忆检索 | 从关键词到向量语义检索、混合检索与重排，结果怎样回到 Agent。 | [Pi / QMD](<Pi Coding Agent/pi-qmd.md>)：已初始化，基础模块之后学习；版本与许可证已核对，兼容性与运行待验证。 |
+| 视频需求到成片预览 | 一句视频要求怎样变成影片文件与可预览画面；区分编程 Agent、影片格式、Studio 和外部媒体服务的职责。 | [OpenFilm](OpenFilm/视频需求到成片预览.md)：已初始化，暂缓学习；官方手册与 Skill 入口已读，完整调用链和运行待验证。 |
+| 设计需求到产物预览 | 设计需求如何组织为 Agent 输入，生成文件如何回到工作台预览；先观察本地 CLI 路径。 | [OpenDesign](OpenDesign/设计需求到产物预览.md)：已初始化；固定版本文档与部分适配源码已读，完整调用链和运行待验证。 |
 | 最小API调用 | 一段文字如何变成结构化判断；请求、响应字段和渠道兼容性。 | [Jev（TypeSafe）](Jev/最小API调用.md)：已初始化；文档已核对，运行证据见实际终端结果。 |
 | 新记忆是否覆盖旧记忆 | 在记忆写入前判断：新增事实是长期变更、临时例外，还是信息不足。 | [Jev（TypeSafe）](Jev/1.新记忆是否覆盖旧记忆.md)：已初始化，未运行。 |
 | 工具有权限但是否符合用户意图 | 在工具执行前检查：拟执行动作是否符合本次用户目标和明确授权。 | [Jev（TypeSafe）](Jev/2.工具有权限但是否符合用户意图.md)：已初始化，未运行。 |

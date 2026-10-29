@@ -1,6 +1,8 @@
-# W-2026-005：生产级 Agent 权限、授权与审批治理
+# C-2026-015：生产级 Agent 权限、授权与审批治理
 
-- Status: ready
+- Status: active
+- Started: 2026-09-26
+- Source Task: W-2026-005-study-production-agent-permissions-and-approval
 - Area: Agent Permission / Authorization / Approval / Runtime Security / Multi-Agent Governance
 - Difficulty: D2 → D3（从 Tool 审批流程进入生产级身份、授权、隔离、审计和恢复）
 - Discovered From: s15 Agent Teams 对权限冒泡、`permission_request`、`permission_response` 和 Teammate/Lead 审批链路的讨论
@@ -154,7 +156,17 @@ Lead 是请求路由和团队协调节点，不应因为能代收请求就自动
 
 - [`s15 Agent Teams`](../../s15_agent_teams/README.md)
 - [`s15 学习笔记`](../../s15_agent_teams/LEARNING_NOTES.md)
-- [`W-2026-006：副作用 Tool 安全`](./W-2026-006-study-side-effect-tool-security.md)
-- [`W-2026-007：Agent 消息注入、插队与运行时事件交付`](./W-2026-007-study-agent-message-injection-steering.md)
-- [`W-2026-008：Python 锁与 Agent 并发状态治理`](./W-2026-008-study-python-locks-and-agent-concurrency.md)
-- [`W-2026-018：持久 Teammate 生命周期、Idle Loop 与唤醒`](./W-2026-018-study-persistent-teammate-lifecycle.md)
+- [`W-2026-006：副作用 Tool 安全`](../changes/C-2026-016-study-side-effect-tool-security.md)
+- [`W-2026-007：Agent 消息注入、插队与运行时事件交付`](../work-pool/W-2026-007-study-agent-message-injection-steering.md)
+- [`W-2026-008：Python 锁与 Agent 并发状态治理`](../work-pool/W-2026-008-study-python-locks-and-agent-concurrency.md)
+- [`W-2026-018：持久 Teammate 生命周期、Idle Loop 与唤醒`](../work-pool/W-2026-018-study-persistent-teammate-lifecycle.md)
+
+
+## 学习启动记录
+
+- 学习目录：[W-2026-005 权限与审批治理](../../learning-notes/work-pool/W-2026-005-study-production-agent-permissions-and-approval-权限审批/LEARNING_NOTES.md)
+- 启动模式：混合线，按理论模型 → 一项主项目源码/官方文档 → 最小安全实验（仅用户确认需要后）→ 失败恢复与生产取舍推进。
+- 关联边界：承接 s15 Team 权限请求冒泡与 W-030 沙箱；为 W-006 副作用 Tool 安全提供身份、策略、审批和隔离前置。
+- 本轮只完成任务迁移和资料导航。学习成果、用户复述、源码固定版本及实验结果均未产生，不得视为学习完成。
+- 研究范围：不安装依赖、不克隆项目、不触发真实副作用、不调用付费模型。
+

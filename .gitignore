@@ -236,3 +236,8 @@ test_providers.py
 # Internal analysis artifacts (not learning material)
 analysis/
 analysis_progress.md
+
+# 按用户指定位置保存的插件源码，仅本地阅读，避免误提交嵌套仓库。
+/开源项目学习/Pi Coding Agent/pi-long-task/
+/开源项目学习/Pi Coding Agent/pi-memory/
+/开源项目学习/Pi Coding Agent/pi-qmd/

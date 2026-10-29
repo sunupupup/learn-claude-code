@@ -1,6 +1,8 @@
-# W-2026-006：生产级副作用 Tool 的分层安全与业务接入学习
+# C-2026-016：生产级副作用 Tool 的分层安全与业务接入学习
 
-- Status: ready
+- Status: active
+- Started: 2026-09-26
+- Source Task: W-2026-006-study-side-effect-tool-security
 - Area: Agent Harness / Tool Calling / Authorization / Idempotency / HITL / Durable Execution / Audit
 - Difficulty: D2 → D3
 - Discovered From: `s08_context_compact` 中创建工单、Tool Result 压缩、权限与重复调用讨论
@@ -99,47 +101,10 @@ Tool Result 压缩也属于安全链：如果压缩后丢失“已经执行成�
 
 ## Open-source Study Samples
 
-正式启动时固定 Commit，并重新核对版本、许可证、活跃度与对应代码路径。初步推荐按以下顺序学习，而不是同时泛读全部仓库。
+本节原有五项是 2026-09-04 的早期候选，不作为当前版本、许可证或产品行为的证据。启动时已于 2026-09-26 复核官方仓库和维护者文档，并扩展为按路线分组的项目专题：
+[项目对照矩阵与学习路线](../../learning-notes/work-pool/W-2026-006-study-side-effect-tool-security-副作用工具/开源项目副作用工具安全设计/子项目.md)。
 
-### 1. 业务样例：OpenAI Customer Service Agents Demo
-
-- Repository: <https://github.com/openai/openai-cs-agents-demo>
-- 观察点：客服路由、订单/航班查询、改签取消、补偿类 Tool、用户确认、Guardrail 和前后端交互；
-- 实验：把 Mock `cancel` / `book` / `issue_compensation` Tool 替换成带幂等键和状态查询的假业务服务，注入超时与重复提交；
-- 边界：仓库明确是 Demo，适合学习业务流程和 Tool 接口，不证明真实支付、授权、事务或恢复已经达到生产级。
-
-### 2. Harness 审批与 Tool Guardrail：OpenAI Agents SDK for Python
-
-- Repository: <https://github.com/openai/openai-agents-python>
-- 重点文档：`docs/human_in_the_loop.md`、`docs/guardrails.md`；
-- 观察点：`needs_approval`、按调用 ID 审批、`RunState` 序列化与恢复、Tool 输入/输出 Guardrail、审批前后检查、拒绝路径和 Trace；
-- 实验：分别给 `query_order`、`create_ticket`、`submit_order` 配置无需审批、条件审批和强制审批，并验证恶意/畸形参数默认拒绝；
-- 边界：SDK 的审批和 Guardrail 不能替代下游 Ticket/Order Service 的最终授权与幂等。
-
-### 3. 暂停恢复与重复副作用：LangGraph
-
-- Repository: <https://github.com/langchain-ai/langgraph>
-- 观察点：`interrupt`、Checkpoint、Durable Execution、恢复时节点重放、把副作用隔离进 Task、幂等调用与人工修改状态；
-- 实验：在审批前后分别放置“创建工单”，恢复同一个 Run，观察错误位置为何会产生重复资源；
-- 边界：持久化执行历史不自动提供业务级 exactly-once；外部写操作仍需要幂等键或先查询后创建。
-
-### 4. 后端可靠执行对照：Temporal Python SDK Samples
-
-- Repository: <https://github.com/temporalio/samples-python>
-- 观察点：Workflow/Activity 边界、Activity Retry、超时、取消、Signal、Query、OpenTelemetry、外部存储和长任务恢复；
-- 实验：把 `submit_order` 作为 Activity，模拟“业务服务已成功、Worker 在记录结果前崩溃”，验证为什么 Activity 本身必须幂等；
-- 边界：Temporal 不是权限系统，也不会自动让第三方 API 变成幂等；它用于学习可靠编排和失败恢复。
-
-### 5. 权限策略对照：OpenFGA 或 Open Policy Agent
-
-- OpenFGA: <https://github.com/openfga/openfga>
-- Open Policy Agent: <https://github.com/open-policy-agent/opa>
-- OpenFGA 观察点：用户、关系、资源与细粒度访问控制，例如“客服是否能读取/操作这个客户的订单”；
-- OPA 观察点：把调用者、Tool、资源、金额、环境和审批状态作为上下文，返回允许/拒绝策略决定；
-- 实验：实现“用户可查自己的订单；客服可查被分配客户的订单；Agent 只能在用户权限与自身 Scope 交集内行动”；
-- 边界：策略引擎给出 Decision，Tool Gateway 和业务服务必须真正 Enforcement；不能把 `allow: true` 只写进 Prompt。
-
-资料初步检索日期：2026-09-04。
+项目推荐只提供导航，不代表已经阅读固定版本源码、运行实验或证明生产效果。真正开始源码线时仍需固定 Commit 并追踪代码、测试和状态变化。Restate Runtime 的仓库虽公开，但当前许可证为 BUSL-1.1；专题明确将其归为“源码可见但受限”，不作为开源项目计数。
 
 ## Learning Plan
 
@@ -229,9 +194,23 @@ cancel_order(order_id, idempotency_key)
 - Ask first：连接真实客服、工单、订单或支付系统；使用真实用户凭证；执行会产生费用、通知或外部资源的 Tool；安装或运行候选开源项目。
 - Never：用 Prompt 或 `source: agent` 代替授权；超时后盲目重做写操作；把 Harness 审批当作业务服务授权；在日志/Context 中无边界保存订单、地址、支付或凭证数据。
 
-## Start Trigger
+## 启动状态与学习入口
 
-当前任务只进入 Work Pool，不自动开始。建议完成 `s08_context_compact`、`s11_error_recovery` 和基础 Tool Calling 学习后，先启动场景 A-B；学习后台任务与持久状态后再进行场景 C 和 Worker 崩溃恢复实验。
+用户于 2026-09-26 明确要求按 W-2026-005 → W-2026-006 → W-2026-014 顺序正式启动三个独立学习任务。本 Change 负责第二项，状态为 active。原 Work Pool 卡已迁入本 Change；本次初始化只完成导航与候选资料整理，未宣告学习完成。
+
+- 学习总览：[LEARNING_NOTES.md](../../learning-notes/work-pool/W-2026-006-study-side-effect-tool-security-副作用工具/LEARNING_NOTES.md)
+- 知识图谱：[副作用工具安全知识图谱.md](../../learning-notes/work-pool/W-2026-006-study-side-effect-tool-security-副作用工具/副作用工具安全知识图谱.md)
+- 名词清单：[名词清单.md](../../learning-notes/work-pool/W-2026-006-study-side-effect-tool-security-副作用工具/名词清单.md)
+- 项目专题：[子项目.md](../../learning-notes/work-pool/W-2026-006-study-side-effect-tool-security-副作用工具/开源项目副作用工具安全设计/子项目.md)
+- 权限与审批前置：[C-2026-015](./C-2026-015-study-production-agent-permissions-and-approval.md)
+- MCP 服务实现后续：[C-2026-017](./C-2026-017-build-useful-mcp-server.md)
+
+## 初始化决策与验收记录
+
+- 保留原任务的查询订单、创建工单、代用户下单梯度，以及责任矩阵、幂等/未知结果、事务/补偿、HITL 恢复、审计、最小实现、Eval、成功标准和安全边界。
+- 开源项目选择采用分层组合，不假设存在一站包办方案；按 Prompt 4 建立矩阵及独立项目笔记。Restate Runtime 的 BUSL-1.1 许可证已标为源码可见但受限，不列入开源候选计数。
+- 已完成初始化产物：学习总览、知识图谱、名词清单、10 份候选项目导航笔记。尚未固定源码 Commit、克隆/安装/运行候选、讲授或验收任何知识块。
+- 当前状态仍为 active；后续只按一轮一个小问题推进。未运行的故障实验仍是计划，不能记录成验证结果。
 
 ## Success Criteria
 
