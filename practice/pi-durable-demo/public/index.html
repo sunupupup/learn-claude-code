@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>映语 · 对话助手</title>
+    <link rel="stylesheet" href="./style.css" />
+    <script>
+      if (location.protocol === 'file:')
+        location.replace('http://127.0.0.1:8787/');
+    </script>
+    <script src="./app.js" type="module"></script>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <a class="brand" href="./"
+        ><span class="brand-mark">✳</span
+        ><span
+          >映语<span class="brand-caption">YOUR CREATIVE COMPANION</span></span
+        ></a
+      >
+      <div class="sidebar-label">你的空间</div>
+      <nav aria-label="工作区">
+        <button id="chat-nav" class="nav-item active">
+          <span>◌</span><span>对话助手</span
+          ><span class="nav-arrow">↗</span></button
+        ><button id="tasks-nav" class="nav-item">
+          <span>▤</span><span>视频任务</span>
+        </button>
+      </nav>
+      <div class="sidebar-note">
+        <span class="sparkle">✧</span><strong>从一个想法开始</strong>
+        <p>聊聊问题，打磨文字，<br />或让一个画面有了起点。</p>
+      </div>
+      <div class="sidebar-footer">
+        <span class="avatar user-avatar">你</span>
+        <div>
+          <strong>本地工作空间</strong><small><i></i> 对话与任务自动保存</small>
+        </div>
+      </div>
+    </aside>
+    <main class="workspace" id="workspace">
+      <header class="topbar">
+        <div class="page-title">
+          <span class="mobile-mark">✳</span>对话助手<span
+            class="model-badge"
+            id="model"
+            >DeepSeek</span
+          >
+        </div>
+        <div class="top-actions">
+          <span id="connection" class="connection" role="status"
+            ><i></i><span>连接中</span></span
+          ><button
+            id="toggle-tasks"
+            class="icon-button"
+            aria-label="定位对话中的视频任务"
+            title="定位对话中的视频任务"
+          >
+            ▤ <span id="task-count">0</span></button
+          ><button
+            id="toggle-debug"
+            class="icon-button debug-button"
+            aria-label="查看保存的状态"
+            title="查看保存的状态"
+          >
+            { }
+          </button>
+        </div>
+      </header>
+      <div id="connection-notice" class="connection-notice" role="alert" hidden>
+        <strong id="notice-title">正在连接助手</strong
+        ><span id="notice-text"></span
+        ><a id="open-service" href="http://127.0.0.1:8787/">打开助手页面 ↗</a>
+      </div>
+      <div class="content-grid">
+        <section class="conversation" aria-label="对话">
+          <div id="scroll-area" class="scroll-area">
+            <div id="welcome" class="welcome">
+              <div class="welcome-symbol">✳</div>
+              <p class="welcome-eyebrow">灵感在这里，慢慢成形</p>
+              <h1>你好，今天想聊些什么？</h1>
+              <p class="welcome-description">
+                一起解答问题、打磨文字，或者探索一个新想法。<br />想制作视频时，告诉我画面就好。
+              </p>
+              <div class="suggestions">
+                <button data-prompt="你好，简单介绍一下你自己吧。">
+                  <span>◌</span><strong>随便聊聊</strong
+                  ><small>认识一下你的新助手</small><b>↗</b></button
+                ><button
+                  data-prompt="帮我把这句话写得更自然：今天的天空很好看，让我想出去走走。"
+                >
+                  <span>✎</span><strong>打磨一段文字</strong
+                  ><small>让表达更清楚，也更动人</small><b>↗</b></button
+                ><button data-prompt="帮我生成一段雨夜城市的视频，5秒，720p。">
+                  <span>▹</span><strong>让画面有个起点</strong
+                  ><small>描述画面，确认后模拟生成</small><b>↗</b>
+                </button>
+              </div>
+            </div>
+            <div
+              id="chat"
+              class="chat"
+              role="log"
+              aria-live="polite"
+              aria-label="聊天记录"
+            ></div>
+          </div>
+          <div class="composer-wrap">
+            <p id="error" class="error" role="alert" hidden></p>
+            <form id="message-form" class="composer">
+              <label class="sr-only" for="message">发送消息</label
+              ><textarea
+                id="message"
+                placeholder="发消息给映语…"
+                rows="1"
+                maxlength="2000"
+                required
+              ></textarea>
+              <div class="composer-bottom">
+                <span class="composer-hint"
+                  >↵ 发送 <span>· Shift + Enter 换行</span></span
+                ><button
+                  id="send"
+                  class="send-button"
+                  type="submit"
+                  aria-label="发送消息"
+                  disabled
+                >
+                  <span>发送</span
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 19V5m-6 6 6-6 6 6" />
+                  </svg>
+                </button>
+              </div>
+            </form>
+            <div class="composer-footer">
+              <span id="activity" role="status">连接后即可开始对话</span
+              ><span>视频工具为 Mock 演示</span>
+            </div>
+          </div>
+        </section>
+      </div>
+      <section id="debug-panel" class="debug-panel" hidden>
+        <div>
+          <strong>后端保存的状态</strong
+          ><button
+            id="close-debug"
+            class="icon-button"
+            aria-label="关闭状态面板"
+          >
+            ×
+          </button>
+        </div>
+        <pre id="saved-state"></pre>
+      </section>
+    </main>
+    <template id="approval-template"
+      ><article class="job">
+        <div class="job-header">
+          <span class="job-icon">▹</span>
+          <div>
+            <strong>视频生成请求</strong><small class="job-status"></small>
+          </div>
+          <span class="mock-tag">MOCK</span>
+        </div>
+        <form class="approval-form">
+          <label
+            >画面描述<textarea
+              name="prompt"
+              rows="4"
+              required
+              maxlength="1000"
+            ></textarea>
+          </label>
+          <div class="parameters">
+            <label
+              >时长<select name="duration">
+                <option value="5">5 秒</option>
+                <option value="10">10 秒</option>
+              </select></label
+            ><label
+              >分辨率<select name="resolution">
+                <option>720p</option>
+                <option>1080p</option>
+              </select></label
+            >
+          </div>
+          <p class="approval-note">检查参数后再开始。未提交的编辑不会保存。</p>
+          <div class="actions">
+            <button
+              type="submit"
+              name="decision"
+              value="rejected"
+              class="secondary"
+              formnovalidate
+            >
+              暂不生成</button
+            ><button
+              type="submit"
+              name="decision"
+              value="approved"
+              class="primary"
+            >
+              确认并生成 ↗
+            </button>
+          </div>
+        </form>
+        <div class="job-summary" hidden>
+          <p class="summary-prompt"></p>
+          <span class="summary-params"></span>
+        </div>
+        <p class="job-description"></p></article
+    ></template>
+    <noscript
+      >此页面需要 JavaScript。请启用 JavaScript，并通过 http://127.0.0.1:8787
+      打开。</noscript
+    >
+  </body>
+</html>
