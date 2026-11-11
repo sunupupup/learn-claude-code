@@ -405,6 +405,7 @@ W-2026-002 将这些摘要扩展为 12 个小课题，并补充 Tokenizer、Chat
 | [W-026 自进化](W-2026-026-study-agent-self-evolution-harnesses.md) | 冻结 Eval、版本和回滚成熟后选修 |
 | [W-027 后训练与严格 JSON](../changes/C-2026-006-study-strict-json-output-post-training.md) | 模型适配方向选修，不阻塞 Agent Runtime 主线 |
 | [W-028 对话型 Agent 应用能力（AstrBot 样本）](W-2026-028-study-conversational-agent-application-capabilities.md) | 研究 AI 伙伴、智能客服、自动化助手的用户价值、能力组合与评估；AstrBot 作为实现样本 |
+| [W-039 个人助手 Personal Agent](../changes/C-2026-033-study-personal-agent.md) | 已启动：先分清个人助手、编程 Agent、业务 Agent 和框架；开源/闭源版图今天未能在线复核，后续只深读一个个人助手样本 |
 
 两个 W-009 使用完整标题/链接区分。已有需求详情不复制到其他 Spec；章节学习继续记录在对应 LEARNING_NOTES.md。
 
