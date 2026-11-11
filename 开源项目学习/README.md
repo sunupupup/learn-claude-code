@@ -8,8 +8,6 @@
 
 | 项目 | 简介与特色 | 已加入的学习模块 |
 | --- | --- | --- |
-| [screenshot-to-code](screenshot-to-code/README.md) | 将截图、设计稿等输入转换为网页代码；当前开源实现包含工具调用循环与渲染截图反馈，适合观察页面生成和视觉检查的衔接。 | [截图到代码与视觉反馈](screenshot-to-code/截图到代码与视觉反馈.md) |
-| [dsh-superagent](dsh-superagent/README.md) | DeepSeek Harness 团队公开的编程 Agent 研究原型，以 Harness bundle 接入单个 GitHub 仓库及可选飞书；观察外部消息、授权任务与执行会话如何衔接。 | [消息接入与任务路由](dsh-superagent/消息接入与任务路由.md) |
 | [JitMem（第三方复现）](JitMem/README.md) | 通过模型 API 复现任务到来后检索原始轨迹、整理临时指导的流程；用于观察记忆与 Harness 的衔接，不包含论文强化学习训练。 | [记忆检索与任务指导](JitMem/记忆检索与任务指导.md) |
 | [OpenFilm](OpenFilm/README.md) | 用网页表达影片，配合本地 Studio 编辑器与命令行工具，让已有编程 Agent 制作和修改视频。 | [视频需求到成片预览](OpenFilm/视频需求到成片预览.md) |
 | [OpenDesign](OpenDesign/README.md) | 人与 AI Agent 协作的设计工作台；本地 CLI 路径复用已有编程 Agent，组织设计指令并展示生成文件。 | [设计需求到产物预览](OpenDesign/设计需求到产物预览.md) |
@@ -18,7 +16,7 @@
 | [Chatwoot](Chatwoot/README.md) | 可自部署的多渠道客服平台，提供共享收件箱、在线聊天与 Captain AI 客服；用于学习客服业务与 Agent 执行机制的衔接。 | [客服消息进入Agent](Chatwoot/客服消息进入Agent.md)、[Agent循环与对话状态](Chatwoot/Agent循环与对话状态.md)、[Scenario与多Agent协作](Chatwoot/Scenario与多Agent协作.md)、[Agent上下文组织](Chatwoot/Agent上下文组织.md)、[工具管理与执行](Chatwoot/工具管理与执行.md)、[转人工与会话归属](Chatwoot/转人工与会话归属.md)、[Agent记忆分层](Chatwoot/Agent记忆分层.md)、[Agent评估闭环](Chatwoot/Agent评估闭环.md)、[客服Agent生产架构](Chatwoot/客服Agent生产架构.md) |
 | [Onyx](Onyx/README.md) | 企业知识搜索与 AI 问答平台；官方说明通过连接器同步内容、元数据与权限，并建立混合检索索引，可作为企业知识库实现的学习起点。 | [企业知识 Agent 整体链路](Onyx/企业知识Agent整体链路.md)、[企业数据接入与同步](Onyx/企业数据接入与同步.md)、[文档处理与索引准备](Onyx/文档处理与索引准备.md)、[混合检索与初召回](Onyx/混合检索与初召回.md)、[候选证据筛选与重排](Onyx/候选证据筛选与重排.md)、[知识检索权限隔离](Onyx/知识检索权限隔离.md)、[Agent 循环与对话状态](Onyx/Agent循环与对话状态.md)、[工具管理与 MCP 接入](Onyx/工具管理与MCP接入.md) |
 | [Codex](Codex/README.md) | OpenAI 的编程 Agent；公开 CLI 与 app-server 源码可用于观察会话协议和执行支撑机制，桌面端行为须另行核验。 | [输入预测（Composer Prediction）](Codex/输入预测模块.md)、[Goal 实现深入解析](Codex/goal实现深入解析.md)、[沙箱](Codex/沙箱.md) |
-| [Pi Coding Agent](<Pi Coding Agent/README.md>) | 可扩展的终端编程 Agent；会话使用 JSONL 条目树保存，可观察分支历史与模型上下文的分离。 | [会话管理](<Pi Coding Agent/会话管理模块.md>)、[上下文压缩策略](<Pi Coding Agent/上下文压缩策略模块.md>)、[工具管理](<Pi Coding Agent/工具管理模块.md>)、[运行生命周期管理](<Pi Coding Agent/运行生命周期管理模块.md>)、[协议转换与模型适配](<Pi Coding Agent/协议转换与模型适配.md>)、[pi-memory](<Pi Coding Agent/pi-memory.md>)、[pi-qmd](<Pi Coding Agent/pi-qmd.md>) |
+| [Pi Coding Agent](<Pi Coding Agent/README.md>) | 可扩展的终端编程 Agent；会话使用 JSONL 条目树保存，可观察分支历史与模型上下文的分离。 | [会话管理](<Pi Coding Agent/会话管理模块.md>)、[上下文压缩策略](<Pi Coding Agent/上下文压缩策略模块.md>)、[工具管理](<Pi Coding Agent/工具管理模块.md>)、[运行生命周期管理](<Pi Coding Agent/运行生命周期管理模块.md>)、[pi-memory](<Pi Coding Agent/pi-memory.md>)、[pi-qmd](<Pi Coding Agent/pi-qmd.md>) |
 | [New API](<New API/README.md>) | 可自部署的 AI 网关；重点观察多协议转换、模型适配及不兼容字段处理。 | [协议转换与模型适配](<New API/协议转换与模型适配.md>)、[消息角色与指令转换](<New API/消息角色与指令转换.md>)、[工具调用与结构化输出适配](<New API/工具调用与结构化输出适配.md>)、[流式事件转换](<New API/流式事件转换.md>)、[不兼容字段与转换损耗](<New API/不兼容字段与转换损耗.md>)、[缓存与增量能力适配](<New API/缓存与增量能力适配.md>)、[渠道路由与故障重试](<New API/渠道路由与故障重试.md>)、[用量统计与计费](<New API/用量统计与计费.md>)、[鉴权与日志隔离](<New API/鉴权与日志隔离.md>) |
 
 ## 模块索引
@@ -27,8 +25,6 @@ Pi 记忆扩展入口：[pi-memory：基础文件读写与注入](<Pi Coding Age
 
 | 模块 | 学习问题与范围 | 项目入口与进度 |
 | --- | --- | --- |
-| 截图到代码与视觉反馈 | 截图如何进入模型输入，生成代码如何显示在预览中；随后观察渲染截图如何回到模型及触发修改。与通用 Agent 循环主题相比，聚焦页面生成场景。 | [screenshot-to-code](screenshot-to-code/截图到代码与视觉反馈.md)：已初始化；固定版本文档与部分核心源码已静态初读，完整调用链和运行待验证。 |
-| 消息接入与任务路由 | 外部事件如何归一化、去重，进入已有任务或新任务评估；与“客服消息进入Agent”相比，关注跨来源接入和任务归属。 | [dsh-superagent](dsh-superagent/消息接入与任务路由.md)：已初始化；官方文档与接入入口已静态初读，完整调用链和运行待验证。 |
 | 记忆检索与任务指导 | 历史轨迹如何检索、按当前任务整理，并进入执行模型请求；关联轨迹收集、判定与入库边界。与单独的记忆检索主题相比，重点是整理与注入的衔接。 | [JitMem（第三方复现）](JitMem/记忆检索与任务指导.md)：已初始化；固定版本关键源码已静态初读，运行待验证。 |
 | 记忆文件读写与注入 | 谁决定保存记忆、文件如何读写、何时进入模型上下文；先不展开语义检索。 | [Pi / pi-memory](<Pi Coding Agent/pi-memory.md>)：已初始化；版本与许可证已核对，调用链与运行待验证。 |
 | 记忆检索 | 从关键词到向量语义检索、混合检索与重排，结果怎样回到 Agent。 | [Pi / QMD](<Pi Coding Agent/pi-qmd.md>)：已初始化，基础模块之后学习；版本与许可证已核对，兼容性与运行待验证。 |
@@ -73,7 +69,7 @@ Pi 记忆扩展入口：[pi-memory：基础文件读写与注入](<Pi Coding Age
 | 候选证据筛选与重排 | 候选预算、LLM 证据选择与扩展；区分当前实现与传统重排器。 | [Onyx](Onyx/候选证据筛选与重排.md)：已初始化；源码入口已初步定位，未运行验证。 |
 | 知识检索权限隔离 | 用户 ACL、来源权限、检索过滤与企业版额外审查。 | [Onyx](Onyx/知识检索权限隔离.md)：已初始化；源码入口已初步定位，未运行验证。 |
 | Agent 循环与对话状态 | Turn、Step、工具结果、消息重建和状态变化；与运行生命周期主题分别观察。 | [Onyx](Onyx/Agent循环与对话状态.md)：已初始化；源码入口已初步定位，未运行验证。<br>[Chatwoot](Chatwoot/Agent循环与对话状态.md)：已初始化，待学习；状态、工具、移交、最终输出与轮数限制待核验。 |
-| 协议转换与模型适配 | 消息和流式响应怎样转换为目标模型 API 的格式？Pi 观察进程内的模型调用库，New API 观察网关转发。 | [Pi / pi-ai](<Pi Coding Agent/协议转换与模型适配.md>)：已初始化；[New API](<New API/协议转换与模型适配.md>)：已初始化，待选择学习；完整调用链与运行待验证。 |
+| 协议转换与模型适配 | 首选：请求如何在 Chat Completions、Responses、Anthropic Messages 和 Gemini 之间转换？ | [New API](<New API/协议转换与模型适配.md>)：已初始化，待选择学习；完整调用链与运行待验证。 |
 | 消息角色与指令转换 | system、developer 和历史消息的角色及插入位置，转换后是否保留？ | [New API](<New API/消息角色与指令转换.md>)：已初始化，待选择学习；完整调用链与运行待验证。 |
 | 工具调用与结构化输出适配 | 工具定义、调用、结果和输出约束，怎样跨协议转换？ | [New API](<New API/工具调用与结构化输出适配.md>)：已初始化，待选择学习；完整调用链与运行待验证。 |
 | 流式事件转换 | 上游流式片段如何转换为客户端事件并正确结束？ | [New API](<New API/流式事件转换.md>)：已初始化，待选择学习；完整调用链与运行待验证。 |

@@ -92,7 +92,3 @@ Any updates in upstream data sources (like new rows) need to be manually refresh
 # 完整教程
 
 https://learn.microsoft.com/en-us/fabric/iq/ontology/tutorial-1-create-ontology?pivots=semantic-model
-
-
-发现一个开源项目
-https://github.com/NVIDIA/auto-ontology
